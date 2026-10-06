@@ -125,6 +125,9 @@ export interface HeroLook {
   weapon: WeaponKind;
   offhand: OffhandKind | 'none';
   cape?: string;
+  /** 依身上武器決定的金屬顏色與光芒 */
+  metal?: string;
+  glow?: string;
 }
 
 export type WeaponKind = 'sword' | 'bow' | 'staff' | 'mace';

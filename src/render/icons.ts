@@ -25,7 +25,7 @@ function render(key: string, fn: (ctx: Ctx) => void, size = SIZE): string {
 }
 
 /** 依物品等級的材質顏色 */
-const TIER_METAL = ['#8a7a6a', '#9aa0a8', '#8ea6c0', '#d8dce8', '#9ae0f0', '#b8e08a', '#b89aff', '#f0e6d0', '#6a8aff', '#ffd76a', '#fff6d8', '#ff9ad8', '#ffffff'];
+export const TIER_METAL = ['#8a7a6a', '#9aa0a8', '#8ea6c0', '#d8dce8', '#9ae0f0', '#b8e08a', '#b89aff', '#f0e6d0', '#6a8aff', '#ffd76a', '#fff6d8', '#ff9ad8', '#ffffff'];
 const TIER_CLOTH = ['#7a5a3a', '#6a6a7a', '#4a6a8a', '#3a5aa8', '#2a8a9a', '#3a8a4a', '#6a3aa8', '#8a3a2a', '#2a2a6a', '#c8902a', '#e8d8a8', '#a83a8a', '#ffffff'];
 
 export function itemIcon(kind: ItemSlotKind, classId: ClassId | undefined, tier: number): string {

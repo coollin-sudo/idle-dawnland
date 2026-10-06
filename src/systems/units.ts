@@ -5,6 +5,7 @@ import type { FxKey, GameState, MonsterDef } from '@/core/types';
 import { recalc, type SkillSlot, type Unit } from '@/core/unit';
 import { ADVANCES } from '@/data/classes';
 import { ELITE_AFFIXES, ELITE_ATK, ELITE_HP, ELITE_MAP } from '@/data/elites';
+import { RARITIES, tierOf } from '@/data/items';
 import { PET_MAP } from '@/data/pets';
 import { getSkill } from '@/data/skills';
 import { classOf, heroConversions, heroMods, heroPowers, heroStatBase } from './hero';
@@ -16,6 +17,17 @@ const ARCHETYPE_FX: Record<string, FxKey> = {
   slime: 'slam', beast: 'bite', bird: 'claw', insect: 'bite', humanoid: 'slash', undead: 'slash', golem: 'slam',
   plant: 'slam', serpent: 'bite', elemental: 'magic', eye: 'magic', dragon: 'claw', giant: 'slam', spirit: 'magic',
 };
+
+/** 武器外觀：材質顏色依物品等級，史詩以上或 +10 以上會發光 */
+export function weaponLook(s: GameState): { metal?: string; glow?: string } {
+  const w = s.equipment.weapon;
+  if (!w) return {};
+  const metal = WEAPON_METAL[Math.min(WEAPON_METAL.length - 1, tierOf(w.ilvl))];
+  const glow = w.unique || w.rarity >= 4 ? RARITIES[w.rarity].color : w.enh >= 10 ? '#ffd34a' : w.rarity >= 3 ? RARITIES[3].color : undefined;
+  return { metal, glow };
+}
+
+const WEAPON_METAL = ['#b8a890', '#c8ccd4', '#b8cce0', '#eef2f8', '#bff0ff', '#d8f0a8', '#d8c8ff', '#fff0d8', '#9ab8ff', '#ffe08a', '#fffbe8', '#ffc8ec', '#ffffff'];
 
 export function makeHeroUnit(s: GameState, uid: number): Unit {
   const c = classOf(s);
@@ -34,7 +46,7 @@ export function makeHeroUnit(s: GameState, uid: number): Unit {
     basic: { ...c.basic, mult: 1 },
     skills, cds: {}, casting: null, statuses: [], buffs: [], resist: {}, powers: heroPowers(s), mem: {},
     size: 1, ranged: c.basic.ranged,
-    look: { classId: s.hero.classId, advId: s.hero.advId, ...(s.hero.advId ? { ...c.look, ...ADVANCES[s.hero.advId].look } : c.look) },
+    look: { classId: s.hero.classId, advId: s.hero.advId, ...(s.hero.advId ? { ...c.look, ...ADVANCES[s.hero.advId].look } : c.look), ...weaponLook(s) },
   };
   recalc(u);
   u.hp = s.hero.hp > 0 ? Math.min(s.hero.hp, u.stats.hp) : u.stats.hp;

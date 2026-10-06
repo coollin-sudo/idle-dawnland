@@ -372,11 +372,13 @@ function paintWeapon(ctx: Ctx, w: WeaponKind, look: HeroLook, a: number, t: numb
       ctx.lineTo(4, -42);
       ctx.lineTo(4, -8);
       ctx.closePath();
+      const metal = look.metal ?? '#e8eef8';
       const g = ctx.createLinearGradient(-4, 0, 4, 0);
-      g.addColorStop(0, '#e8eef8');
+      g.addColorStop(0, metal);
       g.addColorStop(0.5, '#ffffff');
-      g.addColorStop(1, '#9aa6b8');
+      g.addColorStop(1, shade(metal, -0.3));
       fillStroke(ctx, g, 1.8);
+      if (look.glow) glow(ctx, 0, -28, 22 + Math.sin(t * 4) * 3, look.glow, 0.45);
       if (a > 0.25 && a < 0.65) {
         ctx.strokeStyle = 'rgba(255,255,255,0.5)';
         ctx.lineWidth = 6;
@@ -393,8 +395,9 @@ function paintWeapon(ctx: Ctx, w: WeaponKind, look: HeroLook, a: number, t: numb
       ctx.rotate(-90 * DEG);
       rrect(ctx, -2.5, -34, 5, 40, 2);
       fillStroke(ctx, '#6a4a2a', 1.8);
+      if (look.glow) glow(ctx, 0, -38, 22 + Math.sin(t * 4) * 3, look.glow, 0.5);
       ellipse(ctx, 0, -38, 9, 9);
-      fillStroke(ctx, vgrad(ctx, -47, -29, look.trim, 0.35, -0.25), 2);
+      fillStroke(ctx, vgrad(ctx, -47, -29, look.metal ?? look.trim, 0.35, -0.25), 2);
       for (let i = 0; i < 6; i++) {
         const ang = (i / 6) * Math.PI * 2;
         ctx.beginPath();
@@ -422,7 +425,7 @@ function paintWeapon(ctx: Ctx, w: WeaponKind, look: HeroLook, a: number, t: numb
       ctx.lineWidth = 3;
       ctx.stroke();
       const power = Math.max(cast, a >= 0 ? Math.sin(clamp01(a) * Math.PI) : 0);
-      glow(ctx, 0, -54, 14 + power * 18, '#8ad8ff', 0.5 + power * 0.4);
+      glow(ctx, 0, -54, 14 + power * 18 + (look.glow ? 8 : 0), look.glow ?? '#8ad8ff', 0.5 + power * 0.4);
       const g = ctx.createRadialGradient(-2, -56, 1, 0, -54, 6);
       g.addColorStop(0, '#ffffff');
       g.addColorStop(0.5, '#8ad8ff');
@@ -442,9 +445,10 @@ function paintWeapon(ctx: Ctx, w: WeaponKind, look: HeroLook, a: number, t: numb
       ctx.strokeStyle = OUTLINE;
       ctx.lineWidth = 6;
       ctx.stroke();
-      ctx.strokeStyle = '#a8743a';
+      ctx.strokeStyle = look.metal ? shade(look.metal, -0.25) : '#a8743a';
       ctx.lineWidth = 3.6;
       ctx.stroke();
+      if (look.glow) glow(ctx, 6, 0, 24 + Math.sin(t * 4) * 3, look.glow, 0.35);
       ctx.strokeStyle = 'rgba(240,240,240,0.9)';
       ctx.lineWidth = 1.2;
       ctx.beginPath();

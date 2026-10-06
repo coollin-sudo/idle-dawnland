@@ -151,6 +151,16 @@ export class BattleScene {
       }
     });
     on('battle:clear', () => { this.walk = 0.75; });
+    on('stage:clear', e => {
+      if (!e.first || e.stage % 10 !== 9) return;
+      const r = regionOfStage(e.stage);
+      setTimeout(() => {
+        this.banner = { text: '區域制霸！', sub: `${r.name}・永晝水晶碎片收復`, t: 0, color: '#ffe35c' };
+        const h = this.heroActor();
+        if (h) for (let i = 0; i < 4; i++) this.fxs.push(new Ring(h.x, h.y, 10, 120 + i * 60, '#ffe35c', 0.8 + i * 0.2, 6));
+        this.parts.burst(this.offsetX + this.visibleW() / 2, 160, 60, { color: '#ffe35c', shape: 'star', speed: 320, additive: true, size: 3.5, max: 1.4, gravity: 120 });
+      }, 1200);
+    });
     on('stage:enter', () => { this.walk = Math.max(this.walk, 0.6); });
     on('boss:fail', e => {
       this.banner = { text: e.reason === 'time' ? '時間到！' : '挑戰失敗', sub: '回到前一關修練', t: 0, color: '#ff6a6a' };

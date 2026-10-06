@@ -8,6 +8,7 @@ import { scale } from '@/core/types';
 import { BattleScene } from '@/render/scene';
 import { portrait } from '@/render/icons';
 import { combatPower, heroStats } from '@/systems/hero';
+import { weaponLook } from '@/systems/units';
 import { setMode } from '@/systems/activities';
 import { claimQuest, currentQuest, questProgress, describeReward, dailyProgress } from '@/systems/quests';
 import { loadoutSlots, talentAvailable } from '@/systems/progression';
@@ -32,7 +33,7 @@ import { SettingsPanel } from './panels/SettingsPanel';
 export function heroLookOf() {
   const s = g().state;
   const c = CLASSES[s.hero.classId];
-  return s.hero.advId ? { ...c.look, ...ADVANCES[s.hero.advId].look } : c.look;
+  return { ...(s.hero.advId ? { ...c.look, ...ADVANCES[s.hero.advId].look } : c.look), ...weaponLook(s) };
 }
 
 function TopBar() {
