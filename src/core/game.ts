@@ -8,8 +8,9 @@ import { createActivity, type Activity, type ActivityKind } from '@/systems/acti
 import { makePetUnit, refreshHeroUnit } from '@/systems/units';
 import { checkProgress } from '@/systems/quests';
 import { trackRates } from '@/systems/offline';
+import { grantStarterKit } from '@/systems/progression';
 import { setNumberStyle } from './format';
-import { potionHeal } from './formulas';
+import { potionHeal, potionPrice } from './formulas';
 
 export const STEP_MS = 100;
 
@@ -47,6 +48,7 @@ export class Game {
       this.ev.on('unit:hit', e => { if (e.crit && e.src?.kind === 'hero') this.count('crits'); });
       this.ev.on('unit:act', e => { if (e.skill && e.src.kind === 'hero') this.count('skillsCast'); });
     }
+    grantStarterKit(this);
     this.startActivity('stage');
   }
 
@@ -157,6 +159,22 @@ export class Game {
     }
   }
 
+  /** 藥水用完時自動用金幣補 10 瓶（買得起的最好等級） */
+  private autoBuyPotion(): number {
+    const lv = this.state.hero.level;
+    const want = lv < 20 ? 0 : lv < 50 ? 1 : 2;
+    for (let t = want; t >= 0; t--) {
+      const cost = potionPrice(t, lv) * 10;
+      if (this.state.cur.gold >= cost * 2) {
+        this.state.cur.gold -= cost;
+        this.state.potions[t] += 10;
+        this.log(`自動補充${['初級', '中級', '高級'][t]}藥水 ×10`, 'dim');
+        return t;
+      }
+    }
+    return -1;
+  }
+
   private potionCd = 0;
   private autoPotion(hero: Unit) {
     this.potionCd = Math.max(0, this.potionCd - STEP_MS);
@@ -169,6 +187,7 @@ export class Game {
     let tier = -1;
     for (let t = 0; t < 3; t++) if (pots[t] > 0 && heal[t] >= missing * 0.6) { tier = t; break; }
     if (tier < 0) for (let t = 2; t >= 0; t--) if (pots[t] > 0) { tier = t; break; }
+    if (tier < 0 && this.state.settings.autoBuyPotions) tier = this.autoBuyPotion();
     if (tier < 0) return;
     pots[tier]--;
     this.potionCd = 3000;

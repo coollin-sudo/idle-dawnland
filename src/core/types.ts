@@ -352,6 +352,7 @@ export interface Settings {
   shake: boolean;
   numberStyle: 'zh' | 'short' | 'full';
   potionAt: number;
+  autoBuyPotions: boolean;
   autoSalvage: number; // 自動分解此稀有度以下（-1 = 關閉）
   keepUpgrades: boolean;
   autoEquip: boolean;

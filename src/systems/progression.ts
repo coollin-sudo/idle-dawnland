@@ -7,6 +7,7 @@ import { ADVANCES, CLASSES } from '@/data/classes';
 import { classSkills, getSkill, SKILL_MAX_RANK } from '@/data/skills';
 import { TALENT_TIER_REQ, TALENT_TREES } from '@/data/talents';
 import { talentSpent, talentTotal } from './hero';
+import { generateItem } from './items';
 
 export function gainXp(g: Game, amount: number) {
   const h = g.state.hero;
@@ -218,4 +219,16 @@ export function advance(g: Game, advId: AdvId) {
   g.count('advanced');
   g.heroChanged();
   g.toast(`轉職成為「${adv.name}」！`, 'legend', '🌟');
+}
+
+/** 新角色的起始裝備（只會給一次） */
+export function grantStarterKit(g: Game) {
+  const s = g.state;
+  if (s.counters.starterKit) return;
+  s.counters.starterKit = 1;
+  const ctx = { rng: g.rng, nextUid: g.nextUid, classId: s.hero.classId };
+  s.equipment.weapon = { ...generateItem(ctx, { ilvl: 1, rarity: 1, slot: 'weapon' }), isNew: false };
+  s.equipment.armor = { ...generateItem(ctx, { ilvl: 1, rarity: 0, slot: 'armor' }), isNew: false };
+  g.heroChanged();
+  g.pendingFullHeal = true;
 }
