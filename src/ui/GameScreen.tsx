@@ -9,6 +9,7 @@ import { BattleScene } from '@/render/scene';
 import { portrait } from '@/render/icons';
 import { combatPower, heroStats } from '@/systems/hero';
 import { weaponLook } from '@/systems/units';
+import { advise } from '@/systems/advisor';
 import { setMode } from '@/systems/activities';
 import { claimQuest, currentQuest, questProgress, describeReward, dailyProgress } from '@/systems/quests';
 import { loadoutSlots, talentAvailable } from '@/systems/progression';
@@ -203,6 +204,17 @@ function QuestTracker() {
   );
 }
 
+function Advisor() {
+  void uiTick.value;
+  const list = advise(g()).slice(0, 3);
+  if (!list.length) return null;
+  return (
+    <div class="advisor">
+      {list.map(a => <button class="adv" onClick={() => { tab.value = a.tab as TabId; }}><span>{a.icon}</span>{a.text}</button>)}
+    </div>
+  );
+}
+
 function LogBox() {
   return (
     <div class="log panel">
@@ -309,6 +321,7 @@ export function GameScreen() {
             <SkillBar />
           </div>
           <QuestTracker />
+          <Advisor />
           <LogBox />
         </div>
         <div class="right">
