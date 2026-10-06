@@ -4,11 +4,12 @@
   "version": "2.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "dev": "node scripts/art-manifest.mjs && vite",
+    "build": "node scripts/art-manifest.mjs && tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "sim": "vite-node scripts/balance-sim.ts"
+    "sim": "vite-node scripts/balance-sim.ts",
+    "art-prompts": "vite-node scripts/gen-art-prompts.ts"
   },
   "dependencies": {
     "@preact/signals": "^2.11.3",

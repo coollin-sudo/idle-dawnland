@@ -717,7 +717,8 @@ export class BattleScene {
 
     const attackK = a.attack >= 0 ? clamp01(a.attack / a.attackDur) : -1;
     if (u.kind === 'hero') {
-      const img = classImage(u.defId);
+      const advId = (u.look as { advId?: string | null }).advId;
+      const img = (advId ? classImage(advId) : null) ?? classImage(u.defId);
       const look = u.look as HeroLook;
       if (img) this.drawImageUnit(ctx, img, 110, false, attackK);
       else {
