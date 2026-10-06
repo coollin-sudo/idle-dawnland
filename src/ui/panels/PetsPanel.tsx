@@ -6,7 +6,7 @@ import { EGGS, PET_MAX_LEVEL, PET_MAX_STARS, PETS, petPassiveMult, petStarCost, 
 import { GEM_SHOP } from '@/data/shop';
 import { creaturePortrait } from '@/render/icons';
 import { buyEgg, buyHatchSlot, claimEgg, feedPet, hatchCost, hatchingCount, setActivePet, speedHatch, starUp, startHatch } from '@/systems/pets';
-import { Bar, CIcon, Cost, Modal } from '../common';
+import { Bar, CIcon, Cost, Modal, NpcHeader } from '../common';
 import { closeModal, g, openModal, refresh } from '../store';
 
 const petImg = (p: PetDef) => creaturePortrait(p.archetype, p.palette, p.features, 96);
@@ -51,6 +51,7 @@ export function PetsPanel() {
   const hatching = hatchingCount(gm);
   return (
     <div>
+      <NpcHeader npc="bobo" lines={['把蛋交給我孵，孵出來的寶寶會跟你一起戰鬥喔！', '重複的寵物不要浪費，可以拿來升星！', '寵物飼料可以讓寶寶長大，首領常常會掉。', '傳說寵物蛋裡面……說不定是一條龍呢！']} />
       <div class="row between">
         <h3 style={{ margin: '0px' }}>寵物蛋 <span class="count">孵化槽 {hatching}/{s.pets.slots}</span></h3>
         <span class="row small" style={{ gap: '10px' }}><Cost k="petFood" n={s.cur.petFood} /> <Cost k="gems" n={s.cur.gems} /></span>

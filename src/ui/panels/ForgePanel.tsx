@@ -8,7 +8,7 @@ import {
   craft, craftCost, enhance, enhanceCost, enhanceRate, ENH_BREAK_FROM, ENH_DOWN_FROM, findItem, LEGEND_SHARDS, MAX_ENH, reforge, reforgeCost, type EnhanceResult,
 } from '@/systems/forge';
 import { itemColor } from '@/systems/items';
-import { Cost, ItemCard, ItemSlot, Switch } from '../common';
+import { Cost, ItemCard, ItemSlot, NpcHeader, Switch } from '../common';
 import { forgeItem, g, refresh } from '../store';
 
 type Sub = 'enhance' | 'reforge' | 'craft';
@@ -22,6 +22,7 @@ export function ForgePanel() {
   const sel = forgeItem.value ? findItem(gm, forgeItem.value)?.item ?? null : null;
   return (
     <div>
+      <NpcHeader npc="glenn" lines={['+5 之前都很安全。再往上……就看你的運氣了，哈哈！', '分解不用的裝備，精華可以拿來重鑄詞綴。', '傳說碎片收集到 50 個，老頭子幫你打一件傳說！', '強化到 +10 的武器，會發出不一樣的光。']} />
       <div class="subtabs">
         {([['enhance', '🔨 強化'], ['reforge', '🎲 重鑄'], ['craft', '⚒️ 打造']] as [Sub, string][]).map(([id, n]) => (
           <button class={'btn sm' + (sub === id ? ' primary' : '')} onClick={() => setSub(id)}>{n}</button>

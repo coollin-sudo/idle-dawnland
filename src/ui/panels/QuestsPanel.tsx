@@ -3,7 +3,7 @@ import { DAILY_CHEST_GEMS } from '@/data/meta';
 import { CHAPTERS, MAIN_QUESTS } from '@/data/quests';
 import { SCENES } from '@/data/story';
 import { claimDaily, claimDailyChest, claimQuest, currentQuest, dailyProgress, describeReward, questProgress, refreshDailies } from '@/systems/quests';
-import { Bar, Cost } from '../common';
+import { Bar, Cost, NpcHeader } from '../common';
 import { g, refresh, storyQueue } from '../store';
 
 export function QuestsPanel() {
@@ -14,6 +14,7 @@ export function QuestsPanel() {
   const allClaimed = s.quests.daily.length > 0 && s.quests.daily.every(d => d.claimed);
   return (
     <div>
+      <NpcHeader npc="aria" lines={['永晝水晶的碎片還散落在各地，我們繼續前進吧。', '每日任務完成後別忘了開寶箱！', '你成長得真快，守護者。']} />
       <h3>主線任務 <span class="count">{s.quests.main}/{MAIN_QUESTS.length}</span></h3>
       {q ? (() => {
         const p = questProgress(gm, q);

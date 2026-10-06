@@ -149,6 +149,7 @@ export function receiveItem(g: Game, item: Item): 'kept' | 'salvaged' | 'equippe
     }
   }
   s.inventory.push(item);
+  if (item.rarity >= 2) g.log(`獲得 ${RARITIES[item.rarity].name}・${itemDisplayName(item)}`, ['', '', 'epic', 'epic', 'legend', 'legend'][item.rarity]);
   g.ev.emit('loot:item', { item, auto: 'kept' });
   g.touch();
   return 'kept';

@@ -10,6 +10,7 @@ import { CLASSES } from '@/data/classes';
 import { creaturePortrait, itemIcon } from '@/render/icons';
 import { codexTiers } from '@/systems/hero';
 import { g } from '../store';
+import { NpcHeader } from '../common';
 
 type Sub = 'ach' | 'codex' | 'legend' | 'records';
 
@@ -17,6 +18,7 @@ export function CollectionPanel() {
   const [sub, setSub] = useState<Sub>('ach');
   return (
     <div>
+      <NpcHeader npc="mila" lines={['每種怪物打倒得夠多，我就能分析出牠們的弱點。', '傳說裝備都有自己的故事，你收集了幾件呢？', '成就帶來的加成是永久的，轉生也不會消失。']} />
       <div class="subtabs">
         {([['ach', '🏆 成就'], ['codex', '📖 怪物圖鑑'], ['legend', '🌟 傳說收藏'], ['records', '📊 紀錄']] as [Sub, string][]).map(([id, n]) => (
           <button class={'btn sm' + (sub === id ? ' primary' : '')} onClick={() => setSub(id)}>{n}</button>

@@ -1,7 +1,7 @@
 import { fmt } from '@/core/format';
 import { STAR_NODES, starCost } from '@/data/meta';
 import { canRebirth, rebirth, soulsPreview, starUpgrade, startStageAfterRebirth } from '@/systems/rebirth';
-import { CIcon, Cost, confirmModal } from '../common';
+import { CIcon, Cost, NpcHeader, confirmModal } from '../common';
 import { g, refresh } from '../store';
 
 export function RebirthPanel() {
@@ -11,6 +11,7 @@ export function RebirthPanel() {
   const ok = canRebirth(gm);
   return (
     <div>
+      <NpcHeader npc="mila" lines={['碎片會吸收你的戰鬥經驗，凝結成星魂。', '轉生之後，靈魂本身會變得更強。', '覺得前進變慢的時候，就是轉生的好時機。']} />
       <div class="card hl">
         <div class="row" style={{ gap: '12px' }}>
           <img src={undefined} alt="" style={{ display: 'none' }} />

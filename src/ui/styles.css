@@ -494,3 +494,9 @@ select.input { padding: 6px 10px; }
   .forge-main { grid-template-columns: 1fr; justify-items: center; }
   .statgrid { grid-template-columns: 1fr; }
 }
+
+.npc-header { display: flex; gap: 12px; align-items: center; padding: 8px 10px; margin-bottom: 12px; border-radius: 12px; background: linear-gradient(90deg, rgba(240,194,90,.10), transparent 70%); border: 1px solid rgba(240,194,90,.18); }
+.npc-header img { width: 54px; height: 54px; border-radius: 12px; background: radial-gradient(circle at 50% 40%, #3a4468, #141828); border: 1px solid var(--gold3); flex: none; }
+.npc-header .who { font-weight: 900; color: var(--gold2); font-size: 14px; }
+.npc-header .who small { color: var(--muted); font-weight: 600; margin-left: 6px; font-size: 11.5px; }
+.npc-header .say { font-size: 13px; color: #d8deec; }

@@ -13,7 +13,8 @@ import { claimQuest, currentQuest, questProgress, describeReward, dailyProgress 
 import { loadoutSlots, talentAvailable } from '@/systems/progression';
 import { CHAPTERS } from '@/data/quests';
 import { Bar, CIcon } from './common';
-import { g, getScene, logs, setScene, tab, uiTick, type TabId } from './store';
+import { g, getScene, logs, refresh, setScene, tab, uiTick, type TabId } from './store';
+import { audio } from '@/audio/audio';
 import { HeroPanel } from './panels/HeroPanel';
 import { BagPanel } from './panels/BagPanel';
 import { SkillsPanel } from './panels/SkillsPanel';
@@ -93,6 +94,7 @@ function BattleView() {
         </div>
         {act.kind === 'stage' ? (
           <div class="stage-ctl">
+            <MuteButton />
             <button class={'btn xs' + (p.mode === 'push' ? ' on' : '')} onClick={() => setMode(gm, 'push')} title="自動前往下一關">⏩ 推進</button>
             <button class={'btn xs' + (p.mode === 'farm' ? ' on' : '')} onClick={() => setMode(gm, 'farm')} title="停留在這一關刷怪">🔁 刷怪</button>
           </div>
@@ -104,6 +106,20 @@ function BattleView() {
       </div>
     </div>
   );
+}
+
+function MuteButton() {
+  const s = g().state.settings;
+  const muted = s.sfx === 0 && s.music === 0;
+  const toggle = () => {
+    const st = s as typeof s & { _vol?: [number, number] };
+    if (muted) { const [a, b] = st._vol ?? [0.6, 0.35]; s.sfx = a; s.music = b; }
+    else { st._vol = [s.sfx, s.music]; s.sfx = 0; s.music = 0; }
+    audio.unlock();
+    audio.setVolumes(s.sfx, s.music);
+    refresh();
+  };
+  return <button class="btn xs" onClick={toggle} title={muted ? '開啟聲音' : '靜音'}>{muted ? '🔇' : '🔊'}</button>;
 }
 
 function Hud() {

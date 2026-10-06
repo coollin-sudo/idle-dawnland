@@ -262,3 +262,18 @@ export function OfflineModal() {
 }
 
 export { itemMods };
+
+/** 面板頂端的 NPC 招呼 */
+export function NpcHeader({ npc, lines }: { npc: keyof typeof NPCS; lines: string[] }) {
+  const n = NPCS[npc];
+  const [i] = useState(() => Math.floor(Math.random() * lines.length));
+  return (
+    <div class="npc-header">
+      <img src={portrait(n.look, 96)} alt="" />
+      <div>
+        <div class="who">{n.name}<small>{n.title}</small></div>
+        <div class="say">「{lines[i]}」</div>
+      </div>
+    </div>
+  );
+}

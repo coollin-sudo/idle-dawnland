@@ -4,7 +4,7 @@ import { BLESSINGS, GEM_SHOP } from '@/data/shop';
 import { invCapacity } from '@/systems/loot';
 import { buyBlessing, buyInvSlots, buyMerchant, buyPotion, buyProtect, buyStones, ensureMerchant, merchantPrice, PROTECT_GEMS, refreshMerchant } from '@/systems/shop';
 import { currencyIcon } from '@/render/icons';
-import { Cost, ItemCard, ItemSlot, confirmModal } from '../common';
+import { Cost, ItemCard, ItemSlot, NpcHeader, confirmModal } from '../common';
 import { g, refresh } from '../store';
 
 export function ShopPanel() {
@@ -16,6 +16,7 @@ export function ShopPanel() {
   const now = gm.now();
   return (
     <div>
+      <NpcHeader npc="sal" lines={['嘿，騎士。大陸各地的好東西，薩爾這裡都有。', '祝福可以疊加時間，掛機前買一個最划算。', '每四個小時進一批新貨，記得常來看看。', '背包不夠放？薩爾也賣空間，童叟無欺。']} />
       <h3>藥水 <span class="count">生命低於 {s.settings.potionAt}% 時自動使用</span></h3>
       <div class="list">
         {([0, 1, 2] as const).map(t => (
