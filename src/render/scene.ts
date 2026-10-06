@@ -229,6 +229,11 @@ export class BattleScene {
     for (const u of units) {
       present.add(u.uid);
       let a = this.actors.get(u.uid);
+      // 不同場戰鬥的編號會重複：同編號但不是同一個單位就重建
+      if (a && a.unit !== u) {
+        this.actors.delete(u.uid);
+        a = undefined;
+      }
       if (!a) {
         const [hx, hy] = this.homeOf(u);
         let mdef: MonsterDef | PetDef | undefined;

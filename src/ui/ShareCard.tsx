@@ -23,7 +23,9 @@ export function renderShareCard(): HTMLCanvasElement {
   // 背景：目前區域的場景
   const bg = new Background(region.bg, 7);
   ctx.save();
-  ctx.scale(W / 960, W / 960);
+  const sc = 900 / 420;
+  ctx.translate(-(960 * sc - W) / 2, 0);
+  ctx.scale(sc, sc);
   bg.draw(ctx, 300, 0);
   ctx.restore();
   const grd = ctx.createLinearGradient(0, 0, 0, H);

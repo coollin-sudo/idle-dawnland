@@ -41,7 +41,8 @@ export const LEVEL_GRACE = 2;
 export class Battle {
   units: Unit[] = [];
   time = 0;
-  private uidSeq = 1_000_000;
+  private static seq = 1_000_000;
+  private uidSeq = Battle.seq;
 
   constructor(
     public rng: Rng,
@@ -49,7 +50,10 @@ export class Battle {
     public hooks: BattleHooks,
   ) {}
 
-  nextUid() { return this.uidSeq++; }
+  nextUid() {
+    Battle.seq = Math.max(Battle.seq, this.uidSeq + 1);
+    return this.uidSeq++;
+  }
 
   get hero(): Unit | undefined { return this.units.find(u => u.kind === 'hero'); }
 
