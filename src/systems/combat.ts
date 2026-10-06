@@ -34,7 +34,9 @@ const ELEMENT_DMG: Partial<Record<Element, StatKey>> = {
 };
 
 /** 每差一級的傷害修正 */
-export const LEVEL_GAP = 0.05;
+export const LEVEL_GAP = 0.04;
+/** 等級差在這個範圍內不懲罰 */
+export const LEVEL_GRACE = 2;
 
 export class Battle {
   units: Unit[] = [];
@@ -395,8 +397,8 @@ export class Battle {
     let dmg = base * o.mult * Math.max(0.1, 1 + incPct / 100);
     // 等級差：打比自己高等的怪傷害降低，被高等怪打傷害提高
     const gap = tgt.level - src.level;
-    if (gap > 0) dmg *= src.side === 'hero' ? Math.max(0.15, 1 - LEVEL_GAP * gap) : 1;
-    else if (gap < 0 && src.side === 'enemy') dmg *= 1 + LEVEL_GAP * -gap;
+    if (gap > LEVEL_GRACE && src.side === 'hero') dmg *= Math.max(0.2, 1 - LEVEL_GAP * (gap - LEVEL_GRACE));
+    else if (-gap > LEVEL_GRACE && src.side === 'enemy') dmg *= 1 + LEVEL_GAP * (-gap - LEVEL_GRACE);
 
     let critChance = S.crit + (o.bonusCrit ?? 0);
     if (src.mem.evadeCrit) { critChance = 100; src.mem.evadeCrit = 0; }
@@ -418,7 +420,10 @@ export class Battle {
     }
     // 荊棘
     if (tgt.powers.thorns && !o.proc && src.alive && src.side !== tgt.side) {
-      this.applyDamage(src, dealt * tgt.powers.thorns / 100, tgt, 'phys', false, false, true);
+      let reflect = dealt * tgt.powers.thorns / 100;
+      // 怪物的反彈有上限，避免高暴擊職業被自己的傷害秒殺
+      if (tgt.side === 'enemy') reflect = Math.min(reflect, src.stats.hp * 0.08);
+      this.applyDamage(src, reflect, tgt, 'phys', false, false, true);
     }
 
     if (!tgt.alive) return dealt;

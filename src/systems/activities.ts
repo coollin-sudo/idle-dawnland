@@ -9,6 +9,7 @@ import { codexInc } from './quests';
 import { generateItem, pickSet, rollRarity } from './items';
 import { itemCtx, receiveItem, rewardKill } from './loot';
 import { makeHeroUnit, makeMonsterUnit, makePetUnit, rollElites } from './units';
+import { combatPower, heroStats } from './hero';
 
 export type ActivityKind = 'stage' | 'dungeon' | 'tower';
 export type Phase = 'fight' | 'between' | 'dead' | 'done';
@@ -65,7 +66,9 @@ export class StageActivity implements Activity {
   private stageDone = false;
   private farmClears = 0;
   private deathStreak = 0;
-  private bossFails = 0;
+  /** 上次失敗時的戰力與等級：變強之後才會自動再推進 */
+  private failPower = 0;
+  private failLevel = 0;
 
   constructor(private g: Game) {}
 
@@ -136,10 +139,9 @@ export class StageActivity implements Activity {
             // 連續倒下：退回前一關刷怪
             const p = g.state.progress;
             p.stage--;
+            while (p.stage > 0 && stageLevel(this.diff, p.stage) > g.state.hero.level + 1) p.stage--;
             p.mode = 'farm';
-            this.farmClears = 0;
-            this.bossFails++;
-            this.deathStreak = 0;
+            this.markFail();
             g.toast('敵人太強了，退回前一關修練', 'warn', '↩️');
             this.start();
           } else this.start();
@@ -209,17 +211,42 @@ export class StageActivity implements Activity {
     const p = g.state.progress;
     if (p.mode === 'farm') {
       this.farmClears++;
-      if (g.state.settings.autoBoss && this.farmClears >= Math.min(30, 3 * 2 ** this.bossFails) && p.stage < MAX_STAGE && p.stage <= p.best[this.diff]) {
+      if (g.state.settings.autoBoss && p.stage < MAX_STAGE && p.stage <= p.best[this.diff] && this.readyToPush()) {
         p.mode = 'push';
         this.farmClears = 0;
       }
     }
-    if (p.mode === 'push' && p.stage < MAX_STAGE) p.stage++;
+    if (p.mode === 'push' && p.stage < MAX_STAGE) {
+      if (g.state.settings.autoBoss && p.stage >= p.best[this.diff] && stageLevel(this.diff, p.stage + 1) > g.state.hero.level + StageActivity.PUSH_LEVEL_LEAD + 2) {
+        // 等級落後太多：先停在這裡刷怪
+        p.mode = 'farm';
+        g.toast('等級不足，先在這裡修練', 'info', '🔁');
+      } else p.stage++;
+    }
     this.deathStreak = 0;
     this.wave = 0;
     this.stageDone = false;
     g.ev.emit('stage:enter', { stage: this.stage, difficulty: this.diff });
     this.spawnWave();
+  }
+
+  /** 自動推進不會推到怪物比英雄高超過這麼多級的關卡 */
+  static readonly PUSH_LEVEL_LEAD = 3;
+
+  private readyToPush() {
+    if (this.farmClears < 2) return false;
+    const s = this.g.state;
+    if (stageLevel(this.diff, s.progress.stage + 1) > s.hero.level + StageActivity.PUSH_LEVEL_LEAD) return false;
+    if (!this.failPower || this.farmClears >= 60) return true;
+    return s.hero.level > this.failLevel || combatPower(s, heroStats(s)) >= this.failPower * 1.04;
+  }
+
+  private markFail() {
+    const s = this.g.state;
+    this.failPower = combatPower(s, heroStats(s));
+    this.failLevel = s.hero.level;
+    this.farmClears = 0;
+    this.deathStreak = 0;
   }
 
   private bossFail(reason: 'time' | 'death') {
@@ -229,9 +256,7 @@ export class StageActivity implements Activity {
     g.toast(reason === 'time' ? '時間到！首領撤退了，先回前一關變強吧' : '被首領擊敗了，先回前一關變強吧', 'bad', '⏱️');
     p.stage = Math.max(0, p.stage - 1);
     p.mode = 'farm';
-    this.farmClears = 0;
-    this.bossFails++;
-    this.deathStreak = 0;
+    this.markFail();
     this.start();
   }
 
@@ -317,7 +342,7 @@ export class DungeonActivity implements Activity {
   constructor(private g: Game, public def: DungeonDef) {}
 
   title() { return this.def.name; }
-  subtitle() { return `Lv.${this.level}・擊殺 ${this.kills}`; }
+  subtitle() { return this.phase === 'done' ? `結束！擊殺 ${this.kills}` : `Lv.${this.level}・擊殺 ${this.kills}・剩餘 ${Math.ceil(Math.max(0, this.timeLeft) / 1000)} 秒`; }
 
   start() {
     const g = this.g;

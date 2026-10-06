@@ -17,6 +17,7 @@ import { claimQuest, currentQuest, questDone } from '@/systems/quests';
 import { claimEgg, startHatch } from '@/systems/pets';
 import { canRebirth, rebirth } from '@/systems/rebirth';
 import { regionOfStage } from '@/data/regions';
+import { dungeonEntries, startDungeon, startTower } from '@/systems/activities';
 
 const hours = Number(process.argv[2] ?? 48);
 const only = (process.argv[3] ?? 'all') as ClassId | 'all';
@@ -47,7 +48,12 @@ function manage(g: Game) {
     const c = enhanceCost(it);
     if (s.cur.stones >= c.stones && s.cur.gold > c.gold * 2) enhance(g, it.uid, false);
   }
-  // 寵物蛋
+  // 每日副本與無盡之塔（只在主線時）
+  if (g.activity.kind === 'stage') {
+    for (const d of ['xp', 'gold', 'stones']) if (Math.max(...s.progress.best) >= 19 && dungeonEntries(g, d) > 0) { startDungeon(g, d); return; }
+    if (Math.max(...s.progress.best) >= 29 && (s.counters.towerTries ?? 0) < Math.floor(g.state.playMs / 3_600_000) * 2) { startTower(g); return; }
+  }
+  // 天賦已在上面處理；寵物蛋
   for (const e of [...s.pets.eggs]) {
     if (e.readyAt === null) startHatch(g, e.uid);
     else if (e.readyAt <= g.now()) claimEgg(g, e.uid);
@@ -83,6 +89,8 @@ for (const cls of classes) {
         `石${s.cur.stones}`,
         `任務${s.quests.main}`,
         `轉生${s.rebirth.count}`,
+        `塔${s.tower.best}`,
+        `寵${Object.keys(s.pets.owned).length}`,
         `裝${SLOTS.map(sl => s.equipment[sl] ? `${s.equipment[sl]!.rarity}+${s.equipment[sl]!.enh}` : '-').join(',')}`,
       ].join(' '));
     }

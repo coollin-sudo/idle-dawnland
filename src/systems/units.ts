@@ -92,7 +92,7 @@ export function makeMonsterUnit(def: MonsterDef, o: MonsterOpts, uid: number, rn
   for (const sk of skills) cds[sk.def.id] = sk.def.cd * rng.float(0.35, 0.9);
 
   const u: Unit = {
-    uid, side: 'enemy', kind: 'monster', name: (eliteIds.length ? ELITE_MAP.get(eliteIds[0])!.name + '的' : '') + def.name,
+    uid, side: 'enemy', kind: 'monster', name: (eliteIds.length ? eliteIds.map(id => ELITE_MAP.get(id)!.name).join('・') + '的' : '') + def.name,
     defId: def.id, level: L, family: def.family, boss, elite: eliteIds, slot: o.slot,
     statBase, baseMods, conversions: [], stats: emptyStats(),
     hp: 0, mp: 100, shield: 0, shieldTime: 0, alive: true, targetable: true,

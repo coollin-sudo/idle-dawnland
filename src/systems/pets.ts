@@ -46,7 +46,7 @@ export function claimEgg(g: Game, uid: number) {
     g.toast(`孵出 ${def.name}（重複，可用來升星）`, 'good', '🐣');
   } else {
     s.pets.owned[def.id] = { id: def.id, level: 1, xp: 0, stars: 0, dupes: 0 };
-    if (!s.pets.active) s.pets.active = def.id;
+    if (!s.pets.active) { s.pets.active = def.id; g.petChanged(); }
     g.toast(`孵出新寵物：${def.name}！`, def.rarity >= 3 ? 'legend' : 'epic', '🐣');
   }
   g.count('petsHatched');

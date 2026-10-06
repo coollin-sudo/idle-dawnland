@@ -818,7 +818,7 @@ export class BattleScene {
     const boss = this.game.battle?.units.find(u => u.boss && u.alive);
     if (!boss) return;
     const visW = this.visibleW();
-    const W = Math.min(520, visW - 30), x = this.offsetX + (visW - W) / 2, y = 22;
+    const W = Math.min(520, visW - 30), x = this.offsetX + (visW - W) / 2, y = VIEW_H - (boss.casting ? 76 : 52);
     ctx.save();
     rrect(ctx, x - 10, y - 8, W + 20, 48, 10);
     ctx.fillStyle = 'rgba(10,6,16,0.65)';

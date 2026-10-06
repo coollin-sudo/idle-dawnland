@@ -2,7 +2,7 @@ import type { Game } from '@/core/game';
 import { ADVANCE_LEVEL, MAX_LEVEL, SKILL_POINTS_PER_LEVEL, STAT_POINTS_PER_LEVEL, xpToNext } from '@/core/formulas';
 import { LOADOUT_UNLOCK } from '@/core/state';
 import { PRIMARY, type Primary } from '@/core/stats';
-import type { AdvId, GameState } from '@/core/types';
+import type { AdvId, GameState, SkillDef } from '@/core/types';
 import { ADVANCES, CLASSES } from '@/data/classes';
 import { classSkills, getSkill, SKILL_MAX_RANK } from '@/data/skills';
 import { TALENT_TIER_REQ, TALENT_TREES } from '@/data/talents';
@@ -57,24 +57,28 @@ export function autoSpend(s: GameState) {
   autoSkills(s);
 }
 
+/** 自動模式下技能的重要度：終極技 > 轉職技能 > 解鎖等級高的技能 */
+const skillScore = (d: SkillDef) => (d.ultimate ? 200 : 0) + (d.advId ? 60 : 0) + d.unlock;
+
 export function autoSkills(s: GameState) {
   const h = s.hero;
-  // 新技能自動放入空的技能欄
-  for (const sk of availableSkills(s)) {
+  // 1. 先學會所有可用但還沒學的技能（重要的先）
+  const avail = availableSkills(s).sort((a, b) => skillScore(b) - skillScore(a));
+  for (const sk of avail) {
     if (h.skillPoints <= 0) break;
     if ((h.skillRanks[sk.id] ?? 0) === 0) {
-      const free = freeLoadoutIndex(s);
-      if (free >= 0 || sk.ultimate) {
-        h.skillRanks[sk.id] = 1;
-        h.skillPoints--;
-        if (free >= 0) h.loadout[free] = sk.id;
-      }
+      h.skillRanks[sk.id] = 1;
+      h.skillPoints--;
     }
   }
-  // 剩下的點數平均升級技能欄中的技能（優先順序靠前的先）
-  let guard = 200;
+  // 2. 技能欄放入最重要的技能，施放順序也依重要度
+  const slots = loadoutSlots(h.level);
+  const learned = avail.filter(sk => (h.skillRanks[sk.id] ?? 0) > 0).slice(0, slots);
+  for (let i = 0; i < h.loadout.length; i++) h.loadout[i] = learned[i]?.id ?? null;
+  // 3. 剩下的點數平均升級技能欄中的技能（重要的先）
+  let guard = 400;
   while (h.skillPoints > 0 && guard-- > 0) {
-    const inLoadout = h.loadout.filter((x): x is string => !!x).map(getSkill).filter(d => (h.skillRanks[d.id] ?? 0) < SKILL_MAX_RANK);
+    const inLoadout = learned.filter(d => (h.skillRanks[d.id] ?? 0) < SKILL_MAX_RANK);
     if (!inLoadout.length) break;
     const target = inLoadout.reduce((a, b) => ((h.skillRanks[b.id] ?? 0) < (h.skillRanks[a.id] ?? 0) ? b : a));
     h.skillRanks[target.id] = (h.skillRanks[target.id] ?? 0) + 1;
