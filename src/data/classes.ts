@@ -1,0 +1,118 @@
+import { flat, inc, more } from '@/core/stats';
+import type { AdvDef, AdvId, ClassDef, ClassId } from '@/core/types';
+
+export const CLASSES: Record<ClassId, ClassDef> = {
+  warrior: {
+    id: 'warrior', name: '劍士', title: '鋼鐵之刃',
+    desc: '站在最前線的戰士。生命與防禦最高，靠重擊與流血穩定輸出。',
+    role: '近戰・物理・坦克',
+    main: 'str',
+    base: { str: 12, dex: 6, int: 3, vit: 12 },
+    growth: { str: 2.2, dex: 0.8, int: 0.3, vit: 1.8 },
+    conversion: { str: { atk: 0.6 } },
+    baseStats: { hp: 120, mp: 30, atk: 8, matk: 2, def: 10, res: 5, crit: 5, critDmg: 150, mpRegen: 1 },
+    interval: 1.3,
+    basic: { dmgType: 'phys', element: 'phys', fx: 'slash', ranged: false },
+    weaponKind: 'sword', offhandKind: 'shield',
+    look: { skin: '#f1c7a3', hair: '#5a3a24', hairStyle: 'short', outfit: '#8a96a8', outfit2: '#4b5566', trim: '#d9b45a', hat: 'none', weapon: 'sword', offhand: 'shield', cape: '#a8323a' },
+    autoAlloc: { str: 3, dex: 0, int: 0, vit: 2 },
+  },
+  ranger: {
+    id: 'ranger', name: '遊俠', title: '林風之矢',
+    desc: '來自森林的射手。攻速快、暴擊高，擅長遠距離連射。',
+    role: '遠程・物理・暴擊',
+    main: 'dex',
+    base: { str: 6, dex: 13, int: 4, vit: 9 },
+    growth: { str: 0.7, dex: 2.4, int: 0.4, vit: 1.4 },
+    conversion: { dex: { atk: 1.5, crit: 0.02 } },
+    baseStats: { hp: 95, mp: 35, atk: 7, matk: 2, def: 6, res: 5, crit: 8, critDmg: 165, mpRegen: 1.2 },
+    interval: 1.0,
+    basic: { dmgType: 'phys', element: 'phys', fx: 'arrow', ranged: true },
+    weaponKind: 'bow', offhandKind: 'quiver',
+    look: { skin: '#f3d2b0', hair: '#c9a24a', hairStyle: 'pony', outfit: '#4f7a3e', outfit2: '#2f4a25', trim: '#b58b4c', hat: 'hood', weapon: 'bow', offhand: 'quiver' },
+    autoAlloc: { str: 0, dex: 4, int: 0, vit: 1 },
+  },
+  mage: {
+    id: 'mage', name: '法師', title: '奧術之焰',
+    desc: '鑽研元素的學者。魔法無視閃避，範圍爆發最強，但身板脆弱。',
+    role: '遠程・魔法・範圍',
+    main: 'int',
+    base: { str: 3, dex: 6, int: 15, vit: 8 },
+    growth: { str: 0.3, dex: 0.7, int: 2.6, vit: 1.3 },
+    conversion: { int: { matk: 0.5, mpRegen: 0.02 } },
+    baseStats: { hp: 85, mp: 60, atk: 2, matk: 9, def: 4, res: 10, crit: 5, critDmg: 150, mpRegen: 2 },
+    interval: 1.4,
+    basic: { dmgType: 'magic', element: 'phys', fx: 'magic', ranged: true },
+    weaponKind: 'staff', offhandKind: 'orb',
+    look: { skin: '#f0cfb2', hair: '#e8e4f2', hairStyle: 'long', outfit: '#3a4c9e', outfit2: '#22285a', trim: '#e3c25a', hat: 'wizard', weapon: 'staff', offhand: 'none' },
+    autoAlloc: { str: 0, dex: 1, int: 3, vit: 1 },
+  },
+  cleric: {
+    id: 'cleric', name: '祭司', title: '晨曦之光',
+    desc: '侍奉晨曦的聖職者。能治療與加持自己，攻守兼備最不容易倒下。',
+    role: '中程・魔法・治療',
+    main: 'int',
+    base: { str: 8, dex: 5, int: 11, vit: 11 },
+    growth: { str: 1.0, dex: 0.5, int: 1.9, vit: 1.7 },
+    conversion: { int: { matk: 0.2, hp: 2 }, str: { matk: 0.8 } },
+    baseStats: { hp: 110, mp: 50, atk: 4, matk: 7, def: 8, res: 12, crit: 5, critDmg: 150, mpRegen: 1.6 },
+    interval: 1.35,
+    basic: { dmgType: 'magic', element: 'holy', fx: 'holy', ranged: true },
+    weaponKind: 'mace', offhandKind: 'relic',
+    look: { skin: '#f5d6bd', hair: '#d0763a', hairStyle: 'long', outfit: '#f0ede4', outfit2: '#c9b98a', trim: '#e0b84a', hat: 'circlet', weapon: 'mace', offhand: 'relic' },
+    autoAlloc: { str: 1, dex: 0, int: 2, vit: 2 },
+  },
+};
+
+export const ADVANCES: Record<AdvId, AdvDef> = {
+  berserker: {
+    id: 'berserker', classId: 'warrior', name: '狂戰士',
+    desc: '捨棄盾牌、以血換血。攻速與吸血大幅提升，生命越低越危險。',
+    mods: [inc('atk', 15), flat('lifesteal', 3), flat('haste', 10)],
+    look: { offhand: 'none', hairStyle: 'spiky', hair: '#b23a22', outfit: '#6b3a2a', outfit2: '#3a1e14', trim: '#c9a35a', hat: 'horned', cape: '#5a1414' },
+  },
+  paladin: {
+    id: 'paladin', classId: 'warrior', name: '聖騎士',
+    desc: '以晨曦之力守護同伴的騎士。擁有護盾與神聖攻擊，幾乎打不倒。',
+    mods: [inc('hp', 15), inc('def', 20), flat('holyDmg', 15)],
+    look: { outfit: '#d8d4c4', outfit2: '#8f8566', trim: '#f0c85a', hat: 'helm', cape: '#2f5aa8' },
+  },
+  marksman: {
+    id: 'marksman', classId: 'ranger', name: '神射手',
+    desc: '百步穿楊的狙擊手。單體爆發與暴擊傷害是全職業之冠。',
+    mods: [flat('critDmg', 30), flat('bossDmg', 15), inc('atk', 10)],
+    look: { outfit: '#3d5a7a', outfit2: '#22364d', hat: 'none', hairStyle: 'short', cape: '#7a5a2f' },
+  },
+  assassin: {
+    id: 'assassin', classId: 'ranger', name: '毒影刺客',
+    desc: '潛伏暗處的刺客。用劇毒與流血慢慢撕裂敵人。',
+    mods: [flat('dotDmg', 30), flat('statusChance', 15), flat('eva', 40)],
+    look: { outfit: '#3a2f4a', outfit2: '#1c1626', trim: '#7ad16a', hat: 'hood', hair: '#2a2a2a' },
+  },
+  elementalist: {
+    id: 'elementalist', classId: 'mage', name: '元素使',
+    desc: '駕馭火、冰、雷三元素。範圍傷害與異常狀態的大師。',
+    mods: [flat('fireDmg', 15), flat('iceDmg', 15), flat('lightningDmg', 15)],
+    look: { outfit: '#9e3a2a', outfit2: '#4a1a14', trim: '#ffb84a', hair: '#ff8a3a' },
+  },
+  warlock: {
+    id: 'warlock', classId: 'mage', name: '暗咒師',
+    desc: '與暗影締約的咒術師。詛咒敵人、召喚亡骸，越戰越強。',
+    mods: [flat('shadowDmg', 25), flat('dotDmg', 15), flat('lifesteal', 1.5)],
+    look: { outfit: '#2e1f3e', outfit2: '#140c1e', trim: '#b67bff', hat: 'hood', hair: '#cfc4e8' },
+  },
+  archbishop: {
+    id: 'archbishop', classId: 'cleric', name: '大主教',
+    desc: '晨曦教會的最高聖職。治療與增益最強，持久戰無人能敵。',
+    mods: [flat('healPower', 30), flat('shieldPower', 20), inc('matk', 10)],
+    look: { outfit: '#fbf8ef', outfit2: '#d9c27a', trim: '#f5d76a', hat: 'crown', cape: '#f0e2a8' },
+  },
+  inquisitor: {
+    id: 'inquisitor', classId: 'cleric', name: '審判者',
+    desc: '手持聖錘的異端審判官。以神聖重擊暈眩敵人。',
+    mods: [flat('holyDmg', 25), more('matk', 8), flat('crit', 5)],
+    look: { outfit: '#5a2a2a', outfit2: '#2a1212', trim: '#e0b84a', hat: 'helm', cape: '#8a1a1a' },
+  },
+};
+
+export const advancesOf = (c: ClassId) => Object.values(ADVANCES).filter(a => a.classId === c);
