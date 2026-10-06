@@ -8,7 +8,7 @@ export const BASE_INV = 60;
 export function defaultSettings(): Settings {
   return {
     sfx: 0.6, music: 0.35, particles: 'high', dmgNumbers: true, shake: true, numberStyle: 'zh',
-    potionAt: 45, autoBuyPotions: true, autoSalvage: 0, keepUpgrades: true, autoEquip: true, autoBoss: true, speedUi: false,
+    potionAt: 45, autoBuyPotions: true, autoSalvage: 1, keepUpgrades: true, autoEquip: true, autoBoss: true, speedUi: false,
   };
 }
 
