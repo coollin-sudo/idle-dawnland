@@ -657,11 +657,19 @@ const golem: Painter = (ctx, p, f, { t, attack }) => {
     fillStroke(ctx, vgrad(ctx, 0, 30, front ? body : shade(body, -0.2)), 2.2);
     ellipse(ctx, 0, 33, 10, 9);
     fillStroke(ctx, shade(body, -0.1), 2.2);
-    if (front && f.has('spear')) {
-      rrect(ctx, -2, -10, 4, 60, 2);
-      fillStroke(ctx, '#d8b04a', 1.4);
-    }
     ctx.restore();
+  }
+  if (f.has('spear')) {
+    // 長矛直立握在身前
+    const sx = 30 + slam * 10;
+    rrect(ctx, sx - 2, -112 + slam * 20, 4, 100, 2);
+    fillStroke(ctx, vgrad(ctx, -112, -12, '#d8b04a', 0.3, -0.2), 1.6);
+    ctx.beginPath();
+    ctx.moveTo(sx - 6, -110 + slam * 20);
+    ctx.lineTo(sx, -128 + slam * 20);
+    ctx.lineTo(sx + 6, -110 + slam * 20);
+    ctx.closePath();
+    fillStroke(ctx, '#e8eef8', 1.6);
   }
   ctx.restore();
 };

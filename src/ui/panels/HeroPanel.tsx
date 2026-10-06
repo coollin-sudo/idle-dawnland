@@ -10,6 +10,7 @@ import { combatPower, heroPowers, heroStats, setCounts } from '@/systems/hero';
 import { advance, allocate, autoSpend, resetStats, RESET_STATS_GEMS } from '@/systems/progression';
 import { CIcon, ItemSlot, Modal, Switch, confirmModal } from '../common';
 import { HeroPreview } from '../HeroPreview';
+import { ShareCardButton } from '../ShareCard';
 import { heroLookOf } from '../GameScreen';
 import { openItem } from '../ItemModal';
 import { closeModal, g, openModal, refresh } from '../store';
@@ -49,6 +50,8 @@ export function HeroPanel() {
         </div>
         <div class="colslots">{RIGHT.map(slotEl)}</div>
       </div>
+
+      <div class="row" style={{ justifyContent: 'flex-end', marginTop: '8px' }}><ShareCardButton /></div>
 
       {h.level >= ADVANCE_LEVEL && !h.advId && <AdvanceBox />}
 

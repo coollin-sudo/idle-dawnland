@@ -45,7 +45,11 @@ export class Game {
     this.ev.muted = this.headless;
     if (!this.headless) {
       setNumberStyle(state.settings.numberStyle);
-      this.ev.on('unit:hit', e => { if (e.crit && e.src?.kind === 'hero') this.count('crits'); });
+      this.ev.on('unit:hit', e => {
+        if (e.src?.side !== 'hero' || e.tgt.side === 'hero') return;
+        if (e.crit && e.src.kind === 'hero') this.count('crits');
+        this.countMax('maxHit', Math.round(e.amount));
+      });
       this.ev.on('unit:act', e => { if (e.skill && e.src.kind === 'hero') this.count('skillsCast'); });
     }
     grantStarterKit(this);

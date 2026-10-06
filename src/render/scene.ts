@@ -109,7 +109,7 @@ export class BattleScene {
       this.text(e.src, e.skill.name, '#ffb8ff', 18, -0.3);
     });
     on('unit:interrupt', e => this.text(e.src, '打斷！', '#ffe35c', 22));
-    on('unit:death', e => this.onDeath(e.unit));
+    on('unit:death', e => this.onDeath(e.unit, e.killer));
     on('unit:revive', e => {
       const a = this.actors.get(e.unit.uid);
       if (!a) return;
@@ -269,6 +269,11 @@ export class BattleScene {
     if (!src) return;
     src.attack = 0;
     src.attackDur = e.skill ? 0.5 : 0.42;
+    if (e.skill && src.kind === 'hero' && (src.statusShown['skill:' + e.skill.id] ?? -9) < this.time - 0.4) {
+      src.statusShown['skill:' + e.skill.id] = this.time;
+      this.texts.add({ x: src.x, y: src.y - src.height - 30, text: e.skill.icon + ' ' + e.skill.name, color: e.skill.ultimate ? '#ff9aff' : '#ffe08a', size: e.skill.ultimate ? 22 : 16, max: 0.9, crit: !!e.skill.ultimate, vy: -30, vx: 0 });
+      if (e.skill.ultimate) { this.flash('#ffffff', 0.15); this.shake(6, 0.3); }
+    }
     const color = ELEMENT_COLOR[e.element] ?? '#ffffff';
     const targets = e.targets.map(t => this.actors.get(t.uid)).filter((x): x is Actor => !!x);
     const [sx, sy] = this.center(src);
@@ -510,9 +515,16 @@ export class BattleScene {
     }
   }
 
-  private onDeath(u: Unit) {
+  private onDeath(u: Unit, killer: Unit | null) {
     const a = this.actors.get(u.uid);
     if (!a) return;
+    if (u.expires !== undefined && !killer && u.kind === 'monster') {
+      // 逃走（寶藏哥布林）
+      this.texts.add({ x: a.x, y: a.y - a.height - 10, text: '逃走了！', color: '#ffd34a', size: 20, max: 1.4, crit: false });
+      this.parts.burst(a.x, a.y - 10, 12, { color: 'rgba(200,180,140,0.6)', shape: 'smoke', speed: 90, size: 7, max: 0.8 });
+      a.dying = 0.3;
+      return;
+    }
     if (u.kind === 'hero') {
       this.texts.add({ x: a.x, y: a.y - 120, text: '倒下了…', color: '#ff8a8a', size: 26, max: 2, crit: true, vy: -10 });
       return;

@@ -121,6 +121,14 @@ export class StageActivity implements Activity {
       }
       this.timeLeft = this.timeTotal = 0;
     }
+    // 稀有事件：寶藏哥布林（12 秒內沒打倒就會逃走）
+    if (!this.isBossWave() && this.stage >= 4 && units.length < 4 && g.rng.chance(0.02)) {
+      const gob = makeMonsterUnit(getMonster('gold_goblin'), { level: L, diffMult, slot: units.length, hpMult: 2.5, atkMult: 0.3 }, b.nextUid(), g.rng);
+      gob.expires = b.time + 12;
+      gob.interval = 99;
+      units.push(gob);
+      g.toast('寶藏哥布林出現了！快打倒牠！', 'epic', '💰');
+    }
     units.sort((a, b2) => a.slot - b2.slot);
     units.forEach((u, i) => { u.slot = i; b.add(u); });
     g.ev.emit('battle:start', { units, boss: this.isBossWave(), kind: 'stage' });
@@ -261,6 +269,13 @@ export class StageActivity implements Activity {
   }
 
   onKill(u: Unit, killer: Unit | null) {
+    if (u.defId === 'gold_goblin') {
+      rewardKill(this.g, u, killer, { gold: 30, drop: 2, stones: 5 });
+      receiveItem(this.g, generateItem(itemCtx(this.g), { ilvl: u.level + 2, rarity: rollRarity(this.g.rng, 'elite', 100, this.diff) }));
+      this.g.count('goblins');
+      this.g.toast('打倒寶藏哥布林！', 'legend', '💰');
+      return;
+    }
     rewardKill(this.g, u, killer);
   }
 

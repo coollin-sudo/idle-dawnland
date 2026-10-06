@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { loadState } from '@/save/storage';
 import { Create } from './Create';
+import { Gallery } from './Gallery';
 import { GameScreen } from './GameScreen';
 import { ModalHost, OfflineModal, StoryOverlay, Toasts, TooltipHost } from './common';
 import { openImport } from './panels/SettingsPanel';
@@ -15,6 +16,7 @@ function boot() {
 }
 
 export function App() {
+  if (location.hash === '#gallery') return <Gallery />;
   boot();
   const [, force] = useState(0);
   return (

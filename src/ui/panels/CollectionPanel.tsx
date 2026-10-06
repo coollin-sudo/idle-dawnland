@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
-import { fmt } from '@/core/format';
+import { fmt, fmtDuration } from '@/core/format';
+import { ShareCardButton } from '../ShareCard';
 import { describeMod } from '@/core/stats';
 import { ACHIEVEMENTS, ACHIEVEMENT_GEMS, CODEX_BONUS_PER_TIER, CODEX_TIERS } from '@/data/meta';
 import { MONSTERS } from '@/data/monsters';
@@ -10,18 +11,18 @@ import { creaturePortrait, itemIcon } from '@/render/icons';
 import { codexTiers } from '@/systems/hero';
 import { g } from '../store';
 
-type Sub = 'ach' | 'codex' | 'legend';
+type Sub = 'ach' | 'codex' | 'legend' | 'records';
 
 export function CollectionPanel() {
   const [sub, setSub] = useState<Sub>('ach');
   return (
     <div>
       <div class="subtabs">
-        {([['ach', '🏆 成就'], ['codex', '📖 怪物圖鑑'], ['legend', '🌟 傳說收藏']] as [Sub, string][]).map(([id, n]) => (
+        {([['ach', '🏆 成就'], ['codex', '📖 怪物圖鑑'], ['legend', '🌟 傳說收藏'], ['records', '📊 紀錄']] as [Sub, string][]).map(([id, n]) => (
           <button class={'btn sm' + (sub === id ? ' primary' : '')} onClick={() => setSub(id)}>{n}</button>
         ))}
       </div>
-      {sub === 'ach' ? <Achievements /> : sub === 'codex' ? <Codex /> : <Legends />}
+      {sub === 'ach' ? <Achievements /> : sub === 'codex' ? <Codex /> : sub === 'legend' ? <Legends /> : <Records />}
     </div>
   );
 }
@@ -97,6 +98,41 @@ function Legends() {
           );
         })}
       </div>
+    </>
+  );
+}
+
+function Records() {
+  const s = g().state;
+  const c = s.counters;
+  const rows: [string, string][] = [
+    ['遊玩時間', fmtDuration(s.playMs)],
+    ['擊殺怪物', fmt(c.kills ?? 0)],
+    ['擊殺精英', fmt(c.eliteKills ?? 0)],
+    ['擊敗首領', fmt(c.bossKills ?? 0)],
+    ['打倒寶藏哥布林', fmt(c.goblins ?? 0)],
+    ['倒下次數', fmt(c.deaths ?? 0)],
+    ['最高單次傷害', fmt(c.maxHit ?? 0)],
+    ['暴擊次數', fmt(c.crits ?? 0)],
+    ['施放技能', fmt(c.skillsCast ?? 0)],
+    ['累積金幣', fmt(c.goldEarned ?? 0)],
+    ['累積經驗', fmt(c.xpEarned ?? 0)],
+    ['獲得裝備', fmt(c.itemsFound ?? 0)],
+    ['傳說以上裝備', fmt(c.legendaries ?? 0)],
+    ['分解裝備', fmt(c.salvaged ?? 0)],
+    ['強化次數', fmt(c.enhanceTries ?? 0)],
+    ['最高強化', '+' + (c.enhanceMax ?? 0)],
+    ['通關關卡', fmt(c.stagesCleared ?? 0)],
+    ['每日副本', fmt(c.dungeonRuns ?? 0)],
+    ['無盡之塔最高', `${s.tower.best} 層`],
+    ['孵化寵物', fmt(c.petsHatched ?? 0)],
+    ['轉生次數', fmt(s.rebirth.count)],
+    ['完成任務', fmt((c.questsDone ?? 0) + (c.dailiesDone ?? 0))],
+  ];
+  return (
+    <>
+      <div class="statgrid">{rows.map(([k, v]) => <div class="s"><span>{k}</span><b>{v}</b></div>)}</div>
+      <div style={{ marginTop: '14px' }}><ShareCardButton /></div>
     </>
   );
 }
