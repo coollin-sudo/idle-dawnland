@@ -139,13 +139,14 @@ p();
 // ---- 背景與圖示（scripts/art-prompts-v2.json） ----
 type Job2 = { name: string; grid: number; cells: string[]; prompt: string };
 const jobs2: Job2[] = JSON.parse(readFileSync(new URL('./art-prompts-v2.json', import.meta.url), 'utf8'));
-const DIR: Record<string, string> = { bg: 'bg', items: 'items', uniques: 'uniques', currency: 'currency' };
-p('## 4. 背景與圖示');
+const DIR: Record<string, string> = { bg: 'bg', items: 'items', uniques: 'uniques', currency: 'currency', skills: 'skills' };
+p('## 4. 背景、物品與技能圖示');
 p();
 p('這部分每張 prompt 都已包含完整風格描述，直接整段貼給 ChatGPT 即可。');
 p('- 背景：一張圖就是一個區域，存成 `public/art/bg/<區域 id>.webp`（或 .png），角色站的地面約在圖高 72%。');
 p('- 圖示：一張圖是 2×2 或 3×3 的格子，依閱讀順序切開後存成右欄的檔名（建議 128×128）。');
 p('  一般裝備的 4 格依序是等級 1–3、4–6、7–9、10–13 的外觀（檔名結尾 _0～_3）。');
+p('- 技能：檔名是技能 id（例如 `skills/w_slash`），圓角方形圖示。');
 p();
 p('| 產出檔案 | Prompt |');
 p('|---|---|');

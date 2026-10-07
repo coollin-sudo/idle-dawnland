@@ -8,11 +8,19 @@ import { describePower } from '@/data/powers';
 import { NPCS, SCENES } from '@/data/story';
 import { CLASSES, ADVANCES } from '@/data/classes';
 import { currencyIcon, itemIcon, portrait, type CurrencyKey } from '@/render/icons';
+import { artUrl } from '@/render/images';
 import { itemColor, itemMods, reqLevel, canEquip, affixRange } from '@/systems/items';
 import { setCounts, upgradeDelta } from '@/systems/hero';
 import { salvageValue } from '@/systems/loot';
 import { sellPrice, enhanceMult } from '@/core/formulas';
 import { closeModal, g, modal, offlineReport, storyQueue, tip, toasts, uiTick } from './store';
+
+/** 技能圖示：有美術圖用圖，沒有就用 emoji */
+export function SkillIcon({ def, size }: { def: { id: string; icon: string }; size: number }) {
+  const url = artUrl(`art/skills/${def.id}`);
+  if (url) return <img class="skimg" src={url} alt="" style={{ width: size + 'px', height: size + 'px' }} draggable={false} />;
+  return <span style={{ fontSize: Math.round(size * 0.62) + 'px', lineHeight: 1 }}>{def.icon}</span>;
+}
 
 export function CIcon({ k, size }: { k: CurrencyKey; size?: 'sm' | 'lg' }) {
   return <img class={'cicon' + (size ? ' ' + size : '')} src={currencyIcon(k)} alt="" />;

@@ -14,7 +14,7 @@ import { setMode } from '@/systems/activities';
 import { claimQuest, currentQuest, questProgress, describeReward, dailyProgress } from '@/systems/quests';
 import { loadoutSlots, talentAvailable } from '@/systems/progression';
 import { CHAPTERS } from '@/data/quests';
-import { Bar, CIcon } from './common';
+import { Bar, CIcon, SkillIcon } from './common';
 import { g, getScene, logs, refresh, setScene, tab, uiTick, type TabId } from './store';
 import { audio } from '@/audio/audio';
 import { HeroPanel } from './panels/HeroPanel';
@@ -170,7 +170,7 @@ function SkillBar() {
         return (
           <div class={'skill-slot' + (!usable ? ' locked' : '') + (u && u.mp < mp ? ' nomp' : '')} onClick={() => { tab.value = 'skills'; }} title={def.desc}>
             <span class="prio">{i + 1}</span>
-            <span class="ico">{def.icon}</span>
+            <span class="ico"><SkillIcon def={def} size={36} /></span>
             <div>
               <div class="nm">{def.name}</div>
               <div class="rk">Lv.{rank}・{mp.toFixed(0)} MP</div>

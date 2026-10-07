@@ -7,7 +7,7 @@ import { classSkills, SKILL_MAX_RANK } from '@/data/skills';
 import { STATUSES } from '@/data/statuses';
 import { LOADOUT_UNLOCK } from '@/core/state';
 import { learnSkill, loadoutSlots, resetSkills, RESET_SKILLS_GOLD, setLoadout, swapLoadout } from '@/systems/progression';
-import { CIcon, confirmModal } from '../common';
+import { CIcon, SkillIcon, confirmModal } from '../common';
 import { g, refresh } from '../store';
 
 const TARGET: Record<string, string> = { front: '前方敵人', all: '所有敵人', random: '隨機敵人', lowest: '血最少的敵人', highest: '血最多的敵人', self: '自己' };
@@ -67,7 +67,7 @@ export function SkillsPanel() {
               <span class="p">{i + 1}</span>
               {locked ? <div class="small muted" style={{ marginTop: '22px' }}>Lv.{LOADOUT_UNLOCK[i]} 解鎖</div> : def ? (
                 <>
-                  <div style={{ fontSize: '26px' }}>{def.icon}</div>
+                  <div style={{ display: 'flex', justifyContent: 'center' }}><SkillIcon def={def} size={42} /></div>
                   <div class="n">{def.name}</div>
                   <div class="row" style={{ justifyContent: 'center', gap: '2px', marginTop: '2px' }}>
                     <button class="btn xs" disabled={i === 0} onClick={e => { e.stopPropagation(); swapLoadout(gm, i, i - 1); refresh(); }}>◀</button>
@@ -92,7 +92,7 @@ export function SkillsPanel() {
             const showRank = Math.max(1, r);
             return (
               <div class={'skill-row' + (advLocked || lvLocked ? ' locked' : '') + (def.ultimate ? ' ult' : '')}>
-                <div class="skill-ico">{def.icon}</div>
+                <div class="skill-ico"><SkillIcon def={def} size={44} /></div>
                 <div>
                   <div><b>{def.name}</b> <span class="small muted">Lv.{r}/{SKILL_MAX_RANK}</span>{def.ultimate && <span class="chip on" style={{ marginLeft: '6px' }}>終極技</span>}</div>
                   <div class="meta">需要 Lv.{def.unlock}・{scale(def.mp, showRank).toFixed(0)} MP・冷卻 {def.cd} 秒{def.cast ? `・詠唱 ${def.cast} 秒` : ''}{def.cond ? `・${COND[def.cond]}` : ''}</div>

@@ -190,7 +190,9 @@ h3 .count { color: var(--muted); font-weight: 400; font-size: 12px; }
   background: linear-gradient(180deg, #232a42, #181d2e); border: 1px solid var(--line2);
   display: flex; align-items: center; gap: 8px; padding: 0 10px; cursor: pointer;
 }
-.skill-slot .ico { font-size: 22px; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
+.skill-slot .ico { font-size: 22px; display: flex; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
+.skimg { border-radius: 8px; display: block; }
+.skill-ico:has(.skimg) { background: none; border: none; }
 .skill-slot .nm { font-size: 12.5px; font-weight: 700; line-height: 1.2; }
 .skill-slot .rk { font-size: 10.5px; color: var(--muted); }
 .skill-slot .cd { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.6); pointer-events: none; }
@@ -486,6 +488,7 @@ select.input { padding: 6px 10px; }
   .skillbar { gap: 5px; padding: 0 8px 8px; }
   .skill-slot { height: 46px; padding: 0 6px; gap: 4px; }
   .skill-slot .ico { font-size: 18px; }
+  .skill-slot .ico .skimg { width: 30px !important; height: 30px !important; }
   .skill-slot .nm { font-size: 11px; }
   .stages { grid-template-columns: repeat(5, 1fr); }
   .story .box { grid-template-columns: 72px 1fr; }
