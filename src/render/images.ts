@@ -77,5 +77,6 @@ export const monsterImage = (id: string) => getImage(`art/monsters/${id}`);
 export const petImage = (id: string) => getImage(`art/pets/${id}`);
 export const skillImage = (id: string) => getImage(`art/skills/${id}`);
 export const vfxImage = (name: string) => getImage(`art/vfx/${name}`);
+export const particleImage = (name: string) => getImage(`art/particles/${name}`);
 export const monsterArt = (id: string) => artUrl(`art/monsters/${id}`);
 export const petArt = (id: string) => artUrl(`art/pets/${id}`);

@@ -229,7 +229,8 @@ h3 .count { color: var(--muted); font-weight: 400; font-size: 12px; }
   border-radius: 9px; cursor: pointer; border: 1px solid transparent; background: transparent; color: var(--muted);
   font-size: 12px; font-weight: 700;
 }
-.tab .ti { font-size: 18px; filter: grayscale(.5); transition: filter .15s, transform .15s; }
+.tab .ti { font-size: 18px; filter: grayscale(.5); transition: filter .15s, transform .15s; display: inline-flex; }
+.tab .tiimg { width: 26px; height: 26px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
 .tab:hover { color: var(--text); background: rgba(255,255,255,.03); }
 .tab.on { background: linear-gradient(180deg, #2c2a24, #211f1a); border-color: var(--gold3); color: var(--gold2); }
 .tab.on .ti { filter: none; transform: scale(1.08); }
@@ -486,6 +487,7 @@ select.input { padding: 6px 10px; }
   .skill-slot .rk { display: none; }
   .log { max-height: 110px; }
   .tab .ti { font-size: 17px; }
+  .tab .tiimg { width: 22px; height: 22px; }
   .skillbar { gap: 5px; padding: 0 8px 8px; }
   .skill-slot { height: 46px; padding: 0 6px; gap: 4px; }
   .skill-slot .ico { font-size: 18px; }

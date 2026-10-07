@@ -7,6 +7,7 @@ import { getSkill } from '@/data/skills';
 import { scale } from '@/core/types';
 import { BattleScene } from '@/render/scene';
 import { portrait, portraitArt } from '@/render/icons';
+import { artUrl } from '@/render/images';
 import { combatPower, heroStats } from '@/systems/hero';
 import { weaponLook } from '@/systems/units';
 import { advise } from '@/systems/advisor';
@@ -283,7 +284,7 @@ function Tabs() {
             title={lock ?? t.name}
             onClick={() => { if (!lock) tab.value = t.id; else g().toast(lock, 'warn', '🔒'); }}
           >
-            <span class="ti">{t.icon}</span>
+            <span class="ti">{(() => { const art = artUrl(`art/ui/${t.id}`); return art ? <img class="tiimg" src={art} alt="" /> : t.icon; })()}</span>
             {t.name}
             {!lock && tabBadge(t.id) && <span class="badge" />}
           </button>

@@ -41,6 +41,8 @@ interface Actor {
 }
 
 /** 戰鬥特效貼圖（public/art/vfx/） */
+/** 天氣與掉落粒子貼圖（public/art/particles/） */
+export const PARTICLE_SPRITES = ['leaf', 'leaf_autumn', 'snowflake', 'ember', 'firefly', 'spark', 'mote', 'coin', 'dust'];
 export const VFX_SPRITES = [
   'arrow', 'fireball', 'iceshard', 'shadowbolt', 'holyorb', 'arcaneorb', 'dagger', 'poisonglob', 'meteor',
   'slash', 'slash_red', 'claw', 'explosion', 'frostburst', 'holyburst', 'shadowburst', 'spark', 'hitstar',
@@ -81,7 +83,7 @@ export class BattleScene {
 
   bind(game: Game) {
     // 特效貼圖數量不多，開場就全部載入，避免第一次施放時沒有圖
-    preloadArt(VFX_SPRITES.map(n => `art/vfx/${n}`));
+    preloadArt([...VFX_SPRITES.map(n => `art/vfx/${n}`), ...PARTICLE_SPRITES.map(n => `art/particles/${n}`)]);
     this.unsubs.forEach(u => u());
     this.game = game;
     this.actors.clear();
@@ -734,28 +736,28 @@ export class BattleScene {
       const x = Math.random() * VIEW_W;
       switch (theme.particles) {
         case 'fireflies':
-          this.parts.emit({ x, y: 160 + Math.random() * 180, vx: (Math.random() - 0.5) * 20, vy: -8, color: '#e8ff8a', size: 2, max: 3, additive: true });
+          this.parts.emit({ x, y: 160 + Math.random() * 180, vx: (Math.random() - 0.5) * 20, vy: -8, color: '#e8ff8a', size: 2, max: 3, additive: true, sprite: 'firefly', vr: 0 });
           break;
         case 'leaves':
-          this.parts.emit({ x: x + 100, y: -10, vx: -40 - Math.random() * 30, vy: 40 + Math.random() * 20, color: Math.random() < 0.5 ? '#7aa84a' : '#c88a3a', size: 3, max: 6, shape: 'leaf', vr: 3 });
+          this.parts.emit({ x: x + 100, y: -10, vx: -40 - Math.random() * 30, vy: 40 + Math.random() * 20, ...(Math.random() < 0.5 ? { color: '#7aa84a', sprite: 'leaf' } : { color: '#c88a3a', sprite: 'leaf_autumn' }), size: 3, max: 6, shape: 'leaf', vr: 3 });
           break;
         case 'dust':
-          this.parts.emit({ x, y: 80 + Math.random() * 260, vx: 6, vy: -4, color: 'rgba(220,200,180,0.5)', size: 1.6, max: 4 });
+          this.parts.emit({ x, y: 80 + Math.random() * 260, vx: 6, vy: -4, color: 'rgba(220,200,180,0.5)', size: 1.6, max: 4, sprite: 'dust', vr: 0.5 });
           break;
         case 'sand':
           this.parts.emit({ x: VIEW_W + 10, y: 120 + Math.random() * 240, vx: -260 - Math.random() * 120, vy: 10, color: 'rgba(240,210,150,0.6)', size: 1.5, max: 4, shape: 'spark' });
           break;
         case 'snow':
-          this.parts.emit({ x: x + 60, y: -10, vx: -20 - Math.random() * 20, vy: 40 + Math.random() * 30, color: '#ffffff', size: 1.5 + Math.random() * 2, max: 9, shape: 'snow' });
+          this.parts.emit({ x: x + 60, y: -10, vx: -20 - Math.random() * 20, vy: 40 + Math.random() * 30, color: '#ffffff', size: 1.5 + Math.random() * 2, max: 9, shape: 'snow', sprite: 'snowflake', vr: 1 });
           break;
         case 'embers':
-          this.parts.emit({ x, y: GROUND_Y + 20, vx: (Math.random() - 0.5) * 30, vy: -60 - Math.random() * 60, color: '#ff8a3a', size: 2, max: 4, additive: true });
+          this.parts.emit({ x, y: GROUND_Y + 20, vx: (Math.random() - 0.5) * 30, vy: -60 - Math.random() * 60, color: '#ff8a3a', size: 2, max: 4, additive: true, sprite: 'ember', vr: 0 });
           break;
         case 'sparks':
-          this.parts.emit({ x, y: Math.random() * 300, vx: -30, vy: 0, color: '#c8e0ff', size: 1.6, max: 2, additive: true });
+          this.parts.emit({ x, y: Math.random() * 300, vx: -30, vy: 0, color: '#c8e0ff', size: 1.6, max: 2, additive: true, sprite: 'spark', vr: 4 });
           break;
         case 'motes':
-          this.parts.emit({ x, y: GROUND_Y, vx: (Math.random() - 0.5) * 10, vy: -30 - Math.random() * 20, color: '#b67bff', size: 2, max: 6, additive: true });
+          this.parts.emit({ x, y: GROUND_Y, vx: (Math.random() - 0.5) * 10, vy: -30 - Math.random() * 20, color: '#b67bff', size: 2, max: 6, additive: true, sprite: 'mote', vr: 1 });
           break;
       }
     }

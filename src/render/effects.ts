@@ -1,6 +1,6 @@
 import { ELEMENT_COLOR, type Element } from '@/core/stats';
 import { alpha, clamp01, easeIn, easeOut, ellipse, glow, lerp, shade, star, type Ctx } from './draw';
-import { vfxImage } from './images';
+import { particleImage, vfxImage } from './images';
 
 // =====================================================================
 // 粒子
@@ -13,6 +13,8 @@ export interface Particle {
   gravity: number; drag: number; shape: PShape; additive: boolean; rot: number; vr: number;
   /** 飛向目標（金幣飛向 HUD） */
   tx?: number; ty?: number;
+  /** 粒子美術貼圖（art/particles/）；有圖時取代程式繪製的形狀 */
+  sprite?: string;
 }
 
 export class Particles {
@@ -73,6 +75,18 @@ export class Particles {
         const a = k < 0.15 ? k / 0.15 : 1 - easeIn((k - 0.15) / 0.85);
         ctx.globalAlpha = Math.max(0, a);
         const s = p.size * (p.shape === 'smoke' ? 1 + k * 2 : 1);
+        const img = particleImage(p.sprite ?? (p.shape === 'coin' ? 'coin' : ''));
+        if (img && (p.sprite || p.shape === 'coin')) {
+          // 貼圖大小約為原本形狀的 4 倍（原本的 size 是半徑）
+          const w = s * 4.2, h = (img.height / img.width) * w;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          if (p.shape !== 'coin') ctx.rotate(p.rot);
+          else ctx.scale(Math.max(0.25, Math.abs(Math.cos(p.rot))), 1);
+          ctx.drawImage(img, -w / 2, -h / 2, w, h);
+          ctx.restore();
+          continue;
+        }
         switch (p.shape) {
           case 'circle':
           case 'smoke':
