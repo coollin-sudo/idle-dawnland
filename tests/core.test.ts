@@ -119,7 +119,8 @@ describe('強化', () => {
     w.enh = 19;
     s.cur.protect = 1000;
     let protectedHits = 0;
-    for (let i = 0; i < 40 && w.enh === 19; i++) if (enhance(g, w.uid, true) === 'protected') protectedHits++;
+    // 每次都從 +19 開始（成功升到 +20 不算失敗），直到出現一次保護
+    for (let i = 0; i < 200 && protectedHits === 0; i++) { w.enh = 19; if (enhance(g, w.uid, true) === 'protected') protectedHits++; }
     expect(s.equipment.weapon).not.toBeNull();
     expect(protectedHits).toBeGreaterThan(0);
     w.enh = 19;

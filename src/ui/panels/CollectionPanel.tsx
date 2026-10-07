@@ -7,7 +7,7 @@ import { MONSTERS } from '@/data/monsters';
 import { UNIQUES } from '@/data/items';
 import { describePower } from '@/data/powers';
 import { CLASSES } from '@/data/classes';
-import { creaturePortrait, itemIcon } from '@/render/icons';
+import { itemIcon, monsterThumb } from '@/render/icons';
 import { codexTiers } from '@/systems/hero';
 import { g } from '../store';
 import { NpcHeader } from '../common';
@@ -69,7 +69,7 @@ function Codex() {
           const stars = CODEX_TIERS.filter(t => n >= t).length;
           return (
             <div class={'m' + (n ? '' : ' unknown')} title={n ? m.lore : '尚未遭遇'}>
-              <img src={creaturePortrait(m.archetype, m.palette, m.features, 64)} alt="" />
+              <img src={monsterThumb(m, 64)} alt="" />
               <div class="nm">{n ? m.name : '？？？'}</div>
               <div class="stars">{'★'.repeat(stars)}{'☆'.repeat(3 - stars)}</div>
               <div class="tiny muted">{fmt(n)}</div>

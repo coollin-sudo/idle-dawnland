@@ -5,6 +5,7 @@ import { DIFFICULTIES } from '@/core/formulas';
 import { regionOfStage } from '@/data/regions';
 import { paintHero, restPose } from '@/render/heroPainter';
 import { Background } from '@/render/background';
+import { classImage } from '@/render/images';
 import { combatPower, heroStats } from '@/systems/hero';
 import { g } from './store';
 import { heroLookOf } from './GameScreen';
@@ -37,9 +38,15 @@ export function renderShareCard(): HTMLCanvasElement {
   ctx.fillRect(0, 0, W, H);
   // 英雄
   ctx.save();
-  ctx.translate(W / 2, 760);
-  ctx.scale(4.2, 4.2);
-  paintHero(ctx, heroLookOf(), restPose(0.6));
+  const art = (s.hero.advId ? classImage(s.hero.advId) : null) ?? classImage(s.hero.classId);
+  if (art) {
+    const h = 620, w = Math.min(820, (art.width / art.height) * h), hh = (art.height / art.width) * w;
+    ctx.drawImage(art, W / 2 - w / 2, 790 - hh, w, hh);
+  } else {
+    ctx.translate(W / 2, 760);
+    ctx.scale(4.2, 4.2);
+    paintHero(ctx, heroLookOf(), restPose(0.6));
+  }
   ctx.restore();
   // 文字
   const cls = s.hero.advId ? ADVANCES[s.hero.advId].name : CLASSES[s.hero.classId].name;

@@ -40,7 +40,7 @@ body {
 }
 #app { min-height: 100%; }
 button { font: inherit; color: inherit; }
-img { image-rendering: auto; }
+img { image-rendering: auto; object-fit: contain; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: #2f3754; border-radius: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }

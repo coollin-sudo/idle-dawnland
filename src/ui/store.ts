@@ -4,6 +4,7 @@ import { Game } from '@/core/game';
 import type { GameEvents } from '@/core/gameEvents';
 import type { GameState, Item } from '@/core/types';
 import { setNumberStyle } from '@/core/format';
+import { setArtEnabled } from '@/render/images';
 import { applyOffline, type OfflineReport } from '@/systems/offline';
 import { saveState } from '@/save/storage';
 import { audio } from '@/audio/audio';
@@ -59,6 +60,7 @@ export function startGame(state: GameState, opts: { offline?: boolean } = {}) {
   const gm = new Game(state);
   game.value = gm;
   setNumberStyle(state.settings.numberStyle);
+  setArtEnabled(state.settings.useArt);
   audio.setVolumes(state.settings.sfx, state.settings.music);
   unbinds.push(gm.ev.on('toast', pushToast));
   unbinds.push(gm.ev.on('log', e => pushLog(e.text, e.kind)));

@@ -747,7 +747,7 @@ export class BattleScene {
       const advId = (u.look as { advId?: string | null }).advId;
       const img = (advId ? classImage(advId) : null) ?? classImage(u.defId);
       const look = u.look as HeroLook;
-      if (img) this.drawImageUnit(ctx, img, 110, false, attackK);
+      if (img) this.drawImageUnit(ctx, img, 110, 1, attackK);
       else {
         const pose: Pose = { t: this.time, attack: attackK, walk: this.walk > 0 ? this.time * 5 : 0, cast: a.cast, blink: this.time > a.blinkAt, hurt: a.hurt };
         paintHero(ctx, look, pose);
@@ -755,7 +755,8 @@ export class BattleScene {
     } else if (a.mdef && a.arch) {
       const flip = u.side === 'enemy';
       const imgPath = u.kind === 'monster' ? monsterImage(a.mdef.id) : u.kind === 'pet' ? petImage(a.mdef.id) : null;
-      if (imgPath) this.drawImageUnit(ctx, imgPath, a.height * 1.1, flip, attackK);
+      // 美術圖本身已朝向正確方向（怪物面左、寵物面右），不鏡像，只決定突進方向
+      if (imgPath) this.drawImageUnit(ctx, imgPath, a.height * 1.1, flip ? -1 : 1, attackK);
       else {
         ctx.scale(flip ? -a.scale : a.scale, a.scale);
         const walkBob = u.kind === 'pet' && this.walk > 0 ? Math.abs(Math.sin(this.time * 10)) * -4 : 0;
@@ -767,17 +768,21 @@ export class BattleScene {
     ctx.filter = 'none';
   }
 
-  private drawImageUnit(ctx: Ctx, img: HTMLImageElement, h: number, flip: boolean, attackK: number) {
+  private drawImageUnit(ctx: Ctx, img: HTMLImageElement, h: number, dir: 1 | -1, attackK: number) {
     const w = (img.width / img.height) * h;
-    const lunge = attackK >= 0 ? Math.sin(attackK * Math.PI) * 12 : 0;
-    const bob = Math.sin(this.time * 2.4) * 2;
+    const lunge = attackK >= 0 ? Math.sin(attackK * Math.PI) * 12 * dir : 0;
+    // 呼吸感：上下輕晃＋些微伸縮
+    const breath = Math.sin(this.time * 2.4);
+    const bob = breath * 2;
     ctx.save();
-    if (flip) ctx.scale(-1, 1);
     ctx.fillStyle = 'rgba(0,0,0,0.28)';
     ctx.beginPath();
     ctx.ellipse(0, 0, w * 0.35, w * 0.08, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.drawImage(img, -w / 2 + lunge, -h + bob, w, h);
+    const sy = 1 + breath * 0.012;
+    ctx.translate(lunge, 0);
+    ctx.scale(1 / sy, sy);
+    ctx.drawImage(img, -w / 2, -h + bob, w, h);
     ctx.restore();
   }
 

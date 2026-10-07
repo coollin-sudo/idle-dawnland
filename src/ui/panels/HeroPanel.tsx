@@ -42,7 +42,7 @@ export function HeroPanel() {
       <div class="paperdoll">
         <div class="colslots">{LEFT.map(slotEl)}</div>
         <div class="figure">
-          <HeroPreview look={heroLookOf()} size={220} attackEvery={3.2} />
+          <HeroPreview look={heroLookOf()} art={[h.advId, h.classId]} size={220} attackEvery={3.2} />
           <div style={{ position: 'absolute', top: '8px', left: '0px', right: '0px', textAlign: 'center' }}>
             <div style={{ fontWeight: 900, fontSize: '16px' }}>{h.advId ? ADVANCES[h.advId].name : c.name}</div>
             <div class="small gold">戰力 {fmt(combatPower(s, st))}</div>
@@ -171,7 +171,7 @@ function AdvanceBox() {
       <div class="row" style={{ gap: '10px', alignItems: 'stretch' }}>
         {advancesOf(s.hero.classId).map(a => (
           <div class="card grow" style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => choose(a.id)}>
-            <HeroPreview look={{ ...c.look, ...a.look }} size={120} attackEvery={2.2} />
+            <HeroPreview look={{ ...c.look, ...a.look }} art={[a.id]} size={120} attackEvery={2.2} />
             <div style={{ fontWeight: 900 }}>{a.name}</div>
             <div class="small muted">{a.desc}</div>
           </div>

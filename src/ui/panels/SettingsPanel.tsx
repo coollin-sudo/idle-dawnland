@@ -3,6 +3,7 @@ import { setNumberStyle, fmtDuration } from '@/core/format';
 import type { Settings } from '@/core/types';
 import { RARITIES } from '@/data/items';
 import { audio } from '@/audio/audio';
+import { setArtEnabled } from '@/render/images';
 import { clearState, exportCode, importCode, saveState } from '@/save/storage';
 import { Modal, Switch, confirmModal } from '../common';
 import { closeModal, g, openModal, refresh, saveNow, startGame, stopGame, game } from '../store';
@@ -14,6 +15,7 @@ export function SettingsPanel() {
     st[k] = v;
     if (k === 'sfx' || k === 'music') audio.setVolumes(st.sfx, st.music);
     if (k === 'numberStyle') setNumberStyle(st.numberStyle);
+    if (k === 'useArt') setArtEnabled(st.useArt);
     refresh();
   };
   const row = (label: string, help: string | null, ctl: preact.ComponentChildren) => (
@@ -31,6 +33,7 @@ export function SettingsPanel() {
           <option value="high">高</option><option value="low">低</option><option value="off">關閉</option>
         </select>
       ))}
+      {row('角色美術圖', '關閉後改用程式繪製的角色，會隨裝備改變武器外觀', <Switch on={st.useArt} onChange={v => set('useArt', v)} />)}
       {row('傷害數字', null, <Switch on={st.dmgNumbers} onChange={v => set('dmgNumbers', v)} />)}
       {row('畫面震動', null, <Switch on={st.shake} onChange={v => set('shake', v)} />)}
       {row('數字格式', null, (

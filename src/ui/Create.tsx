@@ -28,7 +28,7 @@ export function Create({ onDone, onImport }: { onDone: () => void; onImport: () 
           const c = CLASSES[id];
           return (
             <div class={'cls panel' + (cls === id ? ' on' : '')} onClick={() => { setCls(id); audio.play('click'); }}>
-              <HeroPreview look={c.look} attackEvery={cls === id ? 1.6 : 0} size={180} />
+              <HeroPreview look={c.look} art={[id]} attackEvery={cls === id ? 1.6 : 0} size={180} />
               <div class="cn">{c.name}</div>
               <div class="ct">{c.title}</div>
               <div class="cd">{c.desc}</div>

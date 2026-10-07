@@ -2,7 +2,7 @@ import { DUNGEONS, TOWER_BOSSES, towerGems, towerLevel } from '@/data/dungeons';
 import { GEM_SHOP } from '@/data/shop';
 import { getMonster } from '@/data/monsters';
 import { UNLOCKS } from '@/data/quests';
-import { creaturePortrait } from '@/render/icons';
+import { monsterThumb } from '@/render/icons';
 import { dungeonEntries, dungeonLevel, startDungeon, startTower } from '@/systems/activities';
 import { buyDungeonEntry } from '@/systems/shop';
 import { Cost } from '../common';
@@ -24,7 +24,7 @@ export function ChallengePanel() {
           const mon = getMonster(d.monsters[0]);
           return (
             <div class="li" style={{ borderColor: d.color + '55' }}>
-              <div class="ic"><img src={creaturePortrait(mon.archetype, mon.palette, mon.features, 48)} alt="" /></div>
+              <div class="ic"><img src={monsterThumb(mon, 48)} alt="" /></div>
               <div class="grow">
                 <div class="t">{d.icon} {d.name}</div>
                 <div class="d">{d.desc}</div>
@@ -42,7 +42,7 @@ export function ChallengePanel() {
       <h3>無盡之塔 <span class="count">{towerOpen ? `最高 ${s.tower.best} 層` : '通關第 3 區解鎖'}</span></h3>
       <div class={'card' + (towerOpen ? ' hl' : '')} style={{ opacity: towerOpen ? 1 : 0.5 }}>
         <div class="row" style={{ gap: '12px' }}>
-          <img src={creaturePortrait(nextBoss.archetype, nextBoss.palette, nextBoss.features, 72)} style={{ width: '72px', height: '72px' }} alt="" />
+          <img src={monsterThumb(nextBoss, 72)} style={{ width: '72px', height: '72px' }} alt="" />
           <div class="grow">
             <div style={{ fontWeight: 900, fontSize: '16px' }}>第 {floor} 層・{nextBoss.name}</div>
             <div class="small muted">守衛 Lv.{towerLevel(floor)}・限時 45 秒・通過獎勵 <Cost k="gems" n={towerGems(floor)} />{floor % 10 === 0 ? '・🎁 十層寶箱（可能是套裝）' : ''}</div>

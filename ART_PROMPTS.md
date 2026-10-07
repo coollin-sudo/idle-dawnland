@@ -7,7 +7,7 @@
 ## 使用方式
 
 1. 把「共用風格」和單張描述**一起**貼給 ChatGPT（每次都貼共用風格，畫風才一致）。
-2. 下載 PNG（透明背景），依表格檔名存進對應資料夾，建議壓到 512×512 以內。
+2. 下載 PNG（透明背景），依表格檔名存進對應資料夾（.png 或 .webp 都可以），建議壓到 512×512 以內。
 3. 推上 GitHub，部署完成後重新整理遊戲即可看到。
 4. 請不要在 prompt 裡提到任何現有遊戲的名稱或「某某遊戲風格」，保持原創。
 
@@ -124,7 +124,7 @@ TRANSPARENT background (PNG), square 1:1 image, no text, no watermark, no border
 | `pet_slime.png` | 史萊姆寶寶 | a tiny light-blue baby slime, facing right. |
 | `pet_fox.png` | 小火狐 | a small orange fire fox with a flame-tipped tail, facing right. |
 | `pet_snowbun.png` | 雪球兔 | a round white snow bunny with blue ear tips, facing right. |
-| `pet_volt.png` | 雷電鼠 | a small yellow electric mouse with a lightning tail, facing right. |
+| `pet_volt.png` | 雷電鼠 | a small yellow electric ferret with blue spark-patterned fur and a crackling blue tail, facing right. |
 | `pet_sprite.png` | 森林小精靈 | a tiny green forest sprite with leaf wings, facing right. |
 | `pet_goblin.png` | 迷你哥布林 | a mini goblin with a little treasure sack, facing right. |
 | `pet_beetle.png` | 寶石甲蟲 | a teal jewel beetle with a glossy shell, facing right. |

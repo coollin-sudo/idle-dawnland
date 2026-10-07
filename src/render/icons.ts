@@ -2,6 +2,7 @@ import type { ClassId, HeroLook, ItemSlotKind } from '@/core/types';
 import { alpha, ellipse, fillStroke, glow, rrect, shade, star, vgrad, type Ctx } from './draw';
 import { paintPortrait } from './heroPainter';
 import { paintMonster } from './monsterPainter';
+import { monsterArt, petArt } from './images';
 import type { Archetype } from '@/core/types';
 
 const cache = new Map<string, string>();
@@ -489,3 +490,8 @@ export function creaturePortrait(arch: Archetype, palette: [string, string, stri
     paintMonster(ctx, arch, palette, (features ?? []).filter(f => f !== 'small'), { t: 0.3, attack: -1, cast: 0, seed: 1 });
   }, size);
 }
+
+/** 介面縮圖：有外部美術圖就用圖，否則用程式繪製的頭像 */
+type CreatureLike = { id: string; archetype: Archetype; palette: [string, string, string]; features?: string[] };
+export const monsterThumb = (m: CreatureLike, size = 64) => monsterArt(m.id) ?? creaturePortrait(m.archetype, m.palette, m.features, size);
+export const petThumb = (p: CreatureLike, size = 64) => petArt(p.id) ?? creaturePortrait(p.archetype, p.palette, p.features, size);

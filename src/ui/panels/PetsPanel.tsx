@@ -4,12 +4,12 @@ import type { PetDef } from '@/core/types';
 import { RARITIES } from '@/data/items';
 import { EGGS, PET_MAX_LEVEL, PET_MAX_STARS, PETS, petPassiveMult, petStarCost, petXpToNext } from '@/data/pets';
 import { GEM_SHOP } from '@/data/shop';
-import { creaturePortrait } from '@/render/icons';
+import { petThumb } from '@/render/icons';
 import { buyEgg, buyHatchSlot, claimEgg, feedPet, hatchCost, hatchingCount, setActivePet, speedHatch, starUp, startHatch } from '@/systems/pets';
 import { Bar, CIcon, Cost, Modal, NpcHeader } from '../common';
 import { closeModal, g, openModal, refresh } from '../store';
 
-const petImg = (p: PetDef) => creaturePortrait(p.archetype, p.palette, p.features, 96);
+const petImg = (p: PetDef) => petThumb(p, 96);
 
 function PetDetail({ id }: { id: string }) {
   const gm = g();

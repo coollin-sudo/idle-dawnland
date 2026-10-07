@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import { DIFFICULTIES, stageLevel } from '@/core/formulas';
 import { getMonster } from '@/data/monsters';
 import { REGIONS } from '@/data/regions';
-import { creaturePortrait } from '@/render/icons';
+import { monsterThumb } from '@/render/icons';
 import { travel } from '@/systems/activities';
 import { g, refresh } from '../store';
 
@@ -34,7 +34,7 @@ export function MapPanel() {
           return (
             <div class={'region' + (unlocked ? '' : ' locked')}>
               <div class="rh" style={{ background: `linear-gradient(90deg, ${r.bg.sky[0]}, ${r.bg.mid} 70%, ${r.bg.near})` }} onClick={() => unlocked && setOpen(open === ri ? null : ri)}>
-                <img src={creaturePortrait(boss.archetype, boss.palette, boss.features, 48)} style={{ width: '44px', height: '44px' }} alt="" />
+                <img src={monsterThumb(boss, 48)} style={{ width: '44px', height: '44px' }} alt="" />
                 <div class="grow">
                   <div class="rn">{ri + 1}. {r.name} {cleared && '✅'}</div>
                   <div class="rs">{r.subtitle}・{lvl}</div>
