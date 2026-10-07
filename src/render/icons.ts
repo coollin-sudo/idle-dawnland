@@ -489,6 +489,9 @@ function paintedCurrencyIcon(key: CurrencyKey): string {
   });
 }
 
+/** 頭像美術圖（public/art/portraits/）：職業／轉職 id 或 NPC id */
+export const portraitArt = (id: string) => artUrl(`art/portraits/${id}`);
+
 export function portrait(look: HeroLook, size = 64): string {
   return render('portrait:' + JSON.stringify(look) + size, ctx => paintPortrait(ctx, look, SIZE), size);
 }

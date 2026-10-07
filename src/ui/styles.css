@@ -510,3 +510,6 @@ select.input { padding: 6px 10px; }
   background: linear-gradient(180deg, #2a2a20, #1e1d18); border: 1px solid rgba(240,194,90,.35); color: var(--gold2); animation: advIn .3s ease-out; }
 .adv:hover { filter: brightness(1.2); }
 @keyframes advIn { from { opacity: 0; transform: translateY(4px); } }
+
+/* 頭像美術圖本身已有背景與金框 */
+.hero-chip .portrait.art, .story .face.art, .npc-header img.art { background: none; border: none; border-radius: 12px; }

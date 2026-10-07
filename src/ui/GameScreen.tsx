@@ -6,7 +6,7 @@ import { UNLOCKS } from '@/data/quests';
 import { getSkill } from '@/data/skills';
 import { scale } from '@/core/types';
 import { BattleScene } from '@/render/scene';
-import { portrait } from '@/render/icons';
+import { portrait, portraitArt } from '@/render/icons';
 import { combatPower, heroStats } from '@/systems/hero';
 import { weaponLook } from '@/systems/units';
 import { advise } from '@/systems/advisor';
@@ -49,7 +49,10 @@ function TopBar() {
     <div class="topbar">
       <div class="brand">放置冒險<small>晨曦大陸</small></div>
       <div class="hero-chip">
-        <img class="portrait" src={portrait(heroLookOf(), 88)} alt="" />
+        {(() => {
+          const art = (s.hero.advId ? portraitArt(s.hero.advId) : null) ?? portraitArt(s.hero.classId);
+          return <img class={'portrait' + (art ? ' art' : '')} src={art ?? portrait(heroLookOf(), 88)} alt="" />;
+        })()}
         <div>
           <div class="name">{h.name}</div>
           <div class="sub">Lv.<b>{h.level}</b> {h.advId ? ADVANCES[h.advId].name : c.name}{s.rebirth.count ? `・轉生 ${s.rebirth.count}` : ''}</div>

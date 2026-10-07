@@ -7,7 +7,7 @@ import { RARITIES, SET_MAP, SLOT_LABEL, SLOTS, UNIQUE_MAP, tierOf, AFFIX_MAP } f
 import { describePower } from '@/data/powers';
 import { NPCS, SCENES } from '@/data/story';
 import { CLASSES, ADVANCES } from '@/data/classes';
-import { currencyIcon, itemIcon, portrait, type CurrencyKey } from '@/render/icons';
+import { currencyIcon, itemIcon, portrait, portraitArt, type CurrencyKey } from '@/render/icons';
 import { artUrl } from '@/render/images';
 import { itemColor, itemMods, reqLevel, canEquip, affixRange } from '@/systems/items';
 import { setCounts, upgradeDelta } from '@/systems/hero';
@@ -229,7 +229,10 @@ export function StoryOverlay() {
     <div class="story" onClick={next}>
       <div class="box panel">
         {line === 0 && <div class="scene-title">{scene.title}</div>}
-        <img class="face" src={portrait(npc ? npc.look : heroLook, 120)} alt="" />
+        {(() => {
+          const art = npc ? portraitArt(npc.id) : (s.hero.advId ? portraitArt(s.hero.advId) : null) ?? portraitArt(s.hero.classId);
+          return <img class={'face' + (art ? ' art' : '')} src={art ?? portrait(npc ? npc.look : heroLook, 120)} alt="" />;
+        })()}
         <div>
           <div class="who">{npc ? npc.name : s.hero.name}<small>{npc ? npc.title : CLASSES[s.hero.classId].name}</small></div>
           <div class="txt">{cur.text.slice(0, shown)}</div>
@@ -277,7 +280,7 @@ export function NpcHeader({ npc, lines }: { npc: keyof typeof NPCS; lines: strin
   const [i] = useState(() => Math.floor(Math.random() * lines.length));
   return (
     <div class="npc-header">
-      <img src={portrait(n.look, 96)} alt="" />
+      {(() => { const art = portraitArt(n.id); return <img class={art ? 'art' : ''} src={art ?? portrait(n.look, 96)} alt="" />; })()}
       <div>
         <div class="who">{n.name}<small>{n.title}</small></div>
         <div class="say">「{lines[i]}」</div>
