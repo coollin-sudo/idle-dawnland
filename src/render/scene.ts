@@ -601,7 +601,7 @@ export class BattleScene {
       return;
     }
     this.prevBg = this.bg;
-    this.bg = new Background(region.bg, region.id.length * 7 + (act.kind === 'tower' ? 99 : 0));
+    this.bg = new Background(region.bg, region.id.length * 7 + (act.kind === 'tower' ? 99 : 0), region.id);
     this.bgKey = key;
     this.bgFade = this.prevBg ? 0 : 1;
   }

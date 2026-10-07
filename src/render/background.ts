@@ -1,5 +1,6 @@
 import type { BackgroundTheme } from '@/core/types';
 import { alpha, ellipse, glow, hash, shade, type Ctx } from './draw';
+import { getImage } from './images';
 
 export const VIEW_W = 960;
 export const VIEW_H = 420;
@@ -295,12 +296,51 @@ function paintLayer(ctx: Ctx, kind: LayerKind, color: string, w: number, h: numb
   }
 }
 
+/** 美術背景圖中「角色站立的地面」位於圖片高度的比例（依實際圖片微調） */
+const ART_GROUND: Record<string, number> = {};
+/** 美術背景的捲動速度（相對於地面） */
+const ART_SPEED = 0.35;
+/** 美術背景繪製高度：略高於畫面，讓天空上緣可以裁掉一點 */
+const ART_H = 520;
+
 export class Background {
   layers: Layer[] = [];
   ground!: HTMLCanvasElement;
   sky!: HTMLCanvasElement;
-  constructor(public theme: BackgroundTheme, public seed: number) {
+  /** artId：public/art/bg/ 底下的圖片名稱（通常是區域 id），有圖就改用美術背景 */
+  constructor(public theme: BackgroundTheme, public seed: number, public artId?: string) {
     this.build();
+  }
+
+  private art(): HTMLImageElement | null {
+    return this.artId ? getImage(`art/bg/${this.artId}`) : null;
+  }
+
+  /** 用美術圖畫背景：左右鏡像交替拼接，確保接縫連續 */
+  private drawArt(ctx: Ctx, img: HTMLImageElement, scroll: number) {
+    const h = ART_H;
+    const w = (img.width / img.height) * h;
+    const top = GROUND_Y - (ART_GROUND[this.artId!] ?? 0.72) * h;
+    const period = Math.round(w) * 2;
+    const off = -((scroll * ART_SPEED) % period);
+    // 以整數像素對齊並多畫 1px，避免拼接處出現細縫
+    const tw = Math.round(w);
+    for (let x = Math.floor(off), i = 0; x < VIEW_W; x += tw, i++) {
+      if (i % 2 === 0) ctx.drawImage(img, x, top, tw + 1, h);
+      else {
+        ctx.save();
+        ctx.translate(x + tw + 1, top);
+        ctx.scale(-1, 1);
+        ctx.drawImage(img, 0, 0, tw + 1, h);
+        ctx.restore();
+      }
+    }
+    // 底部若圖片不足以蓋滿，補上地面色
+    const bottom = top + h;
+    if (bottom < VIEW_H) {
+      ctx.fillStyle = this.theme.ground[1];
+      ctx.fillRect(0, bottom, VIEW_W, VIEW_H - bottom);
+    }
   }
 
   private build() {
@@ -382,6 +422,11 @@ export class Background {
   }
 
   draw(ctx: Ctx, scroll: number, t: number) {
+    const img = this.art();
+    if (img) {
+      this.drawArt(ctx, img, scroll);
+      return;
+    }
     ctx.drawImage(this.sky, 0, 0);
     for (const l of this.layers) {
       const w = l.canvas.width;

@@ -91,7 +91,7 @@ function Legends() {
           const found = s.uniquesFound.includes(u.id);
           return (
             <div class="li" style={{ opacity: found ? 1 : 0.45 }}>
-              <div class="ic"><img src={itemIcon(u.slot, u.classId, Math.min(12, Math.floor(u.minIlvl / 10) + 2))} alt="" style={{ filter: found ? 'none' : 'brightness(0) opacity(.5)' }} /></div>
+              <div class="ic"><img src={itemIcon(u.slot, u.classId, Math.min(12, Math.floor(u.minIlvl / 10) + 2), u.id)} alt="" style={{ filter: found ? 'none' : 'brightness(0) opacity(.5)' }} /></div>
               <div class="grow">
                 <div class="t" style={{ color: found ? 'var(--r4)' : undefined }}>{found ? u.name : '？？？'}{u.classId && <span class="tiny muted">（{CLASSES[u.classId].name}）</span>}</div>
                 <div class="d">{found ? describePower(u.power.id, u.power.value) : `物品等級 ${u.minIlvl} 以上可能掉落`}</div>

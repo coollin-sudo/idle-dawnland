@@ -22,7 +22,7 @@ export function renderShareCard(): HTMLCanvasElement {
   const best = Math.max(0, s.progress.best[0]);
   const region = regionOfStage(best);
   // 背景：目前區域的場景
-  const bg = new Background(region.bg, 7);
+  const bg = new Background(region.bg, 7, region.id);
   ctx.save();
   const sc = 900 / 420;
   ctx.translate(-(960 * sc - W) / 2, 0);

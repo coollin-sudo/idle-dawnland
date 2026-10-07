@@ -33,7 +33,7 @@ export function SettingsPanel() {
           <option value="high">高</option><option value="low">低</option><option value="off">關閉</option>
         </select>
       ))}
-      {row('角色美術圖', '關閉後改用程式繪製的角色，會隨裝備改變武器外觀', <Switch on={st.useArt} onChange={v => set('useArt', v)} />)}
+      {row('美術圖', '角色、背景與圖示使用手繪美術圖；關閉後改用程式繪製（角色會隨裝備改變武器外觀）', <Switch on={st.useArt} onChange={v => set('useArt', v)} />)}
       {row('傷害數字', null, <Switch on={st.dmgNumbers} onChange={v => set('dmgNumbers', v)} />)}
       {row('畫面震動', null, <Switch on={st.shake} onChange={v => set('shake', v)} />)}
       {row('數字格式', null, (

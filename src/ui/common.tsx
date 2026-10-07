@@ -64,7 +64,7 @@ export function ItemSlot({ item, onClick, selected, label, showUp, small }: {
       onMouseMove={e => { if (tip.value?.item === item) tip.value = { item, x: e.clientX, y: e.clientY }; }}
       onMouseLeave={() => { tip.value = null; }}
     >
-      <img src={itemIcon(item.slot, item.classId, tierOf(item.ilvl))} alt="" draggable={false} />
+      <img src={itemIcon(item.slot, item.classId, tierOf(item.ilvl), item.unique)} alt="" draggable={false} />
       {item.enh > 0 && <span class="enh">+{item.enh}</span>}
       {up && <span class="up">▲</span>}
       {item.locked && <span class="lock">🔒</span>}

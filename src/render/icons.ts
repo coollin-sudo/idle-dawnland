@@ -2,7 +2,7 @@ import type { ClassId, HeroLook, ItemSlotKind } from '@/core/types';
 import { alpha, ellipse, fillStroke, glow, rrect, shade, star, vgrad, type Ctx } from './draw';
 import { paintPortrait } from './heroPainter';
 import { paintMonster } from './monsterPainter';
-import { monsterArt, petArt } from './images';
+import { artUrl, monsterArt, petArt } from './images';
 import type { Archetype } from '@/core/types';
 
 const cache = new Map<string, string>();
@@ -29,7 +29,16 @@ function render(key: string, fn: (ctx: Ctx) => void, size = SIZE): string {
 export const TIER_METAL = ['#8a7a6a', '#9aa0a8', '#8ea6c0', '#d8dce8', '#9ae0f0', '#b8e08a', '#b89aff', '#f0e6d0', '#6a8aff', '#ffd76a', '#fff6d8', '#ff9ad8', '#ffffff'];
 const TIER_CLOTH = ['#7a5a3a', '#6a6a7a', '#4a6a8a', '#3a5aa8', '#2a8a9a', '#3a8a4a', '#6a3aa8', '#8a3a2a', '#2a2a6a', '#c8902a', '#e8d8a8', '#a83a8a', '#ffffff'];
 
-export function itemIcon(kind: ItemSlotKind, classId: ClassId | undefined, tier: number): string {
+/** 13 個物品等級對應到美術圖的 4 種外觀 */
+const artGrade = (tier: number) => (tier <= 2 ? 0 : tier <= 5 ? 1 : tier <= 8 ? 2 : 3);
+
+/** 物品圖示：傳說裝備有專屬美術圖，其次是依部位與等級的美術圖，最後才用程式繪製 */
+export function itemIcon(kind: ItemSlotKind, classId: ClassId | undefined, tier: number, uniqueId?: string): string {
+  const key = kind === 'weapon' || kind === 'offhand' ? `${kind}_${classId ?? 'warrior'}` : kind;
+  return (uniqueId ? artUrl(`art/uniques/${uniqueId}`) : null) ?? artUrl(`art/items/${key}_${artGrade(tier)}`) ?? paintedItemIcon(kind, classId, tier);
+}
+
+function paintedItemIcon(kind: ItemSlotKind, classId: ClassId | undefined, tier: number): string {
   const metal = TIER_METAL[Math.min(tier, TIER_METAL.length - 1)];
   const cloth = TIER_CLOTH[Math.min(tier, TIER_CLOTH.length - 1)];
   return render(`item:${kind}:${classId ?? ''}:${tier}`, ctx => {
@@ -301,6 +310,10 @@ function offhandIcon(ctx: Ctx, cls: ClassId, metal: string, cloth: string) {
 export type CurrencyKey = 'gold' | 'gems' | 'stones' | 'essence' | 'shards' | 'petFood' | 'protect' | 'starSouls' | 'egg0' | 'egg1' | 'egg2' | 'potion0' | 'potion1' | 'potion2' | 'xp' | 'keys';
 
 export function currencyIcon(key: CurrencyKey): string {
+  return artUrl(`art/currency/${key}`) ?? paintedCurrencyIcon(key);
+}
+
+function paintedCurrencyIcon(key: CurrencyKey): string {
   return render('cur:' + key, ctx => {
     ctx.translate(32, 32);
     switch (key) {

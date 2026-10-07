@@ -1,5 +1,5 @@
 /** 產生 ART_PROMPTS.md：列出所有可替換的美術圖與給 ChatGPT 的生圖描述 */
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { ADVANCES, CLASSES } from '@/data/classes';
 import { MONSTERS } from '@/data/monsters';
 import { PETS } from '@/data/pets';
@@ -135,6 +135,25 @@ p();
 p('| 檔名 | 名稱 | 描述 |');
 p('|---|---|---|');
 for (const pet of PETS) p(`| \`${pet.id}.png\` | ${pet.name} | ${PET_DESC[pet.id]}, facing right. |`);
+p();
+// ---- 背景與圖示（scripts/art-prompts-v2.json） ----
+type Job2 = { name: string; grid: number; cells: string[]; prompt: string };
+const jobs2: Job2[] = JSON.parse(readFileSync(new URL('./art-prompts-v2.json', import.meta.url), 'utf8'));
+const DIR: Record<string, string> = { bg: 'bg', items: 'items', uniques: 'uniques', currency: 'currency' };
+p('## 4. 背景與圖示');
+p();
+p('這部分每張 prompt 都已包含完整風格描述，直接整段貼給 ChatGPT 即可。');
+p('- 背景：一張圖就是一個區域，存成 `public/art/bg/<區域 id>.webp`（或 .png），角色站的地面約在圖高 72%。');
+p('- 圖示：一張圖是 2×2 或 3×3 的格子，依閱讀順序切開後存成右欄的檔名（建議 128×128）。');
+p('  一般裝備的 4 格依序是等級 1–3、4–6、7–9、10–13 的外觀（檔名結尾 _0～_3）。');
+p();
+p('| 產出檔案 | Prompt |');
+p('|---|---|');
+for (const j of jobs2) {
+  const kind = j.name.split('__')[0];
+  const files = j.cells.map(c => `\`${DIR[kind]}/${c}\``).join('<br>');
+  p(`| ${files} | ${j.prompt.replace(/\|/g, '\\|')} |`);
+}
 p();
 const missing = MONSTERS.filter(m => !MONSTER_DESC[m.id]).map(m => m.id);
 if (missing.length) throw new Error('缺少描述：' + missing.join(','));
