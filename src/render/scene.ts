@@ -2,7 +2,7 @@ import type { Game } from '@/core/game';
 import { fmt, fmtClock } from '@/core/format';
 import type { GameEvents } from '@/core/gameEvents';
 import { ELEMENT_COLOR, type Element } from '@/core/stats';
-import type { Archetype, FxKey, HeroLook, MonsterDef, PetDef } from '@/core/types';
+import type { Archetype, FxKey, HeroLook, MonsterDef, PetDef, SkillDef } from '@/core/types';
 import type { Unit } from '@/core/unit';
 import { getMonster, MONSTER_MAP } from '@/data/monsters';
 import { PET_MAP } from '@/data/pets';
@@ -13,7 +13,7 @@ import { Background, GROUND_Y, VIEW_H, VIEW_W } from './background';
 import { alpha, clamp01, easeOut, glow, lerp, rrect, type Ctx } from './draw';
 import { Beam, Bubble, Burst, Falling, Lightning, Particles, Pillar, Projectile, Ring, Slash, Texts, Vortex, type Fx } from './effects';
 import { paintHero, type Pose } from './heroPainter';
-import { classImage, monsterImage, petImage } from './images';
+import { artPending, classImage, monsterImage, petImage, preloadArt, skillImage } from './images';
 import { ARCH_HEIGHT, paintMonster } from './monsterPainter';
 
 interface Actor {
@@ -36,6 +36,8 @@ interface Actor {
   pending: { at: number; fn: () => void }[];
   statusShown: Record<string, number>;
   blinkAt: number;
+  /** 等待美術圖載入的時間（秒） */
+  artWait: number;
 }
 
 const SKELETON: MonsterDef = { id: 'skeleton_summon', name: '骷髏戰士', archetype: 'undead', family: 'undead', palette: ['#e8e2d0', '#4a3a6a', '#b67bff'], features: ['sword'], dmgType: 'magic', element: 'shadow' };
@@ -47,6 +49,8 @@ export class BattleScene {
   actors = new Map<number, Actor>();
   parts = new Particles();
   texts = new Texts();
+  /** 技能施放提示（圖示＋名稱） */
+  pops: { x: number; y: number; skill: SkillDef; color: string; big: boolean; t: number }[] = [];
   fxs: Fx[] = [];
   bg: Background | null = null;
   prevBg: Background | null = null;
@@ -257,7 +261,7 @@ export class BattleScene {
           unit: u, kind: u.kind, x: u.side === 'enemy' ? hx + 260 : hx - 80, y: hy, homeX: hx, homeY: hy,
           spawn: 0, dying: -1, attack: -1, attackDur: 0.45, hurt: 0, cast: 0,
           height: height * scale, scale, mdef, arch, seed: Math.random() * 100, delayUntil: 0, pending: [], statusShown: {},
-          blinkAt: this.time + 2 + Math.random() * 3,
+          blinkAt: this.time + 2 + Math.random() * 3, artWait: 0,
         };
         if (u.kind === 'hero') { a.x = hx; a.spawn = 1; }
         this.actors.set(u.uid, a);
@@ -284,9 +288,11 @@ export class BattleScene {
     if (!src) return;
     src.attack = 0;
     src.attackDur = e.skill ? 0.5 : 0.42;
-    if (e.skill && src.kind === 'hero' && (src.statusShown['skill:' + e.skill.id] ?? -9) < this.time - 0.4) {
+    if (e.skill && (src.statusShown['skill:' + e.skill.id] ?? -9) < this.time - 0.4) {
       src.statusShown['skill:' + e.skill.id] = this.time;
-      this.texts.add({ x: src.x, y: src.y - src.height - 30, text: e.skill.icon + ' ' + e.skill.name, color: e.skill.ultimate ? '#ff9aff' : '#ffe08a', size: e.skill.ultimate ? 22 : 16, max: 0.9, crit: !!e.skill.ultimate, vy: -30, vx: 0 });
+      const ally = src.unit.side === 'hero';
+      const big = !!e.skill.ultimate || (!ally && !!src.unit.boss);
+      this.pops.push({ x: src.x, y: src.y - src.height - 30, skill: e.skill, color: ally ? (e.skill.ultimate ? '#ff9aff' : '#ffe08a') : '#ff9a8a', big, t: 0 });
       if (e.skill.ultimate) { this.flash('#ffffff', 0.15); this.shake(6, 0.3); }
     }
     const color = ELEMENT_COLOR[e.element] ?? '#ffffff';
@@ -582,6 +588,8 @@ export class BattleScene {
     this.ambient(dt);
     this.parts.update(dt);
     this.texts.update(dt);
+    for (const p of this.pops) p.t += dt;
+    this.pops = this.pops.filter(p => p.t < 1);
     if (this.banner) {
       this.banner.t += dt;
       if (this.banner.t > 2.2) this.banner = null;
@@ -601,6 +609,13 @@ export class BattleScene {
       return;
     }
     this.prevBg = this.bg;
+    // 進入新區域時先載入這區所有怪物、首領與技能圖示
+    const ids = [...region.monsters, region.boss];
+    preloadArt([
+      `art/bg/${region.id}`,
+      ...ids.map(id => `art/monsters/${id}`),
+      ...ids.flatMap(id => (getMonster(id).skills ?? []).map(s => `art/skills/${s}`)),
+    ]);
     this.bg = new Background(region.bg, region.id.length * 7 + (act.kind === 'tower' ? 99 : 0), region.id);
     this.bgKey = key;
     this.bgFade = this.prevBg ? 0 : 1;
@@ -609,7 +624,12 @@ export class BattleScene {
   private updateActors(dt: number) {
     for (const a of this.actors.values()) {
       const u = a.unit;
-      if (a.spawn < 1) a.spawn = Math.min(1, a.spawn + dt * 2.2);
+      if (a.spawn < 1) {
+        // 美術圖還在下載時先不現身（最多 1.5 秒），避免閃過程式繪製的版本
+        const base = a.mdef ? (u.kind === 'monster' ? `art/monsters/${a.mdef.id}` : u.kind === 'pet' ? `art/pets/${a.mdef.id}` : null) : null;
+        if (a.spawn === 0 && base && a.artWait < 1.5 && artPending(base)) a.artWait += dt;
+        else a.spawn = Math.min(1, a.spawn + dt * 2.2);
+      }
       const ease = easeOut(a.spawn);
       const targetX = a.homeX;
       if (u.side === 'enemy') a.x = lerp(a.homeX + 260, targetX, ease);
@@ -699,6 +719,7 @@ export class BattleScene {
     for (const f of this.fxs) f.draw(ctx);
     for (const a of list) this.drawOverlay(ctx, a);
     this.texts.draw(ctx);
+    this.drawPops(ctx);
     this.drawBossHud(ctx);
     this.drawBanner(ctx);
 
@@ -846,6 +867,39 @@ export class BattleScene {
     ctx.globalAlpha = 1;
   }
 
+  /** 技能提示：有美術圖示時畫「圖示＋名稱」，否則畫 emoji＋名稱 */
+  private drawPops(ctx: Ctx) {
+    for (const p of this.pops) {
+      const k = p.t;
+      const a = k < 0.12 ? k / 0.12 : 1 - Math.max(0, (k - 0.65) / 0.35);
+      const pop = k < 0.12 ? 0.7 + (k / 0.12) * 0.3 : 1;
+      const y = p.y - k * 30;
+      const img = skillImage(p.skill.id);
+      const fs = p.big ? 20 : 15;
+      const size = (p.big ? 30 : 24) * pop;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, a);
+      ctx.font = `900 ${fs}px "Noto Sans TC", system-ui, sans-serif`;
+      const label = img ? p.skill.name : p.skill.icon + ' ' + p.skill.name;
+      const tw = ctx.measureText(label).width;
+      let x = p.x - ((img ? size + 5 : 0) + tw) / 2;
+      if (img) {
+        ctx.shadowColor = 'rgba(0,0,0,0.6)';
+        ctx.shadowBlur = 4;
+        ctx.drawImage(img, x, y - size * 0.72, size, size);
+        ctx.shadowBlur = 0;
+        x += size + 5;
+      }
+      ctx.textAlign = 'left';
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#1b1420';
+      ctx.strokeText(label, x, y);
+      ctx.fillStyle = p.color;
+      ctx.fillText(label, x, y);
+      ctx.restore();
+    }
+  }
+
   private drawBossHud(ctx: Ctx) {
     const boss = this.game.battle?.units.find(u => u.boss && u.alive);
     if (!boss) return;
@@ -896,7 +950,13 @@ export class BattleScene {
       ctx.fill();
       ctx.font = '700 12px "Noto Sans TC", system-ui, sans-serif';
       ctx.fillStyle = '#ffc8ff';
-      ctx.fillText(`${boss.casting.skill.name}（暈眩可打斷）`, x + W / 2, y + 56);
+      const label = `${boss.casting.skill.name}（暈眩可打斷）`;
+      const icon = skillImage(boss.casting.skill.id);
+      if (icon) {
+        const tw = ctx.measureText(label).width;
+        ctx.drawImage(icon, x + W / 2 - tw / 2 - 22, y + 43, 18, 18);
+      }
+      ctx.fillText(label, x + W / 2, y + 56);
     }
     ctx.restore();
   }

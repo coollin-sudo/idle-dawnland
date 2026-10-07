@@ -334,7 +334,7 @@
    "p_holyshield",
    "p_justice"
   ],
-  "prompt": "Please generate an image. Fantasy RPG skill ability icons, hand-painted style with clean dark outlines, vibrant glowing magical colors, matching a cute chibi fantasy game art style. Each icon is a rounded-square ability tile with its own painted background (dark crimson and steel grey gradient) and a thin ornate gold border; the effect inside fills the tile. TRANSPARENT background outside the tiles (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no grid lines. Draw a 3x3 grid of 9 separate square tiles, evenly spaced, each centered in its own cell and filling about 80% of the cell, with clear transparent gaps between tiles so none of them touch. Tiles in reading order (left to right, top to bottom): 1. a heavy sword slash leaving a red arc and blood droplets. 2. a wide crescent sword sweep, silver arc of wind. 3. a war horn blasting golden shockwaves. 4. a steel shield bashing forward with impact stars. 5. a glowing blood-red drop with a fanged red aura. 6. a spinning sword whirlwind of red slashes. 7. a roaring demonic warrior mask wreathed in red flames. 8. a radiant golden-white protective shield bubble. 9. a giant hammer made of light striking down."
+  "prompt": ""
  },
  {
   "name": "skills__ranger",
@@ -350,7 +350,7 @@
    "a_cloud",
    "a_shadow"
   ],
-  "prompt": "Please generate an image. Fantasy RPG skill ability icons, hand-painted style with clean dark outlines, vibrant glowing magical colors, matching a cute chibi fantasy game art style. Each icon is a rounded-square ability tile with its own painted background (deep forest green gradient) and a thin ornate gold border; the effect inside fills the tile. TRANSPARENT background outside the tiles (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no grid lines. Draw a 3x3 grid of 9 separate square tiles, evenly spaced, each centered in its own cell and filling about 80% of the cell, with clear transparent gaps between tiles so none of them touch. Tiles in reading order (left to right, top to bottom): 1. two arrows flying side by side. 2. a fan of five arrows spreading out. 3. a hawk eye with a golden iris and a crosshair. 4. an arrow piercing straight through an armor plate. 5. a crosshair scope locked on a target with a single bright arrow. 6. many arrows raining down from the sky. 7. a blazing arrow like a meteor with a fiery tail. 8. a green poison gas cloud forming a skull shape. 9. a shadowy rogue dashing with daggers leaving purple afterimages."
+  "prompt": ""
  },
  {
   "name": "skills__mage",
@@ -366,7 +366,7 @@
    "k_bolt",
    "k_skeleton"
   ],
-  "prompt": "Please generate an image. Fantasy RPG skill ability icons, hand-painted style with clean dark outlines, vibrant glowing magical colors, matching a cute chibi fantasy game art style. Each icon is a rounded-square ability tile with its own painted background (deep blue and violet gradient) and a thin ornate gold border; the effect inside fills the tile. TRANSPARENT background outside the tiles (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no grid lines. Draw a 3x3 grid of 9 separate square tiles, evenly spaced, each centered in its own cell and filling about 80% of the cell, with clear transparent gaps between tiles so none of them touch. Tiles in reading order (left to right, top to bottom): 1. a blazing fireball. 2. an icy frost explosion ring of sharp ice shards. 3. a lightning bolt chaining between three points. 4. a glowing blue arcane barrier with runes. 5. a huge flaming meteor falling. 6. a swirling blizzard with snowflakes and ice. 7. fire, ice and lightning swirling together in a vortex. 8. a dark purple shadow bolt with green poison wisps. 9. a skeleton warrior rising from a purple summoning circle."
+  "prompt": ""
  },
  {
   "name": "skills__cleric",
@@ -382,7 +382,7 @@
    "q_hammer",
    "q_condemn"
   ],
-  "prompt": "Please generate an image. Fantasy RPG skill ability icons, hand-painted style with clean dark outlines, vibrant glowing magical colors, matching a cute chibi fantasy game art style. Each icon is a rounded-square ability tile with its own painted background (warm gold and ivory gradient) and a thin ornate gold border; the effect inside fills the tile. TRANSPARENT background outside the tiles (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no grid lines. Draw a 3x3 grid of 9 separate square tiles, evenly spaced, each centered in its own cell and filling about 80% of the cell, with clear transparent gaps between tiles so none of them touch. Tiles in reading order (left to right, top to bottom): 1. a sphere of holy light with sparkles. 2. two open hands holding a soft green and gold healing light. 3. a golden blessing halo with light descending. 4. a radiant burst of holy light in all directions. 5. a pair of white angel wings wrapped around a glow. 6. three beams of holy light descending from the sky. 7. a glowing angel with spread wings descending. 8. a golden holy hammer with a radiant impact. 9. golden scales of judgment with a red glow."
+  "prompt": ""
  },
  {
   "name": "skills__extra",
@@ -393,6 +393,44 @@
    "k_doom",
    "q_wrath"
   ],
-  "prompt": "Please generate an image. Fantasy RPG skill ability icons, hand-painted style with clean dark outlines, vibrant glowing magical colors, matching a cute chibi fantasy game art style. Each icon is a rounded-square ability tile with its own painted background (each tile uses the background color noted) and a thin ornate gold border; the effect inside fills the tile. TRANSPARENT background outside the tiles (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no grid lines. Draw a 2x2 grid of 4 separate square tiles, evenly spaced, each centered in its own cell and filling about 80% of the cell, with clear transparent gaps between tiles so none of them touch. Tiles in reading order (left to right, top to bottom): 1. a glowing holy sanctuary circle with pillars of light (gold background). 2. a storm of many flying dark blades (dark purple background). 3. a dark vortex with a glowing evil eye raining shadows (deep purple background). 4. many golden lightning bolts striking down from storm clouds (dark gold background)."
+  "prompt": ""
+ },
+ {
+  "name": "eskills__a",
+  "grid": 3,
+  "cells": [
+   "e_bite",
+   "e_poison",
+   "e_fire",
+   "e_frost",
+   "e_shock",
+   "e_dark",
+   "e_heal",
+   "boss_slam",
+   "boss_enrage"
+  ],
+  "prompt": "Please generate an image. Fantasy RPG enemy skill ability icons, hand-painted style with clean dark outlines, vibrant glowing colors, menacing but cute chibi fantasy game art style. Each icon is a rounded-square ability tile with its own painted dark background (deep blood-red to black gradient) and a thin jagged dark-iron border with small spikes; the effect inside fills the tile. TRANSPARENT background outside the tiles (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no grid lines. Draw a 3x3 grid of 9 separate square tiles, evenly spaced, each centered in its own cell and filling about 80% of the cell, with clear transparent gaps between tiles so none of them touch. Tiles in reading order (left to right, top to bottom): 1. sharp monster fangs biting with motion lines. 2. green venom dripping from a fang. 3. a monster breathing a stream of fire. 4. an icy claw swipe with frost crystals. 5. a crackling yellow electric shock spark. 6. a dark purple shadow impact burst. 7. a monster heart glowing with green regeneration light. 8. a giant fist slamming the ground with shockwave cracks. 9. a furious red monster eye with a burning rage aura."
+ },
+ {
+  "name": "eskills__b",
+  "grid": 2,
+  "cells": [
+   "boss_shield",
+   "boss_regen",
+   "boss_firenova",
+   "boss_frostbreath"
+  ],
+  "prompt": "Please generate an image. Fantasy RPG enemy skill ability icons, hand-painted style with clean dark outlines, vibrant glowing colors, menacing but cute chibi fantasy game art style. Each icon is a rounded-square ability tile with its own painted dark background (deep blood-red to black gradient) and a thin jagged dark-iron border with small spikes; the effect inside fills the tile. TRANSPARENT background outside the tiles (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no grid lines. Draw a 2x2 grid of 4 separate square tiles, evenly spaced, each centered in its own cell and filling about 80% of the cell, with clear transparent gaps between tiles so none of them touch. Tiles in reading order (left to right, top to bottom): 1. a dark spiked magic barrier shield. 2. glowing green vines and leaves regrowing. 3. an explosion ring of fire. 4. a dragon head breathing an icy blast."
+ },
+ {
+  "name": "eskills__c",
+  "grid": 2,
+  "cells": [
+   "boss_thunder",
+   "boss_void",
+   "boss_poisoncloud",
+   "boss_curse"
+  ],
+  "prompt": "Please generate an image. Fantasy RPG enemy skill ability icons, hand-painted style with clean dark outlines, vibrant glowing colors, menacing but cute chibi fantasy game art style. Each icon is a rounded-square ability tile with its own painted dark background (deep blood-red to black gradient) and a thin jagged dark-iron border with small spikes; the effect inside fills the tile. TRANSPARENT background outside the tiles (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no grid lines. Draw a 2x2 grid of 4 separate square tiles, evenly spaced, each centered in its own cell and filling about 80% of the cell, with clear transparent gaps between tiles so none of them touch. Tiles in reading order (left to right, top to bottom): 1. massive thunderbolts striking from dark storm clouds. 2. a black hole vortex devouring light. 3. a toxic cloud of mushroom spores. 4. a glowing teal ancient eye hieroglyph curse with swirling sand."
  }
 ]

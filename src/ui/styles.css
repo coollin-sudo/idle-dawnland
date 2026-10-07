@@ -374,6 +374,7 @@ h3 .count { color: var(--muted); font-weight: 400; font-size: 12px; }
 .codex .m { padding: 6px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); text-align: center; }
 .codex .m img { width: 64px; height: 64px; }
 .codex .m.unknown img { filter: brightness(0) opacity(.5); }
+.codex .msk { display: flex; justify-content: center; gap: 3px; margin-top: 3px; font-size: 12px; }
 .codex .m .nm { font-size: 11.5px; font-weight: 700; line-height: 1.2; }
 .codex .m .stars { color: var(--gold); font-size: 11px; }
 

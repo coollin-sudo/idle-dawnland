@@ -10,7 +10,8 @@ import { CLASSES } from '@/data/classes';
 import { itemIcon, monsterThumb } from '@/render/icons';
 import { codexTiers } from '@/systems/hero';
 import { g } from '../store';
-import { NpcHeader } from '../common';
+import { NpcHeader, SkillIcon } from '../common';
+import { getSkill } from '@/data/skills';
 
 type Sub = 'ach' | 'codex' | 'legend' | 'records';
 
@@ -73,6 +74,9 @@ function Codex() {
               <div class="nm">{n ? m.name : '？？？'}</div>
               <div class="stars">{'★'.repeat(stars)}{'☆'.repeat(3 - stars)}</div>
               <div class="tiny muted">{fmt(n)}</div>
+              {n > 0 && m.skills && m.skills.length > 0 && (
+                <div class="msk">{m.skills.map(id => <span title={getSkill(id).name + '：' + getSkill(id).desc}><SkillIcon def={getSkill(id)} size={18} /></span>)}</div>
+              )}
             </div>
           );
         })}
