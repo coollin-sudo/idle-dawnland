@@ -1,5 +1,6 @@
 import { ELEMENT_COLOR, type Element } from '@/core/stats';
 import { alpha, clamp01, easeIn, easeOut, ellipse, glow, lerp, shade, star, type Ctx } from './draw';
+import { vfxImage } from './images';
 
 // =====================================================================
 // 粒子
@@ -163,6 +164,8 @@ export class Projectile implements Fx {
     public x0: number, public y0: number, public x1: number, public y1: number,
     public dur: number, public kind: 'arrow' | 'orb' | 'blade' | 'spit', public color: string, public size: number,
     private parts: Particles, public arc = 0, public onHit?: () => void,
+    /** 美術貼圖（art/vfx/）與繪製寬度；有圖時取代程式繪製的外觀 */
+    public sprite?: string, public spriteSize = 40, public spin = 0,
   ) {}
   pos(k: number) {
     const x = lerp(this.x0, this.x1, k);
@@ -184,6 +187,15 @@ export class Projectile implements Fx {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(ang);
+    const img = this.sprite ? vfxImage(this.sprite) : null;
+    if (img) {
+      if (this.spin) ctx.rotate(this.t * this.spin);
+      const w = this.spriteSize, h = (img.height / img.width) * w;
+      // 貼圖的「前端」朝右，畫在略偏前方讓尾焰拖在後面
+      ctx.drawImage(img, -w * 0.62, -h / 2, w, h);
+      ctx.restore();
+      return;
+    }
     switch (this.kind) {
       case 'arrow':
         ctx.strokeStyle = alpha('#ffffff', 0.5);
@@ -365,6 +377,8 @@ export class Falling implements Fx {
   constructor(
     public x: number, public y1: number, public dur: number, public kind: 'meteor' | 'hammer' | 'star' | 'arrow' | 'ice',
     public color: string, private parts: Particles, public onLand?: () => void, public size = 1,
+    /** 美術貼圖、寬度與旋轉（預設朝下） */
+    public sprite?: string, public spriteSize = 60, public spriteRot = 0,
   ) {}
   update() {
     const k = clamp01(this.t / this.dur);
@@ -382,6 +396,14 @@ export class Falling implements Fx {
     const [x, y] = this.pos(k);
     ctx.save();
     ctx.translate(x, y);
+    const img = this.sprite ? vfxImage(this.sprite) : null;
+    if (img) {
+      ctx.rotate(this.spriteRot);
+      const w = this.spriteSize, h = (img.height / img.width) * w;
+      ctx.drawImage(img, -w / 2, -h / 2, w, h);
+      ctx.restore();
+      return;
+    }
     ctx.scale(this.size, this.size);
     switch (this.kind) {
       case 'meteor':
@@ -474,6 +496,51 @@ export class Bubble implements Fx {
     ctx.fillStyle = g;
     ellipse(ctx, this.x, this.y, r, r);
     ctx.fill();
+    ctx.restore();
+  }
+}
+
+/** 美術特效貼圖：位置固定，依時間縮放、旋轉、淡入淡出 */
+export interface SpriteOpts {
+  size: number;
+  dur?: number;
+  rot?: number;
+  spin?: number;
+  grow?: [number, number];
+  /** 'out'：快速出現後淡出；'inout'：淡入淡出 */
+  fade?: 'out' | 'inout';
+  additive?: boolean;
+  /** 垂直壓扁（地面上的魔法陣等） */
+  squash?: number;
+  vy?: number;
+  flip?: boolean;
+  alpha?: number;
+  /** 錨點：center（預設）或 bottom（底部對齊 y） */
+  anchor?: 'center' | 'bottom';
+}
+
+export class SpriteFx implements Fx {
+  t = 0;
+  dur: number;
+  constructor(public name: string, public x: number, public y: number, public o: SpriteOpts) {
+    this.dur = o.dur ?? 0.4;
+  }
+  draw(ctx: Ctx) {
+    const img = vfxImage(this.name);
+    if (!img) return;
+    const k = clamp01(this.t / this.dur);
+    const [g0, g1] = this.o.grow ?? [0.75, 1.1];
+    const s = lerp(g0, g1, easeOut(k));
+    const a = (this.o.fade === 'inout' ? Math.sin(k * Math.PI) : k < 0.12 ? k / 0.12 : 1 - (k - 0.12) / 0.88) * (this.o.alpha ?? 1);
+    const w = this.o.size * s;
+    const h = (img.height / img.width) * w * (this.o.squash ?? 1);
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, a));
+    if (this.o.additive) ctx.globalCompositeOperation = 'lighter';
+    ctx.translate(this.x, this.y + (this.o.vy ?? 0) * this.t);
+    ctx.rotate((this.o.rot ?? 0) + (this.o.spin ?? 0) * this.t);
+    if (this.o.flip) ctx.scale(-1, 1);
+    ctx.drawImage(img, -w / 2, this.o.anchor === 'bottom' ? -h : -h / 2, w, h);
     ctx.restore();
   }
 }

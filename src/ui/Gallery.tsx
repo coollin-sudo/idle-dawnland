@@ -5,7 +5,8 @@ import { ADVANCES, CLASSES } from '@/data/classes';
 import { paintMonster } from '@/render/monsterPainter';
 import { paintHero } from '@/render/heroPainter';
 import type { Archetype, HeroLook } from '@/core/types';
-import { artUrl } from '@/render/images';
+import { artUrl, vfxImage } from '@/render/images';
+import { VFX_SPRITES } from '@/render/scene';
 
 /** 美術檢視頁（網址加上 #gallery）：大尺寸播放所有角色與怪物的動畫 */
 function Cell({ name, art, draw }: { name: string; art?: string | null; draw: (ctx: CanvasRenderingContext2D, t: number, attack: number) => void }) {
@@ -61,6 +62,20 @@ export function Gallery() {
           const s = 130 / h;
           return <Cell name={m.name} art={artUrl(`art/monsters/${m.id}`)} draw={(ctx, t, a) => { ctx.scale(s, s); paintMonster(ctx, m.archetype as Archetype, m.palette, m.features, { t, attack: a, cast: 0, seed: 1 }); }} />;
         })}
+      </div>
+      <h2 style={{ marginTop: '16px' }}>特效</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: '8px' }}>
+        {VFX_SPRITES.map(n => <Cell name={n} draw={(ctx, t) => {
+          const img = vfxImage(n);
+          if (!img) return;
+          const k = (t % 1.2) / 0.6;
+          if (k > 1) return;
+          const s = 0.6 + 0.5 * (1 - (1 - k) * (1 - k));
+          ctx.globalAlpha = k < 0.15 ? k / 0.15 : 1 - (k - 0.15) / 0.85;
+          const w = 120 * s, h = (img.height / img.width) * w;
+          ctx.drawImage(img, -w / 2, -70 - h / 2, w, h);
+          ctx.globalAlpha = 1;
+        }} />)}
       </div>
       <h2 style={{ marginTop: '16px' }}>寵物</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: '8px' }}>

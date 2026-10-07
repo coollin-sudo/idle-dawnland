@@ -11,9 +11,9 @@ import { STATUSES } from '@/data/statuses';
 import { RARITIES } from '@/data/items';
 import { Background, GROUND_Y, VIEW_H, VIEW_W } from './background';
 import { alpha, clamp01, easeOut, glow, lerp, rrect, type Ctx } from './draw';
-import { Beam, Bubble, Burst, Falling, Lightning, Particles, Pillar, Projectile, Ring, Slash, Texts, Vortex, type Fx } from './effects';
+import { Beam, Bubble, Burst, Falling, Lightning, Particles, Pillar, Projectile, Ring, Slash, SpriteFx, Texts, Vortex, type Fx, type SpriteOpts } from './effects';
 import { paintHero, type Pose } from './heroPainter';
-import { artPending, classImage, monsterImage, petImage, preloadArt, skillImage } from './images';
+import { artPending, classImage, monsterImage, petImage, preloadArt, skillImage, vfxImage } from './images';
 import { ARCH_HEIGHT, paintMonster } from './monsterPainter';
 
 interface Actor {
@@ -40,6 +40,13 @@ interface Actor {
   artWait: number;
 }
 
+/** 戰鬥特效貼圖（public/art/vfx/） */
+export const VFX_SPRITES = [
+  'arrow', 'fireball', 'iceshard', 'shadowbolt', 'holyorb', 'arcaneorb', 'dagger', 'poisonglob', 'meteor',
+  'slash', 'slash_red', 'claw', 'explosion', 'frostburst', 'holyburst', 'shadowburst', 'spark', 'hitstar',
+  'poisoncloud', 'summoncircle', 'shieldbubble', 'heal', 'buffaura', 'vortex', 'whirlwind', 'shockwave', 'firebreath',
+  'lightpillar', 'lightningbolt', 'hammer', 'icering', 'blizzard', 'star', 'skullcurse', 'rage', 'bashstars',
+];
 const SKELETON: MonsterDef = { id: 'skeleton_summon', name: '骷髏戰士', archetype: 'undead', family: 'undead', palette: ['#e8e2d0', '#4a3a6a', '#b67bff'], features: ['sword'], dmgType: 'magic', element: 'shadow' };
 
 export class BattleScene {
@@ -73,6 +80,8 @@ export class BattleScene {
   }
 
   bind(game: Game) {
+    // 特效貼圖數量不多，開場就全部載入，避免第一次施放時沒有圖
+    preloadArt(VFX_SPRITES.map(n => `art/vfx/${n}`));
     this.unsubs.forEach(u => u());
     this.game = game;
     this.actors.clear();
@@ -303,7 +312,7 @@ export class BattleScene {
     const delay = (t: Actor, d: number) => { t.delayUntil = Math.max(t.delayUntil, this.time + d); };
     const fx = e.fx as FxKey;
 
-    const projectile = (kind: 'arrow' | 'orb' | 'blade' | 'spit', size: number, c = color, arc = 0, onHit?: (t: Actor) => void) => {
+    const projectile = (kind: 'arrow' | 'orb' | 'blade' | 'spit', size: number, c = color, arc = 0, onHit?: (t: Actor) => void, sprite?: string, spriteSize = 40) => {
       for (const t of targets) {
         const [tx, ty] = this.center(t);
         const d = travel(Math.abs(tx - sx));
@@ -311,51 +320,70 @@ export class BattleScene {
         this.fxs.push(new Projectile(sx + dirX * 20, sy - 6, tx, ty, d, kind, c, size, this.parts, arc, () => {
           this.parts.burst(tx, ty, 8, { color: c, shape: 'spark', speed: 180, additive: true, size: 2.5 });
           onHit?.(t);
-        }));
+        }, sprite, spriteSize));
       }
     };
     const onEach = (fn: (t: Actor, x: number, y: number) => void) => { for (const t of targets) { const [x, y] = this.center(t); fn(t, x, y); } };
+    /** 有美術貼圖就加上貼圖特效並回傳 true，沒有則回傳 false（呼叫端改用程式繪製） */
+    const sp = (name: string, x: number, y: number, o: SpriteOpts) => {
+      if (!vfxImage(name)) return false;
+      this.fxs.push(new SpriteFx(name, x, y, o));
+      return true;
+    };
+    const flip = dirX < 0;
+    const skillId = e.skill?.id ?? '';
 
     switch (fx) {
       case 'slash':
       case 'bite':
       case 'claw':
         onEach((_t, x, y) => {
+          if (fx === 'claw' || fx === 'bite') {
+            if (sp('claw', x, y, { size: 64, dur: 0.26, flip, grow: [0.8, 1.05] })) return;
+          } else if (sp('slash', x - dirX * 6, y, { size: 84, dur: 0.24, flip, rot: -0.25 * dirX, grow: [0.7, 1.08] })) return;
           if (fx === 'claw') for (let i = 0; i < 3; i++) this.fxs.push(new Slash(x - 10 + i * 8, y - 4, 26, -2.2 * dirX, -0.9 * dirX, '#ffffff', 0.22, 3));
           else this.fxs.push(new Slash(x - dirX * 10, y, 34, dirX > 0 ? -2.3 : -0.8, dirX > 0 ? 0.7 : 2.3, fx === 'bite' ? '#ffd0d0' : '#ffffff', 0.26, 8));
         });
         break;
       case 'heavy':
         onEach((_t, x, y) => {
-          this.fxs.push(new Slash(x, y, 46, -2.6, 0.9, color === '#e8e2d4' ? '#ffe9b0' : color, 0.32, 14));
+          if (!sp('slash_red', x, y, { size: 130, dur: 0.32, flip, rot: -0.35 * dirX, grow: [0.7, 1.1] }))
+            this.fxs.push(new Slash(x, y, 46, -2.6, 0.9, color === '#e8e2d4' ? '#ffe9b0' : color, 0.32, 14));
           this.parts.burst(x, y, 14, { color: '#ffe9b0', shape: 'spark', speed: 260, additive: true, size: 3 });
         });
         this.shake(5);
         break;
       case 'sweep':
-        onEach((_t, x, y) => this.fxs.push(new Slash(x, y, 50, -2.8, 0.4, '#e8f4ff', 0.3, 12)));
+        onEach((_t, x, y) => {
+          if (!sp('slash', x, y, { size: 140, dur: 0.3, flip, squash: 0.75, grow: [0.6, 1.1] }))
+            this.fxs.push(new Slash(x, y, 50, -2.8, 0.4, '#e8f4ff', 0.3, 12));
+        });
         break;
       case 'whirl':
-        this.fxs.push(new Ring(src.x, src.y - 30, 20, 170, '#ffe9b0', 0.5, 10, 0.5));
-        onEach((_t, x, y) => this.fxs.push(new Slash(x, y, 40, 0, Math.PI * 2, '#ffffff', 0.4, 8)));
+        if (!sp('whirlwind', src.x + dirX * 40, src.y - 50, { size: 180, dur: 0.55, fade: 'inout', grow: [0.8, 1.2] }))
+          this.fxs.push(new Ring(src.x, src.y - 30, 20, 170, '#ffe9b0', 0.5, 10, 0.5));
+        onEach((_t, x, y) => {
+          if (!sp('slash', x, y, { size: 90, dur: 0.4, spin: 9 * dirX, grow: [0.8, 1] }))
+            this.fxs.push(new Slash(x, y, 40, 0, Math.PI * 2, '#ffffff', 0.4, 8));
+        });
         this.shake(4);
         break;
       case 'bash':
         onEach((_t, x, y) => {
-          this.fxs.push(new Burst(x, y, 50, '#ffe9b0', 0.3));
+          if (!sp('bashstars', x, y - 10, { size: 90, dur: 0.45, grow: [0.6, 1.1] })) this.fxs.push(new Burst(x, y, 50, '#ffe9b0', 0.3));
           this.parts.burst(x, y - 20, 6, { color: '#ffe35c', shape: 'star', speed: 90, size: 3 });
         });
         this.shake(6);
         break;
       case 'arrow':
       case 'multiarrow':
-        projectile('arrow', 4, color === '#e8e2d4' ? '#c8d8ff' : color);
+        projectile('arrow', 4, color === '#e8e2d4' ? '#c8d8ff' : color, 0, undefined, 'arrow', 46);
         break;
       case 'snipe':
         onEach((t, x, y) => {
           delay(t, 0.06);
           this.fxs.push(new Beam(sx + 20, sy - 6, x, y, '#fff2c8', 0.3, 8));
-          this.fxs.push(new Burst(x, y, 60, '#fff2c8', 0.4));
+          if (!sp('hitstar', x, y, { size: 100, dur: 0.4, grow: [0.5, 1.1] })) this.fxs.push(new Burst(x, y, 60, '#fff2c8', 0.4));
         });
         this.shake(5);
         break;
@@ -364,7 +392,7 @@ export class BattleScene {
           const t = targets[i % Math.max(1, targets.length)];
           if (!t) break;
           const x = t.x + (Math.random() - 0.5) * 70;
-          this.fxs.push(new Falling(x, t.y - 20, 0.3 + Math.random() * 0.25, 'arrow', '#ffffff', this.parts));
+          this.fxs.push(new Falling(x, t.y - 20, 0.3 + Math.random() * 0.25, 'arrow', '#ffffff', this.parts, undefined, 1, 'arrow', 40, Math.PI / 2 - 0.25));
         }
         for (const t of targets) delay(t, 0.35);
         break;
@@ -373,36 +401,53 @@ export class BattleScene {
       case 'shadowbolt':
       case 'holy': {
         if (fx === 'holy' && src.unit.side === 'hero' && e.skill) {
-          onEach((t, x, y) => { delay(t, 0.12); this.fxs.push(new Pillar(x, t.y, 26, '#fff2a8', 0.55)); this.parts.burst(x, y, 10, { color: '#fff2a8', shape: 'star', speed: 120, additive: true }); });
+          onEach((t, x, y) => {
+            delay(t, 0.12);
+            if (!sp('lightpillar', x, t.y + 6, { size: 110, dur: 0.6, fade: 'inout', anchor: 'bottom', grow: [0.8, 1], additive: true }))
+              this.fxs.push(new Pillar(x, t.y, 26, '#fff2a8', 0.55));
+            this.parts.burst(x, y, 10, { color: '#fff2a8', shape: 'star', speed: 120, additive: true });
+          });
           break;
         }
         const c = fx === 'fireball' ? '#ff8a3a' : fx === 'shadowbolt' ? '#b67bff' : fx === 'holy' ? '#fff2a8' : color === '#e8e2d4' ? '#9ad0ff' : color;
+        const sprite = fx === 'fireball' ? 'fireball' : fx === 'shadowbolt' ? 'shadowbolt' : fx === 'holy' ? 'holyorb' : 'arcaneorb';
+        const impact = fx === 'fireball' ? 'explosion' : fx === 'shadowbolt' ? 'shadowburst' : fx === 'holy' ? 'holyburst' : 'spark';
         projectile('orb', fx === 'fireball' || fx === 'shadowbolt' ? 7 : 5, c, fx === 'magic' ? 20 : 0, t => {
           const [x, y] = this.center(t);
-          this.fxs.push(new Burst(x, y, fx === 'fireball' ? 60 : 40, c, 0.35));
-        });
+          if (!sp(impact, x, y, { size: fx === 'fireball' ? 110 : 80, dur: 0.38, grow: [0.5, 1.1] }))
+            this.fxs.push(new Burst(x, y, fx === 'fireball' ? 60 : 40, c, 0.35));
+        }, sprite, fx === 'fireball' ? 64 : fx === 'shadowbolt' ? 54 : 38);
         break;
       }
       case 'meteor': {
         const cx = targets.length ? targets.reduce((s, t) => s + t.x, 0) / targets.length : 700;
         for (const t of targets) delay(t, 0.45);
         this.fxs.push(new Falling(cx, GROUND_Y - 30, 0.45, 'meteor', '#ff8a3a', this.parts, () => {
+          if (!sp('explosion', cx, GROUND_Y - 70, { size: 300, dur: 0.6, grow: [0.5, 1.15] })) {
+            this.fxs.push(new Burst(cx, GROUND_Y - 40, 140, '#ffb04a', 0.5));
+          }
           this.fxs.push(new Ring(cx, GROUND_Y, 20, 200, '#ff8a3a', 0.6, 12));
-          this.fxs.push(new Burst(cx, GROUND_Y - 40, 140, '#ffb04a', 0.5));
           this.parts.burst(cx, GROUND_Y - 20, 40, { color: '#ff8a3a', shape: 'spark', speed: 380, additive: true, size: 3.5, gravity: 400 });
           this.parts.burst(cx, GROUND_Y - 10, 20, { color: 'rgba(80,60,60,0.6)', shape: 'smoke', speed: 80, size: 8, max: 1.2 });
           this.shake(10, 0.4);
-        }, 1.6));
+        }, 1.6, 'meteor', 150, 0));
         break;
       }
-      case 'frost':
-        this.fxs.push(new Ring(src.unit.side === 'hero' ? 700 : src.x, GROUND_Y, 20, 260, '#bff0ff', 0.55, 10));
-        onEach((_t, x, y) => this.parts.burst(x, y, 12, { color: '#d8f4ff', shape: 'shard', speed: 160, size: 4 }));
+      case 'frost': {
+        const fxX = src.unit.side === 'hero' ? 700 : src.x;
+        if (!sp('icering', fxX, GROUND_Y - 30, { size: 420, dur: 0.7, squash: 0.55, grow: [0.4, 1.05] }))
+          this.fxs.push(new Ring(fxX, GROUND_Y, 20, 260, '#bff0ff', 0.55, 10));
+        onEach((_t, x, y) => {
+          sp('frostburst', x, y, { size: 80, dur: 0.4, grow: [0.5, 1.1] });
+          this.parts.burst(x, y, 12, { color: '#d8f4ff', shape: 'shard', speed: 160, size: 4 });
+        });
         break;
+      }
       case 'blizzard':
+        sp('blizzard', 740, 110, { size: 420, dur: 1.1, fade: 'inout', grow: [0.9, 1.05] });
         for (let i = 0; i < 26; i++) {
           const x = 560 + Math.random() * 360;
-          this.fxs.push(new Falling(x, GROUND_Y - 10 - Math.random() * 60, 0.3 + Math.random() * 0.5, 'ice', '#bff0ff', this.parts));
+          this.fxs.push(new Falling(x, GROUND_Y - 10 - Math.random() * 60, 0.3 + Math.random() * 0.5, 'ice', '#bff0ff', this.parts, undefined, 1, 'iceshard', 30, Math.PI / 2));
         }
         for (const t of targets) delay(t, 0.3);
         break;
@@ -411,8 +456,10 @@ export class BattleScene {
         if (fx === 'storm') {
           onEach((t, x) => {
             delay(t, 0.05);
-            this.fxs.push(new Lightning([[x + (Math.random() - 0.5) * 60, 0], [x, t.y - t.height * 0.4]], color, 0.35));
-            this.fxs.push(new Burst(x, t.y - t.height * 0.4, 50, color, 0.3));
+            const top = t.y - t.height * 0.4;
+            if (!sp('lightningbolt', x, top + 20, { size: 90, dur: 0.35, anchor: 'bottom', grow: [1, 1], additive: true }))
+              this.fxs.push(new Lightning([[x + (Math.random() - 0.5) * 60, 0], [x, top]], color, 0.35));
+            if (!sp('spark', x, top, { size: 90, dur: 0.3, grow: [0.5, 1.1] })) this.fxs.push(new Burst(x, top, 50, color, 0.3));
           });
           this.flash('#ffffff', 0.12);
           this.shake(6);
@@ -420,44 +467,59 @@ export class BattleScene {
           const pts: [number, number][] = [[sx + dirX * 20, sy - 10]];
           for (const t of targets.slice(0, 6)) pts.push(this.center(t) as [number, number]);
           this.fxs.push(new Lightning(pts, '#ffe35c', 0.35));
+          onEach((_t, x, y) => sp('spark', x, y, { size: 70, dur: 0.3, grow: [0.5, 1.1] }));
         }
         break;
       }
       case 'doom': {
         const cx = targets.length ? targets.reduce((s, t) => s + t.x, 0) / targets.length : 700;
-        this.fxs.push(new Vortex(cx, GROUND_Y, 220, '#b67bff', 1));
+        if (!sp('vortex', cx, GROUND_Y - 10, { size: 460, dur: 1.1, fade: 'inout', squash: 0.6, spin: 0.6 }))
+          this.fxs.push(new Vortex(cx, GROUND_Y, 220, '#b67bff', 1));
+        onEach((_t, x, y) => sp('skullcurse', x, y - 50, { size: 70, dur: 1, fade: 'inout', vy: -20 }));
         this.parts.burst(cx, GROUND_Y - 40, 40, { color: '#b67bff', shape: 'circle', speed: 200, additive: true, size: 3, max: 1 });
         this.flash('#2a0a3a', 0.3);
         this.shake(8, 0.5);
         break;
       }
-      case 'nova':
+      case 'nova': {
+        const el = e.element;
+        const name = el === 'fire' ? 'explosion' : el === 'ice' ? 'frostburst' : el === 'shadow' ? 'shadowburst' : el === 'lightning' ? 'spark' : 'holyburst';
+        if (!sp(name, src.x, src.y - 40, { size: 300, dur: 0.6, grow: [0.3, 1.1] })) this.fxs.push(new Burst(src.x, src.y - 40, 120, color, 0.4));
         this.fxs.push(new Ring(src.x, src.y - 20, 20, 320, color === '#e8e2d4' ? '#fff2a8' : color, 0.6, 14, 0.4));
-        this.fxs.push(new Burst(src.x, src.y - 40, 120, color, 0.4));
         this.shake(5);
         break;
+      }
       case 'hammer':
         onEach((t, x) => {
           delay(t, 0.3);
           this.fxs.push(new Falling(x, t.y - t.height * 0.6, 0.3, 'hammer', '#fff2a8', this.parts, () => {
+            sp('holyburst', x, t.y - 40, { size: 130, dur: 0.4, grow: [0.5, 1.1] });
             this.fxs.push(new Ring(x, t.y, 10, 90, '#fff2a8', 0.4, 8));
             this.parts.burst(x, t.y - 30, 18, { color: '#fff2a8', shape: 'star', speed: 200, additive: true });
             this.shake(7);
-          }));
+          }, 1, 'hammer', 90, 0));
         });
         break;
       case 'heal':
-        this.fxs.push(new Ring(src.x, src.y, 10, 70, '#7dff9a', 0.6, 5));
+        if (!sp('heal', src.x, src.y - src.height * 0.5, { size: 130, dur: 0.9, fade: 'inout', vy: -25, grow: [0.9, 1.1] }))
+          this.fxs.push(new Ring(src.x, src.y, 10, 70, '#7dff9a', 0.6, 5));
         for (let i = 0; i < 14; i++) this.parts.emit({ x: src.x + (Math.random() - 0.5) * 50, y: src.y - Math.random() * 30, vy: -60 - Math.random() * 40, shape: 'star', color: '#7dff9a', size: 3, max: 1, additive: true });
         break;
       case 'shield':
-        this.fxs.push(new Bubble(src.x, src.y - src.height * 0.5, src.height * 0.8, '#8ad0ff', 0.8));
+        if (!sp('shieldbubble', src.x, src.y - src.height * 0.5, { size: src.height * 1.6, dur: 0.9, fade: 'inout', grow: [0.85, 1.05], alpha: 0.85 }))
+          this.fxs.push(new Bubble(src.x, src.y - src.height * 0.5, src.height * 0.8, '#8ad0ff', 0.8));
         break;
-      case 'buff':
-        this.fxs.push(new Ring(src.x, src.y, 10, 60, '#ffd34a', 0.6, 4));
+      case 'buff': {
+        const rage = /enrage|ragegod|bloodlust/.test(skillId);
+        if (!sp(rage ? 'rage' : 'buffaura', src.x, src.y, { size: Math.max(110, src.height * 1.3), dur: 0.9, fade: 'inout', anchor: 'bottom', grow: [0.9, 1.05] }))
+          this.fxs.push(new Ring(src.x, src.y, 10, 60, '#ffd34a', 0.6, 4));
         break;
+      }
       case 'poison':
-        onEach((_t, x, y) => this.parts.burst(x, y, 16, { color: 'rgba(122,209,106,0.55)', shape: 'smoke', speed: 60, size: 9, max: 1.2 }));
+        onEach((_t, x, y) => {
+          if (!sp('poisoncloud', x, y, { size: 130, dur: 1, fade: 'inout', grow: [0.7, 1.15], alpha: 0.9 }))
+            this.parts.burst(x, y, 16, { color: 'rgba(122,209,106,0.55)', shape: 'smoke', speed: 60, size: 9, max: 1.2 });
+        });
         break;
       case 'blades':
         for (let i = 0; i < Math.min(8, targets.length * 3); i++) {
@@ -465,18 +527,27 @@ export class BattleScene {
           const [tx, ty] = this.center(t);
           const d = 0.12 + i * 0.03;
           delay(t, d);
-          this.fxs.push(new Projectile(sx, sy - 10 + (Math.random() - 0.5) * 30, tx, ty + (Math.random() - 0.5) * 20, d, 'blade', '#b67bff', 6, this.parts, 30));
+          this.fxs.push(new Projectile(sx, sy - 10 + (Math.random() - 0.5) * 30, tx, ty + (Math.random() - 0.5) * 20, d, 'blade', '#b67bff', 6, this.parts, 30, undefined, 'dagger', 40, 25));
         }
         break;
-      case 'summon':
-        this.fxs.push(new Vortex(src.unit.side === 'hero' ? 340 : src.x, GROUND_Y + 10, 60, '#b67bff', 0.8));
+      case 'summon': {
+        const x = src.unit.side === 'hero' ? 340 : src.x;
+        if (!sp('summoncircle', x, GROUND_Y + 6, { size: 170, dur: 0.9, fade: 'inout', squash: 0.6, spin: 0 }))
+          this.fxs.push(new Vortex(x, GROUND_Y + 10, 60, '#b67bff', 0.8));
         break;
+      }
       case 'spit':
-        projectile('spit', 6, '#7ad16a', 40);
+        projectile('spit', 6, '#7ad16a', 40, undefined, 'poisonglob', 34);
         break;
       case 'breath':
         onEach((t, x, y) => {
           delay(t, 0.2);
+          const fire = e.element === 'fire';
+          if (fire && sp('firebreath', (sx + x) / 2, (sy + y) / 2 - 10, { size: Math.abs(x - sx) + 60, dur: 0.6, fade: 'inout', flip, grow: [0.8, 1.05] })) return;
+          if (!fire && e.element === 'ice' && sp('frostburst', x, y, { size: 110, dur: 0.5, grow: [0.5, 1.1] })) {
+            sp('blizzard', (sx + x) / 2, (sy + y) / 2 - 10, { size: 200, dur: 0.6, fade: 'inout' });
+            return;
+          }
           for (let i = 0; i < 22; i++) {
             const k = Math.random();
             this.parts.emit({ x: sx + dirX * 30, y: sy - 20, vx: (x - sx) * (1.6 + k), vy: (y - sy + 20) * (1.6 + k) + (Math.random() - 0.5) * 60, size: 6, color, max: 0.5, additive: true, shape: 'circle' });
@@ -486,7 +557,8 @@ export class BattleScene {
       case 'slam':
         onEach((t, x) => {
           delay(t, 0.12);
-          this.fxs.push(new Ring(x, t.y, 10, 110, '#e8d8c0', 0.4, 8));
+          if (!sp('shockwave', x, t.y + 14, { size: 200, dur: 0.5, anchor: 'bottom', grow: [0.6, 1.1] }))
+            this.fxs.push(new Ring(x, t.y, 10, 110, '#e8d8c0', 0.4, 8));
           this.parts.burst(x, t.y, 10, { color: 'rgba(160,140,120,0.6)', shape: 'smoke', speed: 90, size: 6, max: 0.8 });
         });
         if (src.unit.boss) this.shake(8);

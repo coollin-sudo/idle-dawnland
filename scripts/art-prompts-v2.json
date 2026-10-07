@@ -432,5 +432,69 @@
    "boss_curse"
   ],
   "prompt": "Please generate an image. Fantasy RPG enemy skill ability icons, hand-painted style with clean dark outlines, vibrant glowing colors, menacing but cute chibi fantasy game art style. Each icon is a rounded-square ability tile with its own painted dark background (deep blood-red to black gradient) and a thin jagged dark-iron border with small spikes; the effect inside fills the tile. TRANSPARENT background outside the tiles (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no grid lines. Draw a 2x2 grid of 4 separate square tiles, evenly spaced, each centered in its own cell and filling about 80% of the cell, with clear transparent gaps between tiles so none of them touch. Tiles in reading order (left to right, top to bottom): 1. massive thunderbolts striking from dark storm clouds. 2. a black hole vortex devouring light. 3. a toxic cloud of mushroom spores. 4. a glowing teal ancient eye hieroglyph curse with swirling sand."
+ },
+ {
+  "name": "vfx__a",
+  "grid": 3,
+  "cells": [
+   "arrow",
+   "fireball",
+   "iceshard",
+   "shadowbolt",
+   "holyorb",
+   "arcaneorb",
+   "dagger",
+   "poisonglob",
+   "meteor"
+  ],
+  "prompt": "Please generate an image. 2D game visual effect sprites (VFX) for a cute chibi fantasy RPG, hand-painted style, vibrant glowing colors, soft luminous glow, no characters, no creatures unless stated. TRANSPARENT background (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no frames, no grid lines. Draw a 3x3 grid of 9 separate effect sprites, evenly spaced, each centered in its own cell and filling about 75% of the cell, with clear transparent gaps so none of them touch. Sprites in reading order (left to right, top to bottom): 1. a wooden arrow with white feathers and a steel tip, perfectly horizontal, pointing right. 2. a blazing fireball flying right with a flame trail streaming to the left. 3. a sharp glowing ice crystal spear, horizontal, pointing right. 4. a dark purple shadow orb with smoky wisps trailing to the left. 5. a radiant golden holy light orb with sparkles. 6. a glowing blue arcane magic orb with small runes. 7. a steel throwing dagger with a purple glow, horizontal, pointing right. 8. a glob of green poison spit with droplets, moving right. 9. a flaming meteor rock falling diagonally down-right with a long fire trail to the upper left."
+ },
+ {
+  "name": "vfx__b",
+  "grid": 3,
+  "cells": [
+   "slash",
+   "slash_red",
+   "claw",
+   "explosion",
+   "frostburst",
+   "holyburst",
+   "shadowburst",
+   "spark",
+   "hitstar"
+  ],
+  "prompt": "Please generate an image. 2D game visual effect sprites (VFX) for a cute chibi fantasy RPG, hand-painted style, vibrant glowing colors, soft luminous glow, no characters, no creatures unless stated. TRANSPARENT background (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no frames, no grid lines. Draw a 3x3 grid of 9 separate effect sprites, evenly spaced, each centered in its own cell and filling about 75% of the cell, with clear transparent gaps so none of them touch. Sprites in reading order (left to right, top to bottom): 1. a wide white-silver crescent sword slash swoosh arc. 2. a heavy blood-red crescent slash swoosh arc. 3. three glowing white claw scratch marks. 4. a fiery orange explosion burst. 5. an icy blue frost explosion with ice shards. 6. a radiant golden-white light flare burst with rays. 7. a dark purple shadow explosion with smoke. 8. a crackling yellow-white electric spark impact. 9. a bright white impact star burst."
+ },
+ {
+  "name": "vfx__c",
+  "grid": 3,
+  "cells": [
+   "poisoncloud",
+   "summoncircle",
+   "shieldbubble",
+   "heal",
+   "buffaura",
+   "vortex",
+   "whirlwind",
+   "shockwave",
+   "firebreath"
+  ],
+  "prompt": "Please generate an image. 2D game visual effect sprites (VFX) for a cute chibi fantasy RPG, hand-painted style, vibrant glowing colors, soft luminous glow, no characters, no creatures unless stated. TRANSPARENT background (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no frames, no grid lines. Draw a 3x3 grid of 9 separate effect sprites, evenly spaced, each centered in its own cell and filling about 75% of the cell, with clear transparent gaps so none of them touch. Sprites in reading order (left to right, top to bottom): 1. a billowing toxic green poison cloud. 2. a glowing purple magic summoning circle lying on the ground, seen in perspective as a flat ellipse. 3. a translucent glowing blue and gold protective dome bubble. 4. soft green healing light with tiny leaves and sparkles rising upward. 5. a golden rising aura of light streaks and sparkles. 6. a swirling dark purple vortex portal lying on the ground, seen in perspective as a flat ellipse. 7. a whirlwind tornado of silver wind slashes. 8. a ground shockwave with cracked earth, flying rocks and a dust ring, seen from the side. 9. a cone of fire breath blowing to the right."
+ },
+ {
+  "name": "vfx__d",
+  "grid": 3,
+  "cells": [
+   "lightpillar",
+   "lightningbolt",
+   "hammer",
+   "icering",
+   "blizzard",
+   "star",
+   "skullcurse",
+   "rage",
+   "bashstars"
+  ],
+  "prompt": "Please generate an image. 2D game visual effect sprites (VFX) for a cute chibi fantasy RPG, hand-painted style, vibrant glowing colors, soft luminous glow, no characters, no creatures unless stated. TRANSPARENT background (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no frames, no grid lines. Draw a 3x3 grid of 9 separate effect sprites, evenly spaced, each centered in its own cell and filling about 75% of the cell, with clear transparent gaps so none of them touch. Sprites in reading order (left to right, top to bottom): 1. a tall vertical beam of golden holy light shining down from above. 2. a tall vertical jagged lightning bolt striking down. 3. a giant glowing golden hammer made of light, head pointing down. 4. a ring of sharp ice spikes erupting from the ground, seen in perspective. 5. a swirling storm cloud of snow and ice shards. 6. a glowing five-pointed golden star with sparkles. 7. a ghostly glowing purple skull curse mark. 8. fierce red rage flames aura. 9. a shield bash impact with small yellow stars spinning."
  }
 ]
