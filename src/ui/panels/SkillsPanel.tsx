@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { SKILL_SPECS, SPEC_RANK } from '@/data/skillSpecs';
 import { fmt } from '@/core/format';
 import { describeMod, ELEMENT_LABEL } from '@/core/stats';
 import { scale, type SkillDef, type SkillEffect } from '@/core/types';
@@ -6,7 +7,7 @@ import { ADVANCES } from '@/data/classes';
 import { classSkills, SKILL_MAX_RANK } from '@/data/skills';
 import { STATUSES } from '@/data/statuses';
 import { LOADOUT_UNLOCK } from '@/core/state';
-import { learnSkill, loadoutSlots, resetSkills, RESET_SKILLS_GOLD, setLoadout, swapLoadout } from '@/systems/progression';
+import { learnSkill, loadoutSlots, resetSkills, RESET_SKILLS_GOLD, setLoadout, swapLoadout, setSkillSpec } from '@/systems/progression';
 import { CIcon, SkillIcon, confirmModal } from '../common';
 import { g, refresh, uiTick } from '../store';
 
@@ -100,6 +101,20 @@ export function SkillsPanel() {
                   <div class="eff">{def.effects.map(e => effectText(e, showRank)).join('；')}</div>
                   {r > 0 && r < SKILL_MAX_RANK && <div class="tiny dim">下一級：{def.effects.map(e => effectText(e, r + 1)).join('；')}</div>}
                   <div class="tiny muted">{def.desc}</div>
+                  {SKILL_SPECS[def.id] && (
+                    <div class="specs">
+                      <span class="tiny muted">專精{r < SPEC_RANK ? `（Lv.${SPEC_RANK} 解鎖）` : '：'}</span>
+                      {SKILL_SPECS[def.id].map((sp, i) => {
+                        const on = h.skillSpecs?.[def.id] === i;
+                        return (
+                          <button class={'spec' + (on ? ' on' : '')} disabled={r < SPEC_RANK} title={sp.desc}
+                            onClick={() => { setSkillSpec(gm, def.id, on ? -1 : i); refresh(); }}>
+                            <b>{sp.name}</b><span>{sp.desc}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
                 <div class="col" style={{ gap: '4px' }}>
                   <button class="btn sm good" disabled={!!advLocked || lvLocked || h.skillPoints <= 0 || r >= SKILL_MAX_RANK} onClick={() => { learnSkill(gm, def.id); refresh(); }}>{r === 0 ? '學習' : '升級'}</button>

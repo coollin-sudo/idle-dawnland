@@ -1,4 +1,5 @@
 import { newGameState, SAVE_VERSION, defaultSettings } from '@/core/state';
+import { EXCLUSIVE_TIERS, TALENT_TREES } from '@/data/talents';
 import { STAR_NODES, starCost } from '@/data/meta';
 import type { GameState } from '@/core/types';
 
@@ -29,6 +30,13 @@ export function migrate(raw: unknown): GameState | null {
   const s = fill(template, raw);
   s.settings = { ...defaultSettings(), ...(s.settings ?? {}) };
   while (s.progress.best.length < 3) s.progress.best.push(-1);
+  // 天賦互斥層：舊存檔若同層點了多個，只保留點數最多的（其餘點數自動退回）
+  const tree = TALENT_TREES[s.hero.classId];
+  for (const tier of EXCLUSIVE_TIERS) {
+    const picked = tree.nodes.filter(n => n.tier === tier && (s.hero.talentRanks[n.id] ?? 0) > 0)
+      .sort((a, b) => (s.hero.talentRanks[b.id] ?? 0) - (s.hero.talentRanks[a.id] ?? 0));
+    for (const n of picked.slice(1)) delete s.hero.talentRanks[n.id];
+  }
   if (!s.rebirth.soulsEarned) {
     let spent = 0;
     for (const n of STAR_NODES) for (let r = 0; r < (s.rebirth.ranks[n.id] ?? 0); r++) spent += starCost(n, r);

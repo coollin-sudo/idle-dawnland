@@ -24,12 +24,23 @@ function ItemModalBody({ uid }: { uid: number }) {
   const act = (fn: () => void) => { fn(); refresh(); };
   return (
     <>
-      <div class="card" style={{ marginBottom: '10px' }}><ItemCard item={it} /></div>
-      {compareWith.length > 0 && (
-        <details>
-          <summary class="small muted" style={{ cursor: 'pointer' }}>目前裝備中（{compareWith.length}）</summary>
-          {compareWith.map(c => <div class="card" style={{ marginTop: '6px', opacity: 0.85 }}><ItemCard item={c} compare={false} /></div>)}
-        </details>
+      {compareWith.length > 0 ? (
+        // 直接並排比較：左邊是這件裝備，右邊是目前穿著的裝備
+        <div class="compare">
+          <div>
+            <div class="cmp-label">{f.where === 'inv' ? '背包中' : '這件裝備'}</div>
+            <div class="card"><ItemCard item={it} /></div>
+          </div>
+          <div>
+            <div class="cmp-label">目前裝備中</div>
+            {compareWith.map(c => <div class="card" style={{ marginBottom: '6px' }}><ItemCard item={c} compare={false} /></div>)}
+          </div>
+        </div>
+      ) : (
+        <div class="card" style={{ marginBottom: '10px' }}>
+          {f.where === 'inv' && <div class="cmp-label">目前這個部位沒有裝備</div>}
+          <ItemCard item={it} />
+        </div>
       )}
       <div class="actions">
         {f.where === 'inv' && it.slot === 'ring' && equippable && (

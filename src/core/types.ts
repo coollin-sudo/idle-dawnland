@@ -299,6 +299,8 @@ export interface HeroState {
   autoAlloc: boolean;
   skillPoints: number;
   skillRanks: Record<string, number>;
+  /** 技能專精：技能 id → 選擇的專精（0 或 1） */
+  skillSpecs: Record<string, number>;
   loadout: (string | null)[];
   talentRanks: Record<string, number>;
   hp: number;

@@ -297,3 +297,38 @@ describe('經濟', () => {
     expect(it.rarity).toBeGreaterThanOrEqual(3);
   });
 });
+
+describe('技能專精與天賦取捨', () => {
+  it('專精在 5 級後生效並改變技能運作', async () => {
+    const { applySpec, SKILL_SPECS } = await import('@/data/skillSpecs');
+    const base = getSkill('g_fireball');
+    expect(applySpec(base, 0, 4)).toBe(base);
+    const spread = applySpec(base, 0, 5);
+    const e = spread.effects[0] as { target: string; mult: readonly [number, number] };
+    expect(e.target).toBe('all');
+    expect(e.mult[0]).toBeCloseTo(2 * 0.55, 5);
+    // 每個英雄技能都有兩種專精
+    const hero = ALL_SKILLS.filter(s => s.classId !== 'enemy');
+    for (const s of hero) expect(SKILL_SPECS[s.id]?.length).toBe(2);
+  });
+
+  it('天賦終極層只能選一個；舊存檔多選時只保留點數最多的', async () => {
+    const { canTalent } = await import('@/systems/progression');
+    const { g } = makeGame();
+    const s = g.state;
+    s.hero.level = 120;
+    const tree = TALENT_TREES.warrior;
+    for (const n of tree.nodes.filter(n => n.tier < 4)) s.hero.talentRanks[n.id] = 2;
+    const top = tree.nodes.filter(n => n.tier === 5);
+    s.hero.talentRanks[top[0].id] = 1;
+    expect(canTalent(s, top[1].id)).toContain('只能選一個');
+    const raw = JSON.parse(JSON.stringify(s));
+    raw.hero.talentRanks[top[1].id] = 1;
+    const tier4 = tree.nodes.filter(n => n.tier === 4);
+    raw.hero.talentRanks[tier4[0].id] = 1; raw.hero.talentRanks[tier4[1].id] = 3;
+    const m = migrate(raw)!;
+    expect(top.filter(n => (m.hero.talentRanks[n.id] ?? 0) > 0).length).toBe(1);
+    expect(m.hero.talentRanks[tier4[1].id]).toBe(3);
+    expect(m.hero.talentRanks[tier4[0].id]).toBeUndefined();
+  });
+});

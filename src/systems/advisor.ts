@@ -1,4 +1,5 @@
 import type { Game } from '@/core/game';
+import { SKILL_SPECS, SPEC_RANK } from '@/data/skillSpecs';
 import { fineCraftPrice } from '@/core/formulas';
 import { TITLES } from '@/data/titles';
 import { ADVANCE_LEVEL } from '@/core/formulas';
@@ -48,6 +49,8 @@ export function advise(g: Game): Advice[] {
   if (s.cur.stones >= 20 && s.equipment.weapon && s.equipment.weapon.enh < 5) out.push({ id: 'enh', icon: '🔨', text: '強化石很多，去強化武器吧', tab: 'forge' });
   // 金幣很多時提醒可以花掉（精工打造、保護卷軸）
   if (s.cur.gold >= fineCraftPrice(s.hero.level) * 15) out.push({ id: 'gold', icon: '💰', text: '金幣很多，可以精工打造或買保護卷軸', tab: 'forge' });
+  const specReady = s.hero.loadout.filter(id => id && SKILL_SPECS[id] && (s.hero.skillRanks[id] ?? 0) >= SPEC_RANK && s.hero.skillSpecs?.[id] === undefined).length;
+  if (specReady) out.push({ id: 'spec', icon: '✨', text: `${specReady} 個技能可以選擇專精`, tab: 'skills' });
   const emptySockets = Object.values(s.equipment).some(it => it?.sockets?.includes(null));
   if (emptySockets && Object.values(s.jewels).some(n => n > 0)) out.push({ id: 'jewel', icon: '💠', text: '有魔晶可以鑲嵌', tab: 'forge' });
   if (!s.title && TITLES.some(t => t.unlocked(s))) out.push({ id: 'title', icon: '👑', text: '有稱號可以配戴', tab: 'collection' });

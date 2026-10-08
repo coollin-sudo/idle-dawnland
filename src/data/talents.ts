@@ -97,3 +97,5 @@ export const TALENT_TREES: Record<ClassId, TalentTree> = {
 
 /** 該層需要在整棵樹投入多少點才能解鎖 */
 export const TALENT_TIER_REQ = [0, 3, 7, 12, 18, 25];
+/** 這些層只能選一個節點（終極取捨，參考 WoW 熊貓人版的多選一天賦） */
+export const EXCLUSIVE_TIERS = [4, 5];

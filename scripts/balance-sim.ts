@@ -3,6 +3,7 @@
  * 用法：npm run sim -- [小時=48] [職業=all]
  */
 import { Game } from '@/core/game';
+import { SKILL_SPECS, SPEC_RANK } from '@/data/skillSpecs';
 import { newGameState } from '@/core/state';
 import type { AdvId, ClassId } from '@/core/types';
 import { advancesOf } from '@/data/classes';
@@ -28,6 +29,8 @@ const REBIRTH = process.argv.includes('--rebirth') || process.argv.includes('--l
 /** --long：模擬長期玩家（卡關就轉生、花星魂、打通後換更高難度） */
 const LONG = process.argv.includes('--long');
 const STALL_H = 6;
+/** --spec=0 / --spec=1：所有技能統一選第一或第二種專精（比較專精強度） */
+const SPEC = (() => { const a = process.argv.find(x => x.startsWith('--spec=')); return a ? Number(a.slice(7)) : undefined; })();
 
 function manage(g: Game) {
   const s = g.state;
@@ -71,6 +74,7 @@ function manage(g: Game) {
       starUpgrade(g, opts[0].n.id);
     }
   }
+  if (SPEC !== undefined) for (const id in s.hero.skillRanks) if (SKILL_SPECS[id] && s.hero.skillRanks[id] >= SPEC_RANK && s.hero.skillSpecs[id] !== SPEC) { s.hero.skillSpecs[id] = SPEC; g.heroChanged(); }
   // 天賦已在上面處理；寵物蛋
   for (const e of [...s.pets.eggs]) {
     if (e.readyAt === null) startHatch(g, e.uid);

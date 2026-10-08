@@ -1,6 +1,6 @@
 import { fmt } from '@/core/format';
 import { rich } from '../emoji';
-import { TALENT_TIER_REQ, TALENT_TREES } from '@/data/talents';
+import { EXCLUSIVE_TIERS, TALENT_TIER_REQ, TALENT_TREES } from '@/data/talents';
 import { talentSpent, talentTotal } from '@/systems/hero';
 import { canTalent, resetTalents, RESET_TALENT_GOLD, talentAvailable, talentUp } from '@/systems/progression';
 import { CIcon, confirmModal } from '../common';
@@ -24,7 +24,7 @@ export function TalentsPanel() {
       <div class="tree">
         {[0, 1, 2, 3, 4, 5].map(tier => (
           <>
-            <div class="tier-label">{TIER_NAMES[tier]}　{spent < TALENT_TIER_REQ[tier] ? `（需投入 ${TALENT_TIER_REQ[tier]} 點）` : ''}</div>
+            <div class="tier-label">{TIER_NAMES[tier]}　{spent < TALENT_TIER_REQ[tier] ? `（需投入 ${TALENT_TIER_REQ[tier]} 點）` : ''}{EXCLUSIVE_TIERS.includes(tier) && <span class="gold">　◆ 多選一：只能選擇其中一個</span>}</div>
             {tree.nodes.filter(n => n.tier === tier).sort((a, b) => a.col - b.col).map(n => {
               const r = s.hero.talentRanks[n.id] ?? 0;
               const why = canTalent(s, n.id);

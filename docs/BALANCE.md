@@ -9,6 +9,8 @@
 | 裝備預算制（item budget） | [WoW Itemization Formulas](https://wow.allakhazam.com/wiki/Itemization_Formulas_(WoW)) | 每件裝備依「物品等級 × 稀有度 × 部位」有固定預算，每種屬性有不同價格；高稀有度預算一定比較高（同等級紫裝約為綠裝 1.5 倍） |
 | 詞綴設計 | [Diablo IV 系統設計 Part II](https://news.blizzard.com/en-us/article/23230076/system-design-in-diablo-iv-part-ii) | 詞綴要對角色強度「有意義」、帶來取捨；力量來源要分散在等級、技能、天賦、裝備、終局系統 |
 | 放置遊戲數學 | [The Math of Idle Games I](https://www.gamedeveloper.com/design/the-math-of-idle-games-part-i)、[III](https://www.gamedeveloper.com/design/the-math-of-idle-games-part-iii)（AdVenture Capitalist 製作人） | 指數成長最終會追過任何多項式成長；進度要「有快有慢」；轉生獎勵約需多推 3～4 倍進度才翻倍 |
+| 有意義的選擇 | [Ghostcrawler 談熊貓人版天賦樹](https://www.engadget.com/2011-12-08-ghostcrawler-on-seeing-the-forest-for-the-talent-trees.html)、[Talent Trees: A Primer for Game Designers](https://code.tutsplus.com/lets-spec-into-talent-trees-a-primer-for-game-designers--gamedev-6691a) | 「+10% 與 +5% 二選一」不是選擇；選項要改變玩法、視情況而定；避免「只有第一點是選擇」的假選擇 |
+| 技能專精 | [Last Epoch 技能專精](https://maxroll.gg/last-epoch/resources/passives-and-skills) | 每個技能有自己的專精分支，可改變傷害類型、攻擊機制與觸發效果，先決定玩法再選節點 |
 | 遞移平衡與成本曲線 | Ian Schreiber & Brenda Romero《Game Balance》 | 越強的東西成本越高（遞移）；不同職業可以「各有所長」（非遞移），但整體進度要接近 |
 
 ## 在本遊戲中的套用
@@ -61,6 +63,12 @@
   - 保護卷軸可用金幣購買（`protectGoldPrice` = 3000 + 12×等級²，Lv70 約 6 萬）；全身強化到 +20 約需 480 張，約 40 小時收入。
   - 精工打造（`fineCraftPrice` = 4000 + 20×等級²，Lv70 約 10 萬）：只花金幣，物品等級 +3、保底史詩，同時提供後期的升級來源。
 - 強化石可一次購買 100 顆；金幣超過精工打造 15 次的價格時，冒險提示會提醒。
+
+### 10. 技能與天賦：滿級也有差異
+- 問題：每級 1 技能點，約 Lv70 就能點滿所有可用技能；天賦多為「+X% 屬性」的數字選擇。
+- 技能專精（`src/data/skillSpecs.ts`）：技能 5 級後從兩種專精選一種，可免費切換。專精由通用模板組成（擴散、連發、重擊、迅捷、致命、破甲、異常強化、持久／強化增益、堅固／快速護盾、召喚大軍／精銳、終極威力／快速），改變技能運作而非只加數字。
+- 天賦第 5、6 層（終極天賦）改為多選一；總點數 40、整棵樹 72 點，原本就無法點滿。舊存檔同層多選時只保留點數最多的節點。
+- 驗證（48 小時、`npm run sim -- 48 <職業> --spec=0|1`）：同職業選第一或第二種專精，推關差距約 1～3 關，在隨機誤差範圍內；但風格不同（例如遊俠連發型輸出高、死亡多）。
 
 ## 驗證結果（7 天掛機模擬，`npm run sim -- 168`）
 

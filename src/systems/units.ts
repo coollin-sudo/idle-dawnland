@@ -1,4 +1,5 @@
 import { mobAtk, mobDef, mobEva, mobHp, mobMatk, mobRes } from '@/core/formulas';
+import { applySpec } from '@/data/skillSpecs';
 import type { Rng } from '@/core/rng';
 import { emptyStats, type Mod } from '@/core/stats';
 import type { FxKey, GameState, MonsterDef } from '@/core/types';
@@ -35,8 +36,8 @@ export function makeHeroUnit(s: GameState, uid: number): Unit {
   for (const id of s.hero.loadout) {
     if (!id) continue;
     const rank = s.hero.skillRanks[id] ?? 0;
-    const def = getSkill(id);
-    if (rank > 0 && s.hero.level >= def.unlock && (!def.advId || def.advId === s.hero.advId)) skills.push({ def, rank });
+    const base = getSkill(id);
+    if (rank > 0 && s.hero.level >= base.unlock && (!base.advId || base.advId === s.hero.advId)) skills.push({ def: applySpec(base, s.hero.skillSpecs?.[id], rank), rank });
   }
   const u: Unit = {
     uid, side: 'hero', kind: 'hero', name: s.hero.name, defId: s.hero.classId, level: s.hero.level, boss: false, elite: [], slot: 0,

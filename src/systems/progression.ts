@@ -5,7 +5,8 @@ import { PRIMARY, type Primary } from '@/core/stats';
 import type { AdvId, GameState, SkillDef } from '@/core/types';
 import { ADVANCES, CLASSES } from '@/data/classes';
 import { classSkills, getSkill, SKILL_MAX_RANK } from '@/data/skills';
-import { TALENT_TIER_REQ, TALENT_TREES } from '@/data/talents';
+import { EXCLUSIVE_TIERS, TALENT_TIER_REQ, TALENT_TREES } from '@/data/talents';
+import { SPEC_RANK } from '@/data/skillSpecs';
 import { talentSpent, talentTotal } from './hero';
 import { generateItem } from './items';
 
@@ -188,7 +189,17 @@ export function canTalent(s: GameState, nodeId: string): string | null {
   if (talentAvailable(s) <= 0) return '天賦點不足';
   if (talentSpent(s) < TALENT_TIER_REQ[node.tier]) return `需要先投入 ${TALENT_TIER_REQ[node.tier]} 點`;
   if (node.req && !(s.hero.talentRanks[node.req] > 0)) return '需要前置天賦';
+  if (EXCLUSIVE_TIERS.includes(node.tier) && tree.nodes.some(n => n.tier === node.tier && n.id !== node.id && (s.hero.talentRanks[n.id] ?? 0) > 0)) return '這一層只能選一個（重置天賦可改選）';
   return null;
+}
+
+/** 技能專精：選擇或切換（免費） */
+export function setSkillSpec(g: Game, skillId: string, spec: number) {
+  const h = g.state.hero;
+  if ((h.skillRanks[skillId] ?? 0) < SPEC_RANK) return g.toast(`技能達到 ${SPEC_RANK} 級才能選擇專精`, 'warn');
+  h.skillSpecs = { ...(h.skillSpecs ?? {}), [skillId]: spec };
+  g.heroChanged();
+  g.touch();
 }
 
 export function talentUp(g: Game, nodeId: string) {

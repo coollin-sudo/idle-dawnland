@@ -549,3 +549,18 @@ select.input { padding: 6px 10px; }
 .jewel-cell .n { font-size: 12px; line-height: 1.25; }
 .jewel-cell .c { margin-left: auto; font-weight: 800; }
 .title-chip { font-size: 11px; color: var(--gold); background: rgba(240,194,90,.12); border: 1px solid rgba(240,194,90,.35); border-radius: 6px; padding: 0 5px; margin-left: 6px; white-space: nowrap; }
+
+/* 技能專精 */
+.specs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+.spec { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 5px 9px; border-radius: 8px; border: 1px solid var(--line2); background: rgba(255,255,255,.03); color: inherit; cursor: pointer; text-align: left; max-width: 240px; }
+.spec b { font-size: 12px; }
+.spec span { font-size: 10.5px; color: var(--muted); line-height: 1.3; }
+.spec.on { border-color: var(--gold); background: rgba(240,194,90,.12); box-shadow: 0 0 0 1px rgba(240,194,90,.35) inset; }
+.spec.on b { color: var(--gold); }
+.spec:disabled { opacity: .45; cursor: default; }
+
+/* 物品比較：並排顯示 */
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; align-items: start; }
+.compare .cmp-label, .cmp-label { font-size: 11px; color: var(--muted); font-weight: 700; margin-bottom: 4px; }
+@media (max-width: 640px) { .compare { grid-template-columns: 1fr; } }
+.modal:has(.compare) { max-width: 780px; }
