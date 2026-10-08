@@ -7,9 +7,10 @@ import { monsterThumb } from '@/render/icons';
 import { dungeonEntries, dungeonLevel, startDungeon, startTower } from '@/systems/activities';
 import { buyDungeonEntry } from '@/systems/shop';
 import { Cost } from '../common';
-import { g, refresh } from '../store';
+import { g, refresh, uiTick } from '../store';
 
 export function ChallengePanel() {
+  void uiTick.value;
   const gm = g();
   const s = gm.state;
   const busy = gm.activity.kind !== 'stage';

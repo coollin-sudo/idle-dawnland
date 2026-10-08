@@ -8,7 +8,7 @@ import { STATUSES } from '@/data/statuses';
 import { LOADOUT_UNLOCK } from '@/core/state';
 import { learnSkill, loadoutSlots, resetSkills, RESET_SKILLS_GOLD, setLoadout, swapLoadout } from '@/systems/progression';
 import { CIcon, SkillIcon, confirmModal } from '../common';
-import { g, refresh } from '../store';
+import { g, refresh, uiTick } from '../store';
 
 const TARGET: Record<string, string> = { front: '前方敵人', all: '所有敵人', random: '隨機敵人', lowest: '血最少的敵人', highest: '血最多的敵人', self: '自己' };
 const COND: Record<string, string> = {
@@ -36,6 +36,7 @@ function effectText(e: SkillEffect, r: number): string {
 }
 
 export function SkillsPanel() {
+  void uiTick.value;
   const gm = g();
   const s = gm.state;
   const h = s.hero;

@@ -5,9 +5,10 @@ import { getMonster } from '@/data/monsters';
 import { REGIONS } from '@/data/regions';
 import { monsterThumb } from '@/render/icons';
 import { travel } from '@/systems/activities';
-import { g, refresh } from '../store';
+import { g, refresh, uiTick } from '../store';
 
 export function MapPanel() {
+  void uiTick.value;
   const gm = g();
   const p = gm.state.progress;
   const [diff, setDiff] = useState(p.difficulty);

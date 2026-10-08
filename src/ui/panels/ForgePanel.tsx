@@ -17,6 +17,7 @@ import { forgeItem, g, refresh, uiTick } from '../store';
 type Sub = 'enhance' | 'reforge' | 'jewel' | 'craft';
 
 export function ForgePanel() {
+  void uiTick.value;
   const gm = g();
   const s = gm.state;
   const [sub, setSub] = useState<Sub>('enhance');
@@ -50,6 +51,7 @@ export function ForgePanel() {
 }
 
 function Enhance({ item }: { item: Item }) {
+  void uiTick.value;
   const gm = g();
   const s = gm.state;
   const [protect, setProtect] = useState(false);
@@ -103,6 +105,7 @@ function Enhance({ item }: { item: Item }) {
 const fmtV = (stat: Parameters<typeof statIsPct>[0], v: number) => (statIsPct(stat) ? `${v.toFixed(1)}%` : fmt(Math.round(v)));
 
 function Reforge({ item }: { item: Item }) {
+  void uiTick.value;
   const gm = g();
   const s = gm.state;
   const cv = reforgeCost(item, 'value');
@@ -132,6 +135,7 @@ function Reforge({ item }: { item: Item }) {
 const CRAFT_SLOTS: ItemSlotKind[] = ['weapon', 'offhand', 'helmet', 'armor', 'gloves', 'belt', 'boots', 'amulet', 'ring'];
 
 function Craft() {
+  void uiTick.value;
   const gm = g();
   const s = gm.state;
   const [slot, setSlot] = useState<ItemSlotKind>('weapon');

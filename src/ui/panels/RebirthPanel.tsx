@@ -3,9 +3,10 @@ import { Emo, rich } from '../emoji';
 import { STAR_NODES, starCost } from '@/data/meta';
 import { canRebirth, rebirth, soulsPreview, starUpgrade, startStageAfterRebirth } from '@/systems/rebirth';
 import { CIcon, Cost, NpcHeader, confirmModal } from '../common';
-import { g, refresh } from '../store';
+import { g, refresh, uiTick } from '../store';
 
 export function RebirthPanel() {
+  void uiTick.value;
   const gm = g();
   const s = gm.state;
   const souls = soulsPreview(gm);

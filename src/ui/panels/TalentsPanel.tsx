@@ -4,11 +4,12 @@ import { TALENT_TIER_REQ, TALENT_TREES } from '@/data/talents';
 import { talentSpent, talentTotal } from '@/systems/hero';
 import { canTalent, resetTalents, RESET_TALENT_GOLD, talentAvailable, talentUp } from '@/systems/progression';
 import { CIcon, confirmModal } from '../common';
-import { g, refresh } from '../store';
+import { g, refresh, uiTick } from '../store';
 
 const TIER_NAMES = ['基礎', '進階', '專精', '大師', '傳奇', '終極'];
 
 export function TalentsPanel() {
+  void uiTick.value;
   const gm = g();
   const s = gm.state;
   const tree = TALENT_TREES[s.hero.classId];

@@ -6,9 +6,10 @@ import { equipItem, findItem, toggleLock, unequipItem } from '@/systems/forge';
 import { salvageItems, sellItems } from '@/systems/loot';
 import { upgradeDelta } from '@/systems/hero';
 import { ItemCard, confirmModal } from './common';
-import { closeModal, forgeItem, g, openModal, refresh, tab, tip } from './store';
+import { closeModal, forgeItem, g, openModal, refresh, tab, tip, uiTick } from './store';
 
 function ItemModalBody({ uid }: { uid: number }) {
+  void uiTick.value;
   const gm = g();
   const f = findItem(gm, uid);
   if (!f) { closeModal(); return null; }

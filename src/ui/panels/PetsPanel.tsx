@@ -8,11 +8,12 @@ import { GEM_SHOP } from '@/data/shop';
 import { petThumb } from '@/render/icons';
 import { buyEgg, buyHatchSlot, claimEgg, feedPet, hatchCost, hatchingCount, setActivePet, speedHatch, starUp, startHatch } from '@/systems/pets';
 import { Bar, CIcon, Cost, Modal, NpcHeader } from '../common';
-import { closeModal, g, openModal, refresh } from '../store';
+import { closeModal, g, openModal, refresh, uiTick } from '../store';
 
 const petImg = (p: PetDef) => petThumb(p, 96);
 
 function PetDetail({ id }: { id: string }) {
+  void uiTick.value;
   const gm = g();
   const s = gm.state;
   const def = PETS.find(p => p.id === id)!;
@@ -46,6 +47,7 @@ function PetDetail({ id }: { id: string }) {
 }
 
 export function PetsPanel() {
+  void uiTick.value;
   const gm = g();
   const s = gm.state;
   const now = gm.now();

@@ -86,6 +86,7 @@ export function itemStyle(it: Item | null): CSSProperties {
 export function ItemSlot({ item, onClick, selected, label, showUp, small }: {
   item: Item | null; onClick?: () => void; selected?: boolean; label?: string; showUp?: boolean; small?: boolean;
 }) {
+  void uiTick.value;
   useEffect(() => () => { if (item && tip.value?.item === item) tip.value = null; }, [item]);
   if (!item) return <div class={'islot empty' + (small ? ' sm' : '')} onClick={onClick}><span class="slotname">{label}</span></div>;
   const s = g().state;
@@ -116,6 +117,7 @@ function fmtModValue(stat: Parameters<typeof statLabel>[0], v: number) {
 }
 
 export function ItemCard({ item, compare = true }: { item: Item; compare?: boolean }) {
+  void uiTick.value;
   const s = g().state;
   const R = RARITIES[item.rarity];
   const color = itemColor(item);
@@ -243,6 +245,7 @@ export function confirmModal(title: string, body: ComponentChildren, onYes: () =
 }
 
 export function StoryOverlay() {
+  void uiTick.value;
   const id = storyQueue.value[0];
   const [line, setLine] = useState(0);
   const [shown, setShown] = useState(0);

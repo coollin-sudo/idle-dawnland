@@ -5,9 +5,10 @@ import { CHAPTERS, MAIN_QUESTS } from '@/data/quests';
 import { SCENES } from '@/data/story';
 import { claimDaily, claimDailyChest, claimQuest, currentQuest, dailyProgress, describeReward, questProgress, refreshDailies } from '@/systems/quests';
 import { Bar, Cost, NpcHeader } from '../common';
-import { g, refresh, storyQueue } from '../store';
+import { g, refresh, storyQueue, uiTick } from '../store';
 
 export function QuestsPanel() {
+  void uiTick.value;
   const gm = g();
   const s = gm.state;
   refreshDailies(gm);

@@ -33,6 +33,7 @@ export function CollectionPanel() {
 }
 
 function Achievements() {
+  void uiTick.value;
   const s = g().state;
   const done = Object.values(s.achievements).reduce((a, b) => a + b, 0);
   return (
@@ -59,6 +60,7 @@ function Achievements() {
 }
 
 function Codex() {
+  void uiTick.value;
   const s = g().state;
   const tiers = codexTiers(s);
   return (
@@ -88,6 +90,7 @@ function Codex() {
 }
 
 function Legends() {
+  void uiTick.value;
   const s = g().state;
   return (
     <>
@@ -111,6 +114,7 @@ function Legends() {
 }
 
 function Records() {
+  void uiTick.value;
   const s = g().state;
   const c = s.counters;
   const rows: [string, string][] = [

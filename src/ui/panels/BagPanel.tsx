@@ -7,7 +7,7 @@ import { upgradeDelta } from '@/systems/hero';
 import { canEquip } from '@/systems/items';
 import { CIcon, ItemSlot, confirmModal } from '../common';
 import { openItem } from '../ItemModal';
-import { g, refresh } from '../store';
+import { g, refresh, uiTick } from '../store';
 
 type Filter = 'all' | 'weapon' | 'armor' | 'jewel';
 const FILTERS: [Filter, string][] = [['all', '全部'], ['weapon', '武器副手'], ['armor', '防具'], ['jewel', '飾品']];
@@ -17,6 +17,7 @@ const inFilter = (k: ItemSlotKind, f: Filter) =>
 type Sort = 'rarity' | 'level' | 'upgrade' | 'new';
 
 export function BagPanel() {
+  void uiTick.value;
   const gm = g();
   const s = gm.state;
   const [filter, setFilter] = useState<Filter>('all');

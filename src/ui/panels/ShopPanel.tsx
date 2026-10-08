@@ -6,9 +6,10 @@ import { invCapacity } from '@/systems/loot';
 import { buyBlessing, buyInvSlots, buyMerchant, buyPotion, buyProtect, buyStones, ensureMerchant, merchantPrice, PROTECT_GEMS, refreshMerchant } from '@/systems/shop';
 import { currencyIcon } from '@/render/icons';
 import { Cost, ItemCard, ItemSlot, NpcHeader, confirmModal } from '../common';
-import { g, refresh } from '../store';
+import { g, refresh, uiTick } from '../store';
 
 export function ShopPanel() {
+  void uiTick.value;
   const gm = g();
   const s = gm.state;
   const L = s.hero.level;

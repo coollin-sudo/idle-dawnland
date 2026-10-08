@@ -6,9 +6,10 @@ import { audio } from '@/audio/audio';
 import { setArtEnabled } from '@/render/images';
 import { clearState, exportCode, importCode, saveState } from '@/save/storage';
 import { Modal, Switch, confirmModal } from '../common';
-import { closeModal, g, openModal, refresh, saveNow, startGame, stopGame, game } from '../store';
+import { closeModal, g, openModal, refresh, saveNow, startGame, stopGame, game, uiTick } from '../store';
 
 export function SettingsPanel() {
+  void uiTick.value;
   const gm = g();
   const st = gm.state.settings;
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => {
@@ -74,6 +75,7 @@ export function SettingsPanel() {
 }
 
 function ExportBody() {
+  void uiTick.value;
   const [code, setCode] = useState('產生中…');
   useEffect(() => { void exportCode(g().state).then(setCode); }, []);
   return (
@@ -92,6 +94,7 @@ function openExport() {
 }
 
 function ImportBody() {
+  void uiTick.value;
   const [text, setText] = useState('');
   const [err, setErr] = useState('');
   const go = async () => {

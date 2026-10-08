@@ -14,7 +14,7 @@ import { HeroPreview } from '../HeroPreview';
 import { ShareCardButton } from '../ShareCard';
 import { heroLookOf } from '../GameScreen';
 import { openItem } from '../ItemModal';
-import { closeModal, g, openModal, refresh } from '../store';
+import { closeModal, g, openModal, refresh, uiTick } from '../store';
 
 const LEFT: SlotId[] = ['weapon', 'helmet', 'armor', 'gloves', 'belt'];
 const RIGHT: SlotId[] = ['offhand', 'amulet', 'ring1', 'ring2', 'boots'];
@@ -27,6 +27,7 @@ const ATTR_HELP: Record<Primary, string> = {
 };
 
 export function HeroPanel() {
+  void uiTick.value;
   const gm = g();
   const s = gm.state;
   const h = s.hero;
@@ -149,6 +150,7 @@ function StatTable({ st, level }: { st: StatBlock; level: number }) {
 }
 
 function AdvanceBox() {
+  void uiTick.value;
   const gm = g();
   const s = gm.state;
   const c = CLASSES[s.hero.classId];

@@ -117,6 +117,7 @@ function BattleView() {
 }
 
 function MuteButton() {
+  void uiTick.value;
   const s = g().state.settings;
   const muted = s.sfx === 0 && s.music === 0;
   const toggle = () => {
@@ -222,6 +223,7 @@ function Advisor() {
 }
 
 function LogBox() {
+  void uiTick.value;
   return (
     <div class="log panel">
       {logs.value.length === 0 && <div class="dim">戰鬥紀錄會顯示在這裡</div>}
