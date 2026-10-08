@@ -43,7 +43,7 @@ export function newGameState(name: string, classId: ClassId, now = Date.now(), s
     counters: {},
     codex: {},
     uniquesFound: [],
-    rebirth: { count: 0, ranks: {}, bestStageEver: -1 },
+    rebirth: { count: 0, ranks: {}, bestStageEver: -1, soulsEarned: 0 },
     buffs: [],
     merchant: { items: [], refreshAt: 0 },
     settings: defaultSettings(),

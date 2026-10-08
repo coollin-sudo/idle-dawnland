@@ -1,4 +1,5 @@
 import { newGameState, SAVE_VERSION, defaultSettings } from '@/core/state';
+import { STAR_NODES, starCost } from '@/data/meta';
 import type { GameState } from '@/core/types';
 
 export const SAVE_KEY = 'dawnland-v2';
@@ -28,6 +29,11 @@ export function migrate(raw: unknown): GameState | null {
   const s = fill(template, raw);
   s.settings = { ...defaultSettings(), ...(s.settings ?? {}) };
   while (s.progress.best.length < 3) s.progress.best.push(-1);
+  if (!s.rebirth.soulsEarned) {
+    let spent = 0;
+    for (const n of STAR_NODES) for (let r = 0; r < (s.rebirth.ranks[n.id] ?? 0); r++) spent += starCost(n, r);
+    s.rebirth.soulsEarned = spent + (s.cur.starSouls ?? 0);
+  }
   s.version = SAVE_VERSION;
   return s;
 }

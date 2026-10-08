@@ -7,7 +7,7 @@ import { upgradeDelta } from './hero';
 import { invCapacity } from './loot';
 import { talentAvailable } from './progression';
 import { dungeonEntries } from './activities';
-import { canRebirth } from './rebirth';
+import { canRebirth, resonancePct, soulsPreview } from './rebirth';
 import { hatchingCount } from './pets';
 import { DUNGEONS } from '@/data/dungeons';
 
@@ -38,7 +38,12 @@ export function advise(g: Game): Advice[] {
     if (left > 0) out.push({ id: 'dungeon', icon: '🏛️', text: `今天還有 ${left} 次副本`, tab: 'challenge' });
   }
   if (s.inventory.length >= invCapacity(g) - 5) out.push({ id: 'bag', icon: '📦', text: '背包快滿了，記得分解', tab: 'bag' });
-  if (canRebirth(g) && s.rebirth.count === 0 && s.hero.level >= 55) out.push({ id: 'rebirth', icon: '🌌', text: '可以考慮轉生了', tab: 'rebirth' });
+  if (canRebirth(g)) {
+    // 轉生後共鳴加成能提升 25% 以上才建議（避免無效轉生）
+    const earned = s.rebirth.soulsEarned ?? 0;
+    const gain = (100 + resonancePct(earned + soulsPreview(g))) / (100 + resonancePct(earned));
+    if (gain >= 1.25 && s.hero.level >= 50) out.push({ id: 'rebirth', icon: '🌌', text: `轉生可讓星魂共鳴 ×${gain.toFixed(1)}`, tab: 'rebirth' });
+  }
   if (s.cur.stones >= 20 && s.equipment.weapon && s.equipment.weapon.enh < 5) out.push({ id: 'enh', icon: '🔨', text: '強化石很多，去強化武器吧', tab: 'forge' });
   const emptySockets = Object.values(s.equipment).some(it => it?.sockets?.includes(null));
   if (emptySockets && Object.values(s.jewels).some(n => n > 0)) out.push({ id: 'jewel', icon: '💠', text: '有魔晶可以鑲嵌', tab: 'forge' });

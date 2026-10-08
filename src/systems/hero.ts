@@ -1,4 +1,6 @@
 import { armorDR, evadeChance } from '@/core/formulas';
+import { resonancePct } from './rebirth';
+import { more } from '@/core/stats';
 import { softHaste } from '@/core/stats';
 import { TITLE_MAP } from '@/data/titles';
 import { BASE_CONVERSION, computeStats, PRIMARY, type Conversion, type Mod, type StatBlock } from '@/core/stats';
@@ -110,6 +112,8 @@ export function heroMods(s: GameState, ov?: EquipOverride): Mod[] {
     const r = s.rebirth.ranks[node.id] ?? 0;
     if (r > 0 && node.mods) mods.push(...node.mods(r));
   }
+  const res = resonancePct(s.rebirth.soulsEarned ?? 0);
+  if (res > 0) mods.push(more('atk', res), more('matk', res), more('hp', res));
 
   const now = Date.now();
   for (const b of s.buffs) {

@@ -3,6 +3,13 @@ import { REBIRTH_REGION } from '@/core/formulas';
 import { STAR_NODES, starCost } from '@/data/meta';
 import { classSkills } from '@/data/skills';
 
+/**
+ * 星魂共鳴：依累計獲得的星魂，永久提升攻擊、魔攻與生命（獨立乘算，沒有上限）。
+ * 加成 = 15% × √累計星魂；累計約 4 倍才能讓加成翻倍（參考《The Math of Idle Games》的轉生曲線）。
+ */
+export const RESONANCE_PER_SQRT = 15;
+export const resonancePct = (earned: number) => RESONANCE_PER_SQRT * Math.sqrt(Math.max(0, earned));
+
 export function canRebirth(g: Game) {
   return g.state.progress.best[0] >= REBIRTH_REGION * 10 - 1;
 }
@@ -26,6 +33,7 @@ export function rebirth(g: Game) {
   const s = g.state;
   const souls = soulsPreview(g);
   s.cur.starSouls += souls;
+  s.rebirth.soulsEarned = (s.rebirth.soulsEarned ?? 0) + souls;
   s.rebirth.count++;
   s.rebirth.bestStageEver = -1;
   const start = startStageAfterRebirth(g);

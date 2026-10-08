@@ -15,14 +15,19 @@ import { advance, canTalent, talentUp } from '@/systems/progression';
 import { buyPotion } from '@/systems/shop';
 import { claimQuest, currentQuest, questDone } from '@/systems/quests';
 import { claimEgg, startHatch } from '@/systems/pets';
-import { canRebirth, rebirth } from '@/systems/rebirth';
+import { canRebirth, rebirth, resonancePct, soulsPreview, starUpgrade } from '@/systems/rebirth';
+import { STAR_NODES, starCost } from '@/data/meta';
+import { travel } from '@/systems/activities';
 import { regionOfStage } from '@/data/regions';
 import { dungeonEntries, startDungeon, startTower } from '@/systems/activities';
 
 const hours = Number(process.argv[2] ?? 48);
 const only = (process.argv[3] ?? 'all') as ClassId | 'all';
 const classes: ClassId[] = only === 'all' ? ['warrior', 'ranger', 'mage', 'cleric'] : [only];
-const REBIRTH = process.argv.includes('--rebirth');
+const REBIRTH = process.argv.includes('--rebirth') || process.argv.includes('--long');
+/** --long：模擬長期玩家（卡關就轉生、花星魂、打通後換更高難度） */
+const LONG = process.argv.includes('--long');
+const STALL_H = 6;
 
 function manage(g: Game) {
   const s = g.state;
@@ -53,6 +58,19 @@ function manage(g: Game) {
     for (const d of ['xp', 'gold', 'stones']) if (Math.max(...s.progress.best) >= 19 && dungeonEntries(g, d) > 0) { startDungeon(g, d); return; }
     if (Math.max(...s.progress.best) >= 29 && (s.counters.towerTries ?? 0) < Math.floor(g.state.playMs / 3_600_000) * 2) { startTower(g); return; }
   }
+  // 長期：打通普通後換更高難度
+  if (LONG && g.activity.kind === 'stage') {
+    const p = s.progress;
+    if (p.unlockedDifficulty > p.difficulty && p.best[p.difficulty] >= 79) travel(g, Math.max(0, p.best[p.difficulty + 1]), p.difficulty + 1);
+  }
+  // 星魂：便宜的先買
+  if (LONG) {
+    for (let k = 0; k < 50; k++) {
+      const opts = STAR_NODES.filter(n => (s.rebirth.ranks[n.id] ?? 0) < n.max).map(n => ({ n, c: starCost(n, s.rebirth.ranks[n.id] ?? 0) })).filter(o => o.c <= s.cur.starSouls).sort((a, b) => a.c - b.c);
+      if (!opts.length) break;
+      starUpgrade(g, opts[0].n.id);
+    }
+  }
   // 天賦已在上面處理；寵物蛋
   for (const e of [...s.pets.eggs]) {
     if (e.readyAt === null) startHatch(g, e.uid);
@@ -67,11 +85,24 @@ for (const cls of classes) {
   const g = new Game(state, { headless: true, now: () => clock });
   const t0 = performance.now();
   const rows: string[] = [];
-  const marks = new Set([0.5, 1, 2, 3, 6, 12, 24, 36, 48, 72, 96, 120, 168]);
+  const marks = new Set(LONG ? [24, 48, 72, 120, 168, 240, 336, 504, 720] : [0.5, 1, 2, 3, 6, 12, 24, 36, 48, 72, 96, 120, 168]);
+  let lastBestSum = -99, lastImprove = 0;
+  const rebirthLog: string[] = [];
   for (let min = 1; min <= hours * 60; min++) {
     for (let i = 0; i < 6; i++) { g.advance(10_000); clock += 10_000; }
     manage(g);
-    if (REBIRTH && canRebirth(g) && g.state.progress.mode === 'farm' && g.state.rebirth.count < 3 && min % 60 === 0) rebirth(g);
+    const bestSum = g.state.progress.best.reduce((a, b) => a + Math.max(0, b + 1), 0) * 1000 + g.state.progress.best[0];
+    if (bestSum > lastBestSum) { lastBestSum = bestSum; lastImprove = min; }
+    if (LONG) {
+      const earned = g.state.rebirth.soulsEarned ?? 0;
+      const worth = (100 + resonancePct(earned + soulsPreview(g))) / (100 + resonancePct(earned)) >= 1.25;
+      if (canRebirth(g) && worth && min - lastImprove > STALL_H * 60 && g.activity.kind === 'stage') {
+        const souls = soulsPreview(g);
+        rebirthLog.push(`${(min / 60).toFixed(0)}h 轉生#${g.state.rebirth.count + 1}（Lv${g.state.hero.level} 最佳${g.state.progress.best.join('/')} 星魂+${souls}）`);
+        rebirth(g);
+        lastBestSum = -99; lastImprove = min;
+      }
+    } else if (REBIRTH && canRebirth(g) && g.state.progress.mode === 'farm' && g.state.rebirth.count < 3 && min % 60 === 0) rebirth(g);
     const h = min / 60;
     if (marks.has(h) || min === hours * 60) {
       const s = g.state;
@@ -97,4 +128,5 @@ for (const cls of classes) {
   }
   console.log(`\n=== ${cls}（${((performance.now() - t0) / 1000).toFixed(1)}s）===`);
   console.log(rows.join('\n'));
+  if (rebirthLog.length) console.log('  ' + rebirthLog.join('\n  '));
 }

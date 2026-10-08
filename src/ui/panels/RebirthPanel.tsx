@@ -1,7 +1,7 @@
 import { fmt } from '@/core/format';
 import { Emo, rich } from '../emoji';
 import { STAR_NODES, starCost } from '@/data/meta';
-import { canRebirth, rebirth, soulsPreview, starUpgrade, startStageAfterRebirth } from '@/systems/rebirth';
+import { canRebirth, rebirth, resonancePct, soulsPreview, starUpgrade, startStageAfterRebirth } from '@/systems/rebirth';
 import { CIcon, Cost, NpcHeader, confirmModal } from '../common';
 import { g, refresh, uiTick } from '../store';
 
@@ -11,6 +11,7 @@ export function RebirthPanel() {
   const s = gm.state;
   const souls = soulsPreview(gm);
   const ok = canRebirth(gm);
+  const earned = s.rebirth.soulsEarned ?? 0;
   return (
     <div>
       <NpcHeader npc="mila" lines={['碎片會吸收你的戰鬥經驗，凝結成星魂。', '轉生之後，靈魂本身會變得更強。', '覺得前進變慢的時候，就是轉生的好時機。']} />
@@ -23,6 +24,11 @@ export function RebirthPanel() {
             <div class="small muted">放棄目前的等級、關卡進度、金幣、技能與天賦點，換取「星魂」。裝備、寵物、寶石、材料、成就與圖鑑都會保留。</div>
             <div style={{ marginTop: '6px' }}>轉生可獲得：<b class="gold"><CIcon k="starSouls" />{fmt(souls)}</b>　<span class="small muted">（依歷史最高關卡與等級計算）</span></div>
             <div class="small muted">轉生次數 {s.rebirth.count}・轉生後從第 {startStageAfterRebirth(gm) + 1} 關開始</div>
+            <div style={{ marginTop: '6px' }}>
+              星魂共鳴：攻擊、魔攻、生命額外 <b class="gold">+{fmt(Math.round(resonancePct(earned)))}%</b>
+              {souls > 0 && <> → 轉生後 <b class="good">+{fmt(Math.round(resonancePct(earned + souls)))}%</b></>}
+              <div class="tiny muted">依累計獲得的星魂（{fmt(earned)}）計算，沒有上限；累計越多，下一次轉生能推得越遠。</div>
+            </div>
           </div>
           <button class="btn primary" disabled={!ok || souls <= 0} onClick={() => confirmModal('確定轉生？', <p>將重置等級與關卡進度，獲得 <CIcon k="starSouls" />{fmt(souls)} 星魂。</p>, () => { rebirth(gm); refresh(); }, '轉生', true)}>轉生</button>
         </div>

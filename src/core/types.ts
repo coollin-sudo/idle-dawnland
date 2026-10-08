@@ -395,7 +395,7 @@ export interface GameState {
   counters: Record<string, number>;
   codex: Record<string, number>;
   uniquesFound: string[];
-  rebirth: { count: number; ranks: Record<string, number>; bestStageEver: number };
+  rebirth: { count: number; ranks: Record<string, number>; bestStageEver: number; /** 累計獲得的星魂（決定星魂共鳴加成） */ soulsEarned: number };
   buffs: { id: string; until: number }[];
   merchant: { items: Item[]; refreshAt: number };
   settings: Settings;

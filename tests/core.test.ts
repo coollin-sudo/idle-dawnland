@@ -245,3 +245,36 @@ describe('自動裝備', () => {
     expect(back.sockets).toEqual([null]);
   });
 });
+
+describe('轉生與星魂共鳴', () => {
+  it('累計星魂越多，共鳴加成越高且沒有上限；4 倍星魂約讓加成翻倍', async () => {
+    const { resonancePct } = await import('@/systems/rebirth');
+    expect(resonancePct(0)).toBe(0);
+    expect(resonancePct(400) / resonancePct(100)).toBeCloseTo(2, 5);
+    expect(resonancePct(1e6)).toBeGreaterThan(resonancePct(1e5));
+  });
+
+  it('轉生累計星魂並提升戰力；舊存檔會由已花費星魂估算累計值', async () => {
+    const { heroStats } = await import('@/systems/hero');
+    const { rebirth } = await import('@/systems/rebirth');
+    const { g } = makeGame();
+    const s = g.state;
+    const before = heroStats(s).atk;
+    s.progress.best[0] = 60;
+    s.rebirth.bestStageEver = 60;
+    s.hero.level = 60;
+    rebirth(g);
+    expect(s.rebirth.soulsEarned).toBeGreaterThan(0);
+    expect(s.rebirth.count).toBe(1);
+    // 同樣 Lv1 起點，有共鳴的攻擊應高於轉生前的 Lv1
+    const fresh = makeGame().g;
+    expect(heroStats(s).atk).toBeGreaterThan(heroStats(fresh.state).atk);
+    void before;
+    const raw = JSON.parse(JSON.stringify(s)) as Record<string, unknown>;
+    (raw.rebirth as Record<string, unknown>).soulsEarned = 0;
+    (raw.rebirth as { ranks: Record<string, number> }).ranks = { st_might: 2 };
+    (raw.cur as Record<string, number>).starSouls = 10;
+    const m = migrate(raw)!;
+    expect(m.rebirth.soulsEarned).toBeGreaterThanOrEqual(10 + 1 + 2);
+  });
+});
