@@ -112,7 +112,7 @@ export function reforge(g: Game, uid: number, index: number, mode: 'reroll' | 'v
     it.affixes[index] = rollAffixValue(g.rng, def, it.ilvl, uniqueMult);
   } else {
     const exclude = new Set(it.affixes.map(x => x.id));
-    const next = rollAffix(g.rng, it.slot, it.ilvl, exclude);
+    const next = rollAffix(g.rng, it.slot, it.ilvl, exclude, g.state.hero.classId);
     if (next) it.affixes[index] = next;
   }
   if (f.where === 'equip') g.heroChanged();

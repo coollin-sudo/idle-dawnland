@@ -1,4 +1,6 @@
 import { armorPower, enhanceMult, weaponPower } from '@/core/formulas';
+import { classSkills } from '@/data/skills';
+import { CLASSES } from '@/data/classes';
 import { jewelMods, rollSockets } from '@/data/jewels';
 import type { Rng } from '@/core/rng';
 import { flat, statIsPct, type Mod } from '@/core/stats';
@@ -103,12 +105,34 @@ export function rollAffixValue(rng: Rng, def: AffixDef, ilvl: number, mult = 1):
   return { id: def.id, value, q: Math.round(q * 100) / 100 };
 }
 
-function affixPool(kind: ItemSlotKind, ilvl: number, exclude: Set<string>): AffixDef[] {
-  return AFFIXES.filter(a => !exclude.has(a.id) && (a.minIlvl ?? 0) <= ilvl && (a.slots === 'all' || a.slots.includes(kind)));
+/** 職業用不到的攻擊屬性：物理職業不需要魔攻，法系職業不需要物攻 */
+const OFF_CLASS_STATS: Record<'phys' | 'magic', string[]> = { phys: ['matk', 'magDmg'], magic: ['atk', 'physDmg'] };
+
+function affixPool(kind: ItemSlotKind, ilvl: number, exclude: Set<string>, classId?: ClassId): AffixDef[] {
+  const off = classId ? OFF_CLASS_STATS[CLASSES[classId].basic.dmgType] : [];
+  return AFFIXES.filter(a => !exclude.has(a.id) && !off.includes(a.stat) && (a.minIlvl ?? 0) <= ilvl && (a.slots === 'all' || a.slots.includes(kind)));
 }
 
-export function rollAffix(rng: Rng, kind: ItemSlotKind, ilvl: number, exclude: Set<string>): AffixRoll | null {
-  const def = rng.weighted(affixPool(kind, ilvl, exclude), a => a.weight);
+/** 各職業（含轉職）技能會用到的元素，用來降低抽到用不到的元素傷害詞綴 */
+const ELEMENT_STAT: Record<string, string> = { fire: 'fireDmg', ice: 'iceDmg', lightning: 'lightningDmg', holy: 'holyDmg', shadow: 'shadowDmg' };
+const classElementStats = new Map<ClassId, Set<string>>();
+function elementStatsOf(classId: ClassId): Set<string> {
+  let set = classElementStats.get(classId);
+  if (!set) {
+    set = new Set<string>();
+    const basic = CLASSES[classId].basic.element;
+    if (ELEMENT_STAT[basic]) set.add(ELEMENT_STAT[basic]);
+    for (const sk of classSkills(classId)) for (const e of sk.effects) if (e.type === 'damage' && ELEMENT_STAT[e.element]) set.add(ELEMENT_STAT[e.element]);
+    classElementStats.set(classId, set);
+  }
+  return set;
+}
+const OFF_ELEMENT_WEIGHT = 0.15;
+
+export function rollAffix(rng: Rng, kind: ItemSlotKind, ilvl: number, exclude: Set<string>, classId?: ClassId): AffixRoll | null {
+  const useful = classId ? elementStatsOf(classId) : null;
+  const weight = (a: AffixDef) => (useful && Object.values(ELEMENT_STAT).includes(a.stat) && !useful.has(a.stat) ? a.weight * OFF_ELEMENT_WEIGHT : a.weight);
+  const def = rng.weighted(affixPool(kind, ilvl, exclude, classId), weight);
   return def ? rollAffixValue(rng, def, ilvl) : null;
 }
 
@@ -165,12 +189,12 @@ export function generateItem(ctx: ItemCtx, o: GenOpts): Item {
       used.add(ua.id);
     }
     if (rarity === 5) {
-      const extra = rollAffix(rng, kind, ilvl, used);
+      const extra = rollAffix(rng, kind, ilvl, used, classId);
       if (extra) affixes.push(extra);
     }
   } else {
     for (let i = 0; i < R.affixes; i++) {
-      const a = rollAffix(rng, kind, ilvl, used);
+      const a = rollAffix(rng, kind, ilvl, used, classId);
       if (!a) break;
       affixes.push(a);
       used.add(a.id);

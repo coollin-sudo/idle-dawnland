@@ -162,16 +162,23 @@ export function combatPower(s: GameState, st: StatBlock): number {
     const key = ({ fire: 'fireDmg', ice: 'iceDmg', lightning: 'lightningDmg', holy: 'holyDmg', shadow: 'shadowDmg' } as const)[el as 'fire'];
     if (key) elemBonus += st[key] / elements.length;
   }
-  const inc = 1 + (st.dmg + (magic ? st.magDmg : st.physDmg) + elemBonus + st.skillDmg * 0.4 + st.bossDmg * 0.15) / 100;
+  // 持續傷害、異常觸發、寵物、精英傷害等次要輸出也折算進去
+  const minor = st.dotDmg * 0.25 + st.statusChance * 0.3 + st.petDmg * 0.1 + st.eliteDmg * 0.1;
+  const inc = 1 + (st.dmg + (magic ? st.magDmg : st.physDmg) + elemBonus + st.skillDmg * 0.4 + st.bossDmg * 0.15 + minor) / 100;
   const crit = 1 + Math.min(100, st.crit) / 100 * Math.max(0, st.critDmg - 100) / 100;
   const speed = 1 + st.haste / 100;
   const cd = 1 + st.cdr / 150;
-  const offense = atk * inc * crit * speed * cd;
+  // 魔力回復讓技能更常施放
+  const mana = 1 + Math.min(0.15, st.mpRegen / Math.max(20, st.mp) * 0.6);
+  const offense = atk * inc * crit * speed * cd * mana;
   const lvl = s.hero.level;
   const dr = (armorDR(st.def, lvl) + armorDR(st.res, lvl)) / 2;
   const ev = evadeChance(st.eva, lvl) * 0.5;
-  const sustain = 1 + st.lifesteal / 40 + (st.hpRegen * 8) / Math.max(1, st.hp);
-  const ehp = st.hp / (1 - dr) / (1 - ev) / Math.max(0.2, 1 + st.dmgTaken / 100) * sustain;
+  const sustain = 1 + st.lifesteal / 40 + (st.hpRegen * 8) / Math.max(1, st.hp) + (c.id === 'cleric' ? st.healPower / 200 : 0);
+  // 元素抗性：假設約一半的受到傷害是元素傷害
+  const res = (st.fireRes + st.iceRes + st.lightningRes + st.holyRes + st.shadowRes) / 5;
+  const resMult = 1 / Math.max(0.3, 1 - Math.min(75, Math.max(0, res)) / 100 * 0.5);
+  const ehp = st.hp / (1 - dr) / (1 - ev) / Math.max(0.2, 1 + st.dmgTaken / 100) * sustain * resMult;
   return Math.round(offense * 3 + ehp * 0.4);
 }
 

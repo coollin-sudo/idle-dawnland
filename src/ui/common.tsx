@@ -83,6 +83,9 @@ export function itemStyle(it: Item | null): CSSProperties {
   return { '--rc': itemColor(it), '--rg': it.set ? 'rgba(74,224,160,.35)' : R.glow } as CSSProperties;
 }
 
+/** 不影響戰鬥、因此不計入戰力的屬性 */
+const UTILITY_STATS: string[] = ['goldFind', 'magicFind', 'xpGain'];
+
 export function ItemSlot({ item, onClick, selected, label, showUp, small }: {
   item: Item | null; onClick?: () => void; selected?: boolean; label?: string; showUp?: boolean; small?: boolean;
 }) {
@@ -144,7 +147,7 @@ export function ItemCard({ item, compare = true }: { item: Item; compare?: boole
         const [lo, hi] = affixRange(def, item.ilvl);
         return (
           <div class="aff">
-            <span>{describeMod({ stat: def.stat, kind: def.kind, value: a.value }, 1)}</span>
+            <span>{describeMod({ stat: def.stat, kind: def.kind, value: a.value }, 1)}{UTILITY_STATS.includes(def.stat) && <span class="dim tiny">（不計戰力）</span>}</span>
             <span class="q">{Math.round(a.q * 100)}%　<span class="dim">{fmtNum(lo)}~{fmtNum(hi)}</span></span>
           </div>
         );
