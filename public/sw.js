@@ -1,5 +1,5 @@
 // 離線快取：頁面走網路優先（確保拿到新版），其餘靜態檔走快取優先
-const CACHE = 'dawnland-v4';
+const CACHE = 'dawnland-v5';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
