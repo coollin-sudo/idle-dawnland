@@ -1,9 +1,9 @@
 import { fmt, fmtDuration } from '@/core/format';
 import { Emo, rich } from '../emoji';
-import { potionHeal, potionPrice, stonePrice } from '@/core/formulas';
+import { potionHeal, potionPrice, protectGoldPrice, stonePrice } from '@/core/formulas';
 import { BLESSINGS, GEM_SHOP } from '@/data/shop';
 import { invCapacity } from '@/systems/loot';
-import { buyBlessing, buyInvSlots, buyMerchant, buyPotion, buyProtect, buyStones, ensureMerchant, merchantPrice, PROTECT_GEMS, refreshMerchant } from '@/systems/shop';
+import { buyBlessing, buyInvSlots, buyMerchant, buyPotion, buyProtect, buyProtectGold, buyStones, ensureMerchant, merchantPrice, PROTECT_GEMS, refreshMerchant } from '@/systems/shop';
 import { currencyIcon } from '@/render/icons';
 import { Cost, ItemCard, ItemSlot, NpcHeader, confirmModal } from '../common';
 import { g, refresh, uiTick } from '../store';
@@ -38,11 +38,14 @@ export function ShopPanel() {
           <div class="grow"><div class="t">強化石</div><div class="d">強化裝備的必要材料・持有 {fmt(s.cur.stones)}</div></div>
           <button class="btn sm" onClick={() => act(() => buyStones(gm, 1))}><Cost k="gold" n={stonePrice(L)} have={s.cur.gold} /></button>
           <button class="btn sm" onClick={() => act(() => buyStones(gm, 10))}>×10</button>
+          <button class="btn sm" onClick={() => act(() => buyStones(gm, 100))}>×100</button>
         </div>
         <div class="li">
           <div class="ic"><img src={currencyIcon('protect')} alt="" /></div>
           <div class="grow"><div class="t">保護卷軸</div><div class="d">強化失敗時避免降級與碎裂・持有 {s.cur.protect}</div></div>
           <button class="btn sm" onClick={() => act(() => buyProtect(gm))}><Cost k="gems" n={PROTECT_GEMS} have={s.cur.gems} /></button>
+          <button class="btn sm" onClick={() => act(() => buyProtectGold(gm, 1))}><Cost k="gold" n={protectGoldPrice(L)} have={s.cur.gold} /></button>
+          <button class="btn sm" onClick={() => act(() => buyProtectGold(gm, 10))}>×10</button>
         </div>
       </div>
 

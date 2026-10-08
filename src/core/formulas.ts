@@ -51,3 +51,7 @@ export const sellPrice = (ilvl: number, rarity: number) => Math.round((5 + ilvl 
 export const potionHeal = (tier: number) => [0.25, 0.4, 0.6][tier];
 export const potionPrice = (tier: number, heroLvl: number) => Math.round([10, 40, 150][tier] * (1 + heroLvl / 15));
 export const stonePrice = (heroLvl: number) => Math.round(80 + heroLvl * 6);
+/** 保護卷軸的金幣價格（金幣的長期消耗：強化到 +20 需要大量保護卷軸） */
+export const protectGoldPrice = (heroLvl: number) => Math.round(3000 + heroLvl * heroLvl * 12);
+/** 精工打造（只花金幣）：價格隨等級平方成長，跟上金幣收入 */
+export const fineCraftPrice = (heroLvl: number) => Math.round(4000 + heroLvl * heroLvl * 20);

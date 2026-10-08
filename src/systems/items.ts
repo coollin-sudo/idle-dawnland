@@ -42,7 +42,8 @@ export function rollRarity(rng: Rng, source: 'normal' | 'elite' | 'boss' | 'ches
   const base = source === 'chest' ? [0, 500, 380, 100, 20, 0] : RARITY_WEIGHTS[source === 'elite' ? 'elite' : source];
   const w = base.slice();
   const mf = 1 + Math.max(0, magicFind) / 100;
-  for (let r = 2; r < w.length; r++) w[r] *= mf * (1 + difficulty * 0.35);
+  // 掉寶率對稀有、史詩完整生效；對傳說以上遞減（開根號），避免後期傳說氾濫
+  for (let r = 2; r < w.length; r++) w[r] *= (r >= 4 ? Math.sqrt(mf) : mf) * (1 + difficulty * 0.35);
   if ((source === 'boss' || source === 'chest') && difficulty >= 1) w[5] = 4 * difficulty + mythicBonus;
   return Math.max(0, rng.weightedIndex(w)) as Rarity;
 }

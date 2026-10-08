@@ -278,3 +278,22 @@ describe('轉生與星魂共鳴', () => {
     expect(m.rebirth.soulsEarned).toBeGreaterThanOrEqual(10 + 1 + 2);
   });
 });
+
+describe('經濟', () => {
+  it('精工打造只花金幣，產出高 3 級、史詩以上的指定部位裝備', async () => {
+    const { fineCraft } = await import('@/systems/forge');
+    const { fineCraftPrice } = await import('@/core/formulas');
+    const { g } = makeGame();
+    const s = g.state;
+    s.hero.level = 40;
+    s.cur.gold = fineCraftPrice(40);
+    s.settings.autoSalvage = -1;
+    s.settings.autoEquip = false;
+    fineCraft(g, 'boots');
+    expect(s.cur.gold).toBe(0);
+    const it = s.inventory[s.inventory.length - 1];
+    expect(it.slot).toBe('boots');
+    expect(it.ilvl).toBe(43);
+    expect(it.rarity).toBeGreaterThanOrEqual(3);
+  });
+});

@@ -1,4 +1,5 @@
 import type { Game } from '@/core/game';
+import { fineCraftPrice } from '@/core/formulas';
 import type { Item, ItemSlotKind, SlotId } from '@/core/types';
 import { AFFIX_MAP, SLOTS, UNIQUES } from '@/data/items';
 import { STAR_NODES } from '@/data/meta';
@@ -127,6 +128,22 @@ export function craftCost(level: number) {
   return { essence: 25 + level * 3, gold: 500 + level * 120 };
 }
 export const LEGEND_SHARDS = 50;
+
+/** 精工打造：只花金幣，物品等級比角色高 3 級、稀有度較好（保底史詩），是金幣的長期消耗 */
+export const FINE_CRAFT_ILVL = 3;
+export function fineCraft(g: Game, slot: ItemSlotKind) {
+  const c = g.state.cur;
+  const L = g.state.hero.level;
+  const price = fineCraftPrice(L);
+  if (c.gold < price) return g.toast('金幣不足', 'warn');
+  c.gold -= price;
+  const rarity = Math.max(3, rollRarity(g.rng, 'chest', 50, g.state.progress.difficulty));
+  const it = generateItem(itemCtx(g), { ilvl: L + FINE_CRAFT_ILVL, rarity: rarity as 3, slot });
+  receiveItem(g, it);
+  g.toast(`精工打造完成：${it.name}`, it.rarity >= 4 ? 'legend' : 'epic', '⚒️');
+  g.count('crafted');
+  g.touch();
+}
 
 export function craft(g: Game, slot: ItemSlotKind, legendary: boolean) {
   const c = g.state.cur;

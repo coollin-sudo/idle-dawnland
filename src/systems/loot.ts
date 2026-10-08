@@ -16,6 +16,8 @@ export interface KillMods {
   drop?: number;
   stones?: number;
   noItems?: boolean;
+  /** 重複擊敗已打倒過的首領：掉落改用精英表 */
+  repeatBoss?: boolean;
 }
 
 const BOSS_REWARD = 15;
@@ -71,12 +73,14 @@ export function rewardKill(g: Game, u: Unit, killer: Unit | null, m: KillMods = 
   const mf = st.magicFind + DIFFICULTIES[diff].dropBonus;
   const dropChance = (u.boss ? 1 : u.elite.length ? 0.5 : 0.055) * (m.drop ?? 1);
   let drops = g.rng.chance(Math.min(1, dropChance)) ? 1 : 0;
-  if (u.boss && g.rng.chance(0.5)) drops++;
+  if (u.boss && !m.repeatBoss && g.rng.chance(0.5)) drops++;
   for (let i = 0; i < drops; i++) {
-    const source = u.boss ? 'boss' : u.elite.length ? 'elite' : 'normal';
+    const source = u.boss && !m.repeatBoss ? 'boss' : u.boss || u.elite.length ? 'elite' : 'normal';
     const rarity = rollRarity(g.rng, source, mf, diff);
-    const ilvl = L + (u.boss ? 2 : g.rng.int(-1, 1));
-    const setDrop = u.boss && L >= 35 && g.rng.chance(0.04 + diff * 0.03);
+    // 偶爾掉出高等級品（物品等級 +2～+6），讓卡關時也有機會撿到升級
+    const high = g.rng.chance(0.08) ? g.rng.int(2, 6) : 0;
+    const ilvl = L + (u.boss ? 2 : g.rng.int(-1, 1)) + high;
+    const setDrop = u.boss && L >= 35 && g.rng.chance((0.04 + diff * 0.03) * (m.repeatBoss ? 0.5 : 1));
     const item = generateItem(itemCtx(g), { ilvl, rarity, setId: setDrop ? pickSet(g.rng, s.hero.classId).id : undefined });
     receiveItem(g, item);
   }

@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { fineCraftPrice } from '@/core/formulas';
 import { Emo, rich } from '../emoji';
 import { fmt } from '@/core/format';
 import { enhanceMult } from '@/core/formulas';
@@ -6,7 +7,7 @@ import { describeMod, statIsPct, statLabel } from '@/core/stats';
 import type { Item, ItemSlotKind } from '@/core/types';
 import { AFFIX_MAP, SLOT_LABEL, SLOTS } from '@/data/items';
 import {
-  craft, craftCost, enhance, enhanceCost, enhanceRate, ENH_BREAK_FROM, ENH_DOWN_FROM, findItem, LEGEND_SHARDS, MAX_ENH, reforge, reforgeCost, type EnhanceResult,
+  craft, craftCost, enhance, fineCraft, FINE_CRAFT_ILVL, enhanceCost, enhanceRate, ENH_BREAK_FROM, ENH_DOWN_FROM, findItem, LEGEND_SHARDS, MAX_ENH, reforge, reforgeCost, type EnhanceResult,
 } from '@/systems/forge';
 import { itemColor } from '@/systems/items';
 import { Cost, ItemCard, ItemSlot, JewelIcon, NpcHeader, Sockets, Switch } from '../common';
@@ -152,6 +153,9 @@ function Craft() {
         </button>
         <button class="btn" style={{ borderColor: 'var(--r4)' }} onClick={() => { craft(gm, slot, true); refresh(); }}>
           <Emo e="🌟" /> 打造傳說{SLOT_LABEL[slot]}　<Cost k="shards" n={LEGEND_SHARDS} have={s.cur.shards} />
+        </button>
+        <button class="btn" style={{ borderColor: 'var(--r3)' }} onClick={() => { fineCraft(gm, slot); refresh(); }} title={`只花金幣：物品等級 ${s.hero.level + FINE_CRAFT_ILVL}、保底史詩`}>
+          <Emo e="🔨" /> 精工打造{SLOT_LABEL[slot]}（Lv.{s.hero.level + FINE_CRAFT_ILVL}、保底史詩）　<Cost k="gold" n={fineCraftPrice(s.hero.level)} have={s.cur.gold} />
         </button>
       </div>
       <div class="tiny dim" style={{ marginTop: '10px' }}>傳說碎片來自分解傳說／神話裝備。打造的物品會依自動規則放進背包。</div>

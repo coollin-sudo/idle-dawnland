@@ -276,7 +276,9 @@ export class StageActivity implements Activity {
       this.g.toast('打倒寶藏哥布林！', 'legend', '💰');
       return;
     }
-    rewardKill(this.g, u, killer);
+    // 已經打倒過的首領再刷：獎勵降為精英等級，避免反覆刷首領造成傳說氾濫
+    const repeat = u.boss && this.g.state.progress.best[this.diff] >= this.stage;
+    rewardKill(this.g, u, killer, repeat ? { repeatBoss: true } : {});
   }
 
   onHeroDeath() {

@@ -1,5 +1,5 @@
 import type { Game } from '@/core/game';
-import { potionPrice, stonePrice } from '@/core/formulas';
+import { potionPrice, protectGoldPrice, stonePrice } from '@/core/formulas';
 import type { Item } from '@/core/types';
 import { BLESSING_MAP, GEM_SHOP, MERCHANT_REFRESH_MS, MERCHANT_SIZE } from '@/data/shop';
 import { DUNGEON_MAP } from '@/data/dungeons';
@@ -22,6 +22,14 @@ export function buyStones(g: Game, n: number) {
   if (g.state.cur.gold < cost) return g.toast('金幣不足', 'warn');
   g.state.cur.gold -= cost;
   g.state.cur.stones += n;
+  g.touch();
+}
+
+export function buyProtectGold(g: Game, n = 1) {
+  const cost = protectGoldPrice(g.state.hero.level) * n;
+  if (g.state.cur.gold < cost) return g.toast('金幣不足', 'warn');
+  g.state.cur.gold -= cost;
+  g.state.cur.protect += n;
   g.touch();
 }
 
