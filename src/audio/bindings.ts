@@ -30,14 +30,20 @@ export function bindAudio(g: Game): () => void {
     else if (e.item.rarity >= 2) audio.play('loot');
   }));
   offs.push(ev.on('hero:level', () => audio.play('levelup')));
-  offs.push(ev.on('unit:death', e => { if (e.unit.boss || e.unit.kind === 'hero') audio.play('death'); }));
+  offs.push(ev.on('unit:death', e => {
+    if (e.unit.kind === 'hero') audio.play('herodeath');
+    else if (e.unit.boss) audio.play('bossdown');
+    else if (e.unit.elite.length) audio.play('death', 0.6);
+  }));
   offs.push(ev.on('forge:enhance', e => audio.play(e.result === 'success' ? 'enhance' : e.result === 'break' ? 'break' : 'fail')));
-  offs.push(ev.on('achievement', () => audio.play('loot')));
+  offs.push(ev.on('achievement', () => audio.play('achievement')));
 
   const updateMusic = (boss: boolean) => {
     const act = g.activity;
     const region = act.kind === 'tower' ? regionOfStage(70) : regionOfStage(act.kind === 'dungeon' ? Math.max(0, g.state.progress.best[0]) : g.state.progress.stage);
-    audio.setMusic(region.music, boss);
+    // 首領戰、副本與高塔有專屬配樂，其餘依區域
+    const key = boss ? 'boss' : act.kind === 'dungeon' || act.kind === 'tower' ? 'dungeon' : region.id;
+    audio.setTrack(key, region.music, boss);
   };
   offs.push(ev.on('battle:start', e => {
     if (e.boss) audio.play('boss');

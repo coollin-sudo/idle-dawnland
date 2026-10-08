@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { newGameState } from '@/core/state';
 import type { ClassId } from '@/core/types';
 import { CLASSES, advancesOf } from '@/data/classes';
@@ -11,6 +11,8 @@ import { artUrl } from '@/render/images';
 export function Create({ onDone, onImport }: { onDone: () => void; onImport: () => void }) {
   const [cls, setCls] = useState<ClassId>('warrior');
   const [name, setName] = useState('');
+  // 標題畫面配樂（要等第一次點擊解鎖音訊後才會真正播放）
+  useEffect(() => { audio.setTrack('title'); }, []);
   const start = () => {
     audio.unlock();
     audio.play('levelup');

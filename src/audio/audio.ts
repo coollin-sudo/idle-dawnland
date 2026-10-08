@@ -1,8 +1,32 @@
-/** 程式合成的音效與配樂（WebAudio），不需要任何音檔 */
+/**
+ * 音效與配樂（WebAudio）
+ * - 音效：優先播放 public/audio/sfx/ 的 CC0 取樣（同一種音效有多個版本隨機挑選並微調音高）
+ * - 配樂：播放 public/audio/music/ 的 CC0 曲目，換區域時交叉淡入淡出
+ * - 音檔還沒載入或載入失敗時，退回程式合成
+ */
 
 type SfxName =
   | 'hit' | 'crit' | 'slash' | 'arrow' | 'magic' | 'fire' | 'ice' | 'lightning' | 'holy' | 'shadow' | 'heal'
-  | 'coin' | 'levelup' | 'loot' | 'legend' | 'death' | 'boss' | 'enhance' | 'fail' | 'break' | 'click' | 'hurt' | 'shield';
+  | 'coin' | 'levelup' | 'loot' | 'legend' | 'death' | 'boss' | 'enhance' | 'fail' | 'break' | 'click' | 'hurt' | 'shield'
+  | 'achievement' | 'herodeath' | 'bossdown';
+
+/** 每種音效有幾個取樣檔（audio/sfx/{name}_{i}.wav） */
+const SAMPLE_COUNT: Partial<Record<SfxName, number>> = {
+  hit: 5, crit: 5, hurt: 5, slash: 3, shield: 3, coin: 2, loot: 2, legend: 1, levelup: 1, achievement: 1, herodeath: 1, bossdown: 1,
+  boss: 2, enhance: 3, fail: 1, break: 3, click: 2, holy: 2, heal: 2, magic: 2, death: 2,
+};
+/** 各音效的取樣音量（取樣本身響度不一，在這裡校正） */
+const SAMPLE_GAIN: Partial<Record<SfxName, number>> = {
+  hit: 0.55, crit: 0.8, hurt: 0.5, slash: 0.6, shield: 0.5, coin: 0.45, loot: 0.6, legend: 0.8, levelup: 0.8, achievement: 0.7,
+  herodeath: 0.7, bossdown: 0.75, boss: 0.7, enhance: 0.6, fail: 0.5, break: 0.7, click: 0.4, holy: 0.45, heal: 0.5, magic: 0.45, death: 0.5,
+  fire: 0.6, ice: 0.6, lightning: 0.6,
+};
+/** 音高隨機範圍（配樂短句不變調） */
+const NO_PITCH = new Set<SfxName>(['legend', 'levelup', 'achievement', 'herodeath', 'bossdown']);
+
+/** 配樂曲目：區域 id、boss、dungeon、title */
+export type TrackKey = string;
+const LOOP_TRACKS = new Set(['desert', 'dungeon', 'sky', 'abyss', 'boss']);
 
 const SCALES: Record<string, number[]> = {
   major: [0, 2, 4, 5, 7, 9, 11],
@@ -23,7 +47,15 @@ class AudioEngine {
   private last: Record<string, number> = {};
   sfxVol = 0.6;
   musicVol = 0.35;
-  // 音樂
+  // 取樣
+  private samples = new Map<string, AudioBuffer[]>();
+  private samplesLoading = false;
+  private voices = 0;
+  // 配樂（檔案）
+  private track: TrackKey | null = null;
+  private trackBuffers = new Map<TrackKey, AudioBuffer | null>();
+  private current: { key: TrackKey; src: AudioBufferSourceNode; gain: GainNode } | null = null;
+  // 音樂（程式合成備援）
   private music: { root: number; scale: string; tempo: number; intense: boolean } | null = null;
   private nextNote = 0;
   private step = 0;
@@ -53,7 +85,58 @@ class AudioEngine {
     this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
     const d = this.noiseBuf.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-    if (this.music) this.startScheduler();
+    void this.loadSamples();
+    if (this.track) void this.playTrack(this.track);
+    else if (this.music) this.startScheduler();
+  }
+
+  private base() {
+    return import.meta.env.BASE_URL;
+  }
+
+  private async decode(url: string): Promise<AudioBuffer | null> {
+    try {
+      const r = await fetch(url);
+      if (!r.ok) return null;
+      return await this.ctx!.decodeAudioData(await r.arrayBuffer());
+    } catch {
+      return null;
+    }
+  }
+
+  private async loadSamples() {
+    if (this.samplesLoading || !this.ctx) return;
+    this.samplesLoading = true;
+    const jobs: Promise<void>[] = [];
+    for (const [name, n] of Object.entries(SAMPLE_COUNT)) {
+      for (let i = 0; i < (n ?? 0); i++) {
+        jobs.push(this.decode(`${this.base()}audio/sfx/${name}_${i}.wav`).then(b => {
+          if (!b) return;
+          const list = this.samples.get(name) ?? [];
+          list.push(b);
+          this.samples.set(name, list);
+        }));
+      }
+    }
+    await Promise.all(jobs);
+  }
+
+  /** 播放取樣；沒有取樣時回傳 false 讓呼叫端改用合成 */
+  private playSample(name: SfxName, v: number, t: number): boolean {
+    const list = this.samples.get(name);
+    if (!list?.length || !this.ctx) return false;
+    if (this.voices > 14) return true; // 同時發聲太多就略過，避免爆音
+    const c = this.ctx;
+    const src = c.createBufferSource();
+    src.buffer = list[Math.floor(Math.random() * list.length)];
+    if (!NO_PITCH.has(name)) src.playbackRate.value = 0.93 + Math.random() * 0.14;
+    const g = c.createGain();
+    g.gain.value = (SAMPLE_GAIN[name] ?? 0.6) * (0.55 + 0.45 * v);
+    src.connect(g).connect(this.sfxBus);
+    this.voices++;
+    src.onended = () => { this.voices--; };
+    src.start(t);
+    return true;
   }
 
   setVolumes(sfx: number, music: number) {
@@ -61,7 +144,7 @@ class AudioEngine {
     this.musicVol = music;
     if (!this.ctx) return;
     this.sfxBus.gain.value = sfx * 0.8;
-    this.musicBus.gain.value = music * 0.5;
+    this.musicBus.gain.value = music * 0.7;
   }
 
   // ---------------------------------------------------------------------
@@ -108,8 +191,16 @@ class AudioEngine {
     this.last[name] = now;
     const t = now + 0.005;
     const v = Math.min(1, intensity);
+    if (this.playSample(name, v, t)) return;
     const B = this.sfxBus;
     switch (name) {
+      case 'achievement':
+      case 'bossdown':
+        for (const [i, f] of [880, 1109, 1319].entries()) this.tone('triangle', f, f, t + i * 0.05, 0.2, 0.08, B);
+        break;
+      case 'herodeath':
+        this.tone('sawtooth', 300, 60, t, 0.6, 0.12, B);
+        break;
       case 'hit':
         this.noise(t, 0.08, 0.35 * v, 'bandpass', 1800, 600, 1.2);
         this.tone('sine', 160, 60, t, 0.1, 0.4 * v, B);
@@ -201,7 +292,69 @@ class AudioEngine {
   }
 
   // ---------------------------------------------------------------------
-  // 配樂：每個區域依調式與速度生成循環
+  // 配樂（檔案）：區域曲、首領曲、副本曲、標題曲
+  // ---------------------------------------------------------------------
+  /** 切換配樂曲目；fallback 是載入失敗時用的合成配樂設定 */
+  setTrack(key: TrackKey | null, fallback?: { root: number; scale: string; tempo: number } | null, intense = false) {
+    if (key === this.track) return;
+    this.track = key;
+    this.fallback = fallback ?? null;
+    this.fallbackIntense = intense;
+    if (this.ctx) void this.playTrack(key);
+  }
+  private fallback: { root: number; scale: string; tempo: number } | null = null;
+  private fallbackIntense = false;
+
+  private async playTrack(key: TrackKey | null) {
+    if (!this.ctx) return;
+    if (!key) { this.fadeOutCurrent(); return; }
+    let buf = this.trackBuffers.get(key);
+    if (buf === undefined) {
+      buf = await this.decode(`${this.base()}audio/music/${key}.m4a`);
+      this.trackBuffers.set(key, buf);
+    }
+    if (this.track !== key) return; // 載入期間又換了曲目
+    if (!buf) {
+      // 檔案配樂載入失敗：改用合成配樂
+      this.fadeOutCurrent();
+      this.music = this.fallback ? { ...this.fallback, intense: this.fallbackIntense } : null;
+      this.startScheduler();
+      return;
+    }
+    this.music = null; // 停掉合成配樂
+    if (this.current?.key === key) return;
+    const c = this.ctx;
+    const src = c.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    if (!LOOP_TRACKS.has(key)) {
+      // 非循環設計的曲子：避開開頭與結尾可能的空白
+      src.loopStart = 0.05;
+      src.loopEnd = Math.max(0.1, buf.duration - 0.05);
+    }
+    const g = c.createGain();
+    const now = c.currentTime;
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(1, now + 1.2);
+    src.connect(g).connect(this.musicBus);
+    src.start(now);
+    this.fadeOutCurrent();
+    this.current = { key, src, gain: g };
+  }
+
+  private fadeOutCurrent() {
+    if (!this.current || !this.ctx) return;
+    const { src, gain } = this.current;
+    const now = this.ctx.currentTime;
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setValueAtTime(Math.max(0.0001, gain.gain.value), now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+    src.stop(now + 1.3);
+    this.current = null;
+  }
+
+  // ---------------------------------------------------------------------
+  // 配樂（合成備援）：每個區域依調式與速度生成循環
   // ---------------------------------------------------------------------
   setMusic(m: { root: number; scale: string; tempo: number } | null, intense = false) {
     const next = m ? { ...m, intense } : null;

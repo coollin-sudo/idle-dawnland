@@ -27,7 +27,7 @@
   - 怪物圖鑑、轉生與星魂天賦
 - **表現**：
   - 角色、怪物、寵物立繪、頭像、區域背景、物品與技能圖示、戰鬥特效都是手繪風格美術圖；特效動畫與粒子運動由程式驅動
-  - 音效與各區域配樂由 WebAudio 即時合成，不需任何素材檔
+  - 音效與配樂使用 CC0（公眾領域）素材：Kenney 音效包、OpenGameArt 的奇幻配樂；8 個區域、首領戰、副本與標題畫面各有配樂，素材載入失敗時退回 WebAudio 合成
 - **離線收益**：離開時用真實戰鬥邏輯模擬目前關卡的效率，回來時結算（基本上限 12 小時）。
 - **存檔**：自動存在瀏覽器，可匯出／匯入存檔碼換裝置。
 
@@ -78,3 +78,22 @@ docs/        遊戲設計文件
 遊戲設定裡可以關閉「美術圖」，改用程式即時繪製的版本（角色會隨裝備改變武器外觀）。
 
 想替換某張圖，照 ART_PROMPTS.md 的檔名放進對應資料夾即可（支援 .webp／.png），找不到圖的單位會自動用程式繪製。
+
+## 音效與配樂授權
+
+所有音訊素材皆為 CC0（公眾領域，可自由使用、不需標示作者），以下列出來源以示感謝：
+
+- 音效：[Kenney](https://kenney.nl) — RPG Audio、Impact Sounds、Interface Sounds、Music Jingles
+- 配樂（[OpenGameArt](https://opengameart.org)）：
+  - 標題：Intro Music — RonyDkid
+  - 晨露草原：GrassLands Theme — DST
+  - 迷霧森林：Peaceful Forest — Samza
+  - 遺忘礦坑：Mysterious — nene
+  - 赤沙遺跡：Desert Calmness (Negev Desert Loop) — Dizzy Crow
+  - 霜語山脈：Fantasy: Rising Moon — RandomMind
+  - 熔心火山：Evil Approach — nene
+  - 雷鳴天城：Determined Pursuit — Emma_MA
+  - 暮影深淵：Dark Shrine Loop — qubodup / yd
+  - 副本與高塔：Desert Fighting (Negev Fight Loop) — Dizzy Crow
+  - 首領戰：Boss Battle #2 [Symphonic Metal] — nene
+
