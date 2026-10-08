@@ -217,3 +217,27 @@ describe('魔晶與稱號', () => {
     expect(heroStats(s).dmg).toBe(base + 5);
   });
 });
+
+describe('自動裝備', () => {
+  it('預設不會自動換掉身上的傳說；開啟後會換上並搬移魔晶', async () => {
+    const { receiveItem } = await import('@/systems/loot');
+    const { g } = makeGame();
+    const s = g.state;
+    const old = s.equipment.weapon!;
+    old.rarity = 4;
+    old.sockets = ['ruby:2'];
+    const better = generateItem({ rng: g.rng, nextUid: g.nextUid, classId: 'warrior' }, { ilvl: 60, rarity: 3, slot: 'weapon' });
+    better.sockets = [null, null];
+    s.hero.level = 70;
+    expect(receiveItem(g, better)).toBe('kept');
+    expect(s.equipment.weapon!.uid).toBe(old.uid);
+
+    s.settings.autoEquipSpecial = true;
+    s.inventory = s.inventory.filter(i => i.uid !== better.uid);
+    expect(receiveItem(g, better)).toBe('equipped');
+    expect(s.equipment.weapon!.uid).toBe(better.uid);
+    expect(s.equipment.weapon!.sockets).toEqual(['ruby:2', null]);
+    const back = s.inventory.find(i => i.uid === old.uid)!;
+    expect(back.sockets).toEqual([null]);
+  });
+});

@@ -45,7 +45,8 @@ export function SettingsPanel() {
       <h3>自動化</h3>
       {row('自動喝藥水', `生命低於 ${st.potionAt}% 時`, <input type="range" min={10} max={90} step={5} value={st.potionAt} onInput={e => set('potionAt', +(e.target as HTMLInputElement).value)} />)}
       {row('自動補充藥水', '藥水用完時用金幣補 10 瓶', <Switch on={st.autoBuyPotions} onChange={v => set('autoBuyPotions', v)} />)}
-      {row('自動裝備更好的裝備', '傳說與套裝不會自動換上', <Switch on={st.autoEquip} onChange={v => set('autoEquip', v)} />)}
+      {row('自動裝備更好的裝備', '換裝時會把舊裝備上的魔晶搬到新裝備', <Switch on={st.autoEquip} onChange={v => set('autoEquip', v)} />)}
+      {row('自動裝備傳說與套裝', '開啟後傳說、套裝也會自動換上；關閉時也不會自動換掉身上的傳說與套裝', <Switch on={st.autoEquipSpecial} onChange={v => set('autoEquipSpecial', v)} />)}
       {row('自動分解', '掉落時直接分解這個稀有度以下的裝備', (
         <select class="input" value={st.autoSalvage} onChange={e => set('autoSalvage', +(e.target as HTMLSelectElement).value)}>
           <option value={-1}>關閉</option>

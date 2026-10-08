@@ -361,6 +361,8 @@ export interface Settings {
   autoSalvage: number; // 自動分解此稀有度以下（-1 = 關閉）
   keepUpgrades: boolean;
   autoEquip: boolean;
+  /** 自動裝備也包含傳說與套裝（並允許替換身上的傳說／套裝） */
+  autoEquipSpecial: boolean;
   autoBoss: boolean;
   speedUi: boolean;
   /** 有外部美術圖時使用圖片（關閉則用程式繪製，會顯示裝備外觀） */

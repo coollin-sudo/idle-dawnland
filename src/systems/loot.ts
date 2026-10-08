@@ -104,6 +104,20 @@ export function invCapacity(g: Game) {
   return g.state.invCapacity + (g.state.rebirth.ranks[bag.id] ?? 0) * (bag.per ?? 0);
 }
 
+/** 換裝時把舊裝備上的魔晶搬到新裝備的空孔；鑲不下的留在舊裝備上 */
+function moveJewels(from: Item, to: Item) {
+  if (!from.sockets?.some(Boolean) || !to.sockets?.includes(null)) return;
+  to.sockets = [...to.sockets];
+  from.sockets = [...from.sockets];
+  for (let i = 0; i < from.sockets.length; i++) {
+    const k = from.sockets[i];
+    const j = to.sockets.indexOf(null);
+    if (!k || j < 0) continue;
+    to.sockets[j] = k;
+    from.sockets[i] = null;
+  }
+}
+
 export function receiveItem(g: Game, item: Item): 'kept' | 'salvaged' | 'equipped' {
   const s = g.state;
   g.count('itemsFound');
@@ -119,10 +133,16 @@ export function receiveItem(g: Game, item: Item): 'kept' | 'salvaged' | 'equippe
   let delta = 0;
   if (equipable && (s.settings.autoEquip || s.settings.keepUpgrades)) delta = upgradeDelta(s, item).delta;
 
-  if (equipable && s.settings.autoEquip && delta > 0 && item.rarity < 4 && !item.set) {
-    const slot = upgradeDelta(s, item).slot;
+  const special = (it: Item) => it.rarity >= 4 || !!it.set;
+  const allowSpecial = s.settings.autoEquipSpecial;
+  const target = equipable && s.settings.autoEquip && delta > 0 ? upgradeDelta(s, item).slot : null;
+  const current = target ? s.equipment[target] : null;
+  if (target && (allowSpecial || (!special(item) && !(current && special(current))))) {
+    const slot = target;
     const old = s.equipment[slot];
-    s.equipment[slot] = { ...item, isNew: false };
+    const next: Item = { ...item, isNew: false };
+    if (old) moveJewels(old, next);
+    s.equipment[slot] = next;
     g.heroChanged();
     g.ev.emit('loot:item', { item, auto: 'kept' });
     g.log(`自動裝備 ${itemDisplayName(item)}`, 'good');
@@ -130,7 +150,7 @@ export function receiveItem(g: Game, item: Item): 'kept' | 'salvaged' | 'equippe
     return 'equipped';
   }
 
-  const protectedItem = item.rarity >= 4 || !!item.set || (s.settings.keepUpgrades && delta > 0);
+  const protectedItem = special(item) || (s.settings.keepUpgrades && delta > 0);
   if (!protectedItem && item.rarity <= s.settings.autoSalvage) {
     salvageOne(g, item);
     g.ev.emit('loot:item', { item, auto: 'salvaged' });
