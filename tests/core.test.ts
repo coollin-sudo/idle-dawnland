@@ -8,7 +8,7 @@ import { MONSTERS } from '@/data/monsters';
 import { REGIONS } from '@/data/regions';
 import { ALL_SKILLS, getSkill } from '@/data/skills';
 import { TALENT_TREES } from '@/data/talents';
-import { generateItem } from '@/systems/items';
+import { generateItem, UTILITY_STATS } from '@/systems/items';
 import { enhance } from '@/systems/forge';
 import { migrate } from '@/save/storage';
 import { applyOffline } from '@/systems/offline';
@@ -77,7 +77,11 @@ describe('裝備產生', () => {
     for (let i = 0; i < 300; i++) {
       const rarity = (i % 4) as 0 | 1 | 2 | 3;
       const it = generateItem({ rng: g.rng, nextUid: g.nextUid, classId: 'mage' }, { ilvl: 1 + (i % 80), rarity });
-      expect(it.affixes.length).toBe(RARITIES[rarity].affixes);
+      // 主要詞綴數量符合稀有度；稀有以上可能額外附加一條非戰鬥詞綴（金幣、掉寶、經驗）
+      const main = it.affixes.filter(a => !UTILITY_STATS.includes(AFFIX_MAP.get(a.id)!.stat));
+      const extra = it.affixes.length - main.length;
+      expect(main.length).toBe(RARITIES[rarity].affixes);
+      expect(extra).toBeLessThanOrEqual(rarity >= 2 ? 1 : 0);
       expect(new Set(it.affixes.map(a => a.id)).size).toBe(it.affixes.length);
       for (const a of it.affixes) expect(AFFIX_MAP.has(a.id)).toBe(true);
       expect(it.implicit.length).toBeGreaterThan(0);
