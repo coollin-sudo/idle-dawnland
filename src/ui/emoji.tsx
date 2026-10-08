@@ -6,7 +6,7 @@ const MAP: Record<string, string> = {
   // 沿用既有的分頁、貨幣圖示
   '🌌': 'ui/rebirth', '🎒': 'ui/bag', '📜': 'ui/quests', '🐾': 'ui/pets', '🗼': 'ui/challenge', '📖': 'ui/collection',
   '⚒': 'ui/forge', '🌳': 'ui/talents', '🗺': 'ui/map', '🛒': 'ui/shop', '🧝': 'ui/hero', '⚙': 'ui/settings',
-  '🥚': 'currency/egg0', '💎': 'currency/gems', '💠': 'currency/gems', '🔷': 'currency/gems', '🍖': 'currency/petFood',
+  '🥚': 'currency/egg0', '💎': 'currency/gems', '💠': 'gems/pouch', '🔷': 'currency/gems', '🍖': 'currency/petFood',
   '🧪': 'currency/potion0', '💰': 'currency/gold',
   // 專用小圖示
   '🌟': 'emo/star', '⭐': 'emo/star', '🔒': 'emo/lock', '🔓': 'emo/unlock', '♻': 'emo/salvage', '🔄': 'emo/reroll', '🔁': 'emo/reroll',

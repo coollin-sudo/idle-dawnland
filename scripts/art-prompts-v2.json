@@ -691,5 +691,21 @@
    "icon-*.png（public/ 根目錄，用 scripts/title-assets.py 產生各尺寸）"
   ],
   "prompt": "Please generate an image. A mobile game app icon for a cute chibi fantasy idle RPG called Dawnland. Full-bleed square artwork with NO transparency and no rounded corners: a glowing golden dawn crystal floating above a crossed longsword and magic staff, warm sunrise sky with soft clouds behind, hand-painted style with clean dark outlines and vibrant colors, centered composition with the crystal large and readable at small sizes. No text, no letters, no watermark, no border."
+ },
+ {
+  "name": "gems__a",
+  "grid": 3,
+  "cells": [
+   "ruby",
+   "sapphire",
+   "emerald",
+   "topaz",
+   "amethyst",
+   "diamond",
+   "socket",
+   "pouch",
+   "titlebadge"
+  ],
+  "prompt": "Please generate an image. Fantasy RPG gem and socket icons, hand-painted style with clean dark outlines, soft cel shading, vibrant glowing colors, matching a cute chibi fantasy game art style. Each icon is a single object with no background tile. TRANSPARENT background (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no frames, no grid lines. Draw a 3x3 grid of 9 separate icons, evenly spaced, each centered in its own cell and filling about 70% of the cell, with wide empty transparent gaps so none of them touch. Icons in reading order (left to right, top to bottom): 1. a faceted red ruby gem. 2. a faceted deep blue sapphire gem. 3. a faceted green emerald gem. 4. a faceted golden yellow topaz gem. 5. a faceted purple amethyst gem. 6. a brilliant white diamond gem with rainbow sparkle. 7. an empty round metal gem socket with a dark hollow center. 8. a small leather pouch spilling colorful gems. 9. an ornate golden laurel wreath title badge with a small star."
  }
 ]

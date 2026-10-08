@@ -139,7 +139,7 @@ p();
 // ---- 背景與圖示（scripts/art-prompts-v2.json） ----
 type Job2 = { name: string; grid: number; cells: string[]; prompt: string };
 const jobs2: Job2[] = JSON.parse(readFileSync(new URL('./art-prompts-v2.json', import.meta.url), 'utf8'));
-const DIR: Record<string, string> = { bg: 'bg', items: 'items', uniques: 'uniques', currency: 'currency', skills: 'skills', eskills: 'skills', vfx: 'vfx', portraits: 'portraits', ui: 'ui', particles: 'particles', emo: 'emo', status: 'status', title: '' };
+const DIR: Record<string, string> = { bg: 'bg', items: 'items', uniques: 'uniques', currency: 'currency', skills: 'skills', eskills: 'skills', vfx: 'vfx', portraits: 'portraits', ui: 'ui', particles: 'particles', emo: 'emo', status: 'status', title: '', gems: 'gems' };
 p('## 4. 背景、圖示與特效');
 p();
 p('這部分每張 prompt 都已包含完整風格描述，直接整段貼給 ChatGPT 即可。');
