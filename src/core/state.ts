@@ -38,6 +38,8 @@ export function newGameState(name: string, classId: ClassId, now = Date.now(), s
     pets: { owned: {}, active: null, eggs: [], slots: 2 },
     quests: { main: 0, mainProgress: 0, daily: [], dailyDate: '', dailyChest: false },
     achievements: {},
+    jewels: {},
+    title: null,
     counters: {},
     codex: {},
     uniquesFound: [],

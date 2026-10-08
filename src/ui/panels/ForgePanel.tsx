@@ -9,10 +9,12 @@ import {
   craft, craftCost, enhance, enhanceCost, enhanceRate, ENH_BREAK_FROM, ENH_DOWN_FROM, findItem, LEGEND_SHARDS, MAX_ENH, reforge, reforgeCost, type EnhanceResult,
 } from '@/systems/forge';
 import { itemColor } from '@/systems/items';
-import { Cost, ItemCard, ItemSlot, NpcHeader, Switch } from '../common';
-import { forgeItem, g, refresh } from '../store';
+import { Cost, ItemCard, ItemSlot, JewelIcon, NpcHeader, Sockets, Switch } from '../common';
+import { JEWEL_MAX_TIER, JEWELS, MAX_SOCKETS, combineCost, jewelKey, jewelMods, jewelName, parseJewel, punchCost, unsocketCost } from '@/data/jewels';
+import { canPunch, combineJewel, punchSocket, socketJewel, unsocketJewel } from '@/systems/jewels';
+import { forgeItem, g, refresh, uiTick } from '../store';
 
-type Sub = 'enhance' | 'reforge' | 'craft';
+type Sub = 'enhance' | 'reforge' | 'jewel' | 'craft';
 
 export function ForgePanel() {
   const gm = g();
@@ -25,7 +27,7 @@ export function ForgePanel() {
     <div>
       <NpcHeader npc="glenn" lines={['+5 之前都很安全。再往上……就看你的運氣了，哈哈！', '分解不用的裝備，精華可以拿來重鑄詞綴。', '傳說碎片收集到 50 個，老頭子幫你打一件傳說！', '強化到 +10 的武器，會發出不一樣的光。']} />
       <div class="subtabs">
-        {([['enhance', '🔨 強化'], ['reforge', '🎲 重鑄'], ['craft', '⚒️ 打造']] as [Sub, string][]).map(([id, n]) => (
+        {([['enhance', '🔨 強化'], ['reforge', '🎲 重鑄'], ['jewel', '💠 魔晶'], ['craft', '⚒️ 打造']] as [Sub, string][]).map(([id, n]) => (
           <button class={'btn sm' + (sub === id ? ' primary' : '')} onClick={() => setSub(id)}>{rich(n)}</button>
         ))}
         <span class="spacer" />
@@ -35,7 +37,7 @@ export function ForgePanel() {
       </div>
       {sub === 'craft' ? <Craft /> : (
         <>
-          {sel ? (sub === 'enhance' ? <Enhance item={sel} /> : <Reforge item={sel} />) : <div class="muted">先選一件裝備</div>}
+          {sub === 'jewel' ? <Jewels item={sel} /> : sel ? (sub === 'enhance' ? <Enhance item={sel} /> : <Reforge item={sel} />) : <div class="muted">先選一件裝備</div>}
           <h3>選擇裝備</h3>
           <div class="small muted" style={{ marginBottom: '6px' }}>身上裝備</div>
           <div class="items" style={{ marginBottom: '10px' }}>{equipped.map(it => <ItemSlot item={it} selected={it.uid === forgeItem.value} onClick={() => { forgeItem.value = it.uid; refresh(); }} />)}</div>
@@ -149,6 +151,74 @@ function Craft() {
         </button>
       </div>
       <div class="tiny dim" style={{ marginTop: '10px' }}>傳說碎片來自分解傳說／神話裝備。打造的物品會依自動規則放進背包。</div>
+    </div>
+  );
+}
+
+/** 魔晶：鑲嵌、取下、打孔與合成 */
+function Jewels({ item }: { item: Item | null }) {
+  // 訂閱介面刷新：props 不變時 signals 會略過重畫
+  void uiTick.value;
+  const gm = g();
+  const s = gm.state;
+  const owned = JEWELS.flatMap(d => Array.from({ length: JEWEL_MAX_TIER + 1 }, (_, t) => jewelKey(d.id, t)))
+    .filter(k => (s.jewels[k] ?? 0) > 0)
+    .sort((a, b) => parseJewel(b)!.tier - parseJewel(a)!.tier);
+  const hasEmpty = !!item?.sockets?.includes(null);
+  const act = (fn: () => unknown) => { fn(); refresh(); };
+  const effect = (k: string) => {
+    const m = jewelMods(k);
+    return m.length > 1 ? `全元素抗性 +${m[0].value}%` : describeMod(m[0], 1);
+  };
+  return (
+    <div class="card" style={{ marginBottom: '6px' }}>
+      {item ? (
+        <div class="forge-main">
+          <div class="forge-item"><ItemSlot item={item} /></div>
+          <div class="grow">
+            <div style={{ fontWeight: 800, color: itemColor(item) }}>{item.name}</div>
+            <div class="small muted" style={{ margin: '2px 0 8px' }}>鑲嵌孔 {item.sockets?.length ?? 0} / {MAX_SOCKETS[item.rarity]}（上限依稀有度）</div>
+            {(item.sockets ?? []).map((k, i) => (
+              <div class="row" style={{ gap: '8px', marginBottom: '4px', alignItems: 'center' }}>
+                {k ? <JewelIcon jkey={k} size={26} /> : <Sockets item={{ ...item, sockets: [null] }} size={26} />}
+                <span class="small grow">{k ? <>{jewelName(k)}・<span class="gold">{effect(k)}</span></> : <span class="dim">空孔：點下方魔晶鑲入</span>}</span>
+                {k && <button class="btn xs" onClick={() => act(() => unsocketJewel(gm, item.uid, i))}>取下 <Cost k="gold" n={unsocketCost(parseJewel(k)!.tier)} have={s.cur.gold} /></button>}
+              </div>
+            ))}
+            {canPunch(item) ? (() => {
+              const c = punchCost(item.sockets?.length ?? 0, item.ilvl);
+              return <button class="btn sm" style={{ marginTop: '4px' }} onClick={() => act(() => punchSocket(gm, item.uid))}>🔨 打孔 <Cost k="gold" n={c.gold} have={s.cur.gold} /> <Cost k="stones" n={c.stones} have={s.cur.stones} /></button>;
+            })() : MAX_SOCKETS[item.rarity] === 0 && <div class="small dim">普通裝備無法打孔，稀有度越高可以打越多孔。</div>}
+          </div>
+        </div>
+      ) : <div class="muted">先從下方選一件裝備</div>}
+      <h3 style={{ marginTop: '12px' }}>魔晶袋</h3>
+      {owned.length === 0 ? <div class="small muted">還沒有魔晶。擊敗首領必定掉落，精英怪也有機會掉落。</div> : (
+        <div class="jewel-grid">
+          {owned.map(k => (
+            <div class="jewel-cell" title={hasEmpty ? '點擊鑲入選取的裝備' : '選取的裝備沒有空孔'} onClick={() => { if (item && hasEmpty) act(() => socketJewel(gm, item.uid, k)); else gm.toast(item ? '這件裝備沒有空的鑲嵌孔' : '先選一件裝備', 'warn', '💠'); }}>
+              <JewelIcon jkey={k} size={30} />
+              <div class="n">{jewelName(k)}<div class="tiny gold">{effect(k)}</div></div>
+              <span class="c">×{s.jewels[k]}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {owned.some(k => s.jewels[k] >= 3 && parseJewel(k)!.tier < JEWEL_MAX_TIER) && (
+        <>
+          <h3 style={{ marginTop: '12px' }}>合成（3 顆同級 → 1 顆高一級）</h3>
+          <div class="row wrap" style={{ gap: '6px' }}>
+            {owned.filter(k => s.jewels[k] >= 3 && parseJewel(k)!.tier < JEWEL_MAX_TIER).map(k => {
+              const p = parseJewel(k)!;
+              return (
+                <button class="btn sm" onClick={() => act(() => combineJewel(gm, k))}>
+                  <JewelIcon jkey={k} size={18} /> ×3 → <JewelIcon jkey={jewelKey(p.def.id, p.tier + 1)} size={18} /> <Cost k="gold" n={combineCost(p.tier)} have={s.cur.gold} />
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }

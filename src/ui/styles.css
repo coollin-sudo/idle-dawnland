@@ -530,3 +530,22 @@ select.input { padding: 6px 10px; }
 .stars-art { display: inline-flex; gap: 1px; vertical-align: middle; }
 .stars-art img { width: 1.05em; height: 1.05em; }
 .stars-art img.off { filter: grayscale(1) brightness(.45); opacity: .7; }
+
+/* 魔晶 */
+.jewel { position: relative; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; flex: none; }
+.jewel img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
+.jewel .jdot { width: 70%; height: 70%; transform: rotate(45deg); border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.4), 0 0 6px currentColor; }
+.jewel .jt { position: absolute; right: -3px; bottom: -3px; font-size: 9px; font-weight: 900; color: #fff; background: rgba(10,8,20,.85); border-radius: 4px; padding: 0 2px; line-height: 1.2; }
+.jewel.empty { border-radius: 50%; background: rgba(0,0,0,.35); box-shadow: inset 0 0 0 1px var(--line2); }
+.jewel.empty img { opacity: .8; }
+.sockets { display: inline-flex; gap: 4px; }
+.socket-line span:first-child { display: inline-flex; align-items: center; gap: 4px; }
+.islot .skdots { position: absolute; left: 3px; bottom: 3px; display: flex; gap: 2px; }
+.islot .skdots i { width: 6px; height: 6px; transform: rotate(45deg); background: rgba(0,0,0,.6); box-shadow: inset 0 0 0 1px rgba(255,255,255,.5); }
+.islot .skdots i.on { box-shadow: 0 0 4px currentColor, inset 0 0 0 1px rgba(255,255,255,.7); }
+.jewel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.jewel-cell { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 10px; background: rgba(255,255,255,.04); border: 1px solid var(--line2); cursor: pointer; }
+.jewel-cell:hover { border-color: var(--gold3); }
+.jewel-cell .n { font-size: 12px; line-height: 1.25; }
+.jewel-cell .c { margin-left: auto; font-weight: 800; }
+.title-chip { font-size: 11px; color: var(--gold); background: rgba(240,194,90,.12); border: 1px solid rgba(240,194,90,.35); border-radius: 6px; padding: 0 5px; margin-left: 6px; white-space: nowrap; }

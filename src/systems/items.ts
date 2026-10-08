@@ -1,4 +1,5 @@
 import { armorPower, enhanceMult, weaponPower } from '@/core/formulas';
+import { jewelMods, rollSockets } from '@/data/jewels';
 import type { Rng } from '@/core/rng';
 import { flat, statIsPct, type Mod } from '@/core/stats';
 import type { AffixDef, AffixRoll, ClassId, Item, ItemSlotKind, Rarity, UniqueDef } from '@/core/types';
@@ -186,7 +187,7 @@ export function generateItem(ctx: ItemCtx, o: GenOpts): Item {
 
   return {
     uid: ctx.nextUid(), slot: kind, base: kind, name, rarity, ilvl, implicit, affixes, enh: 0,
-    unique: unique?.id, set: set?.id, isNew: true,
+    unique: unique?.id, set: set?.id, isNew: true, sockets: rollSockets(rarity, rng.float(0, 1)),
     classId: kind === 'weapon' || kind === 'offhand' ? classId : undefined,
   };
 }
@@ -209,6 +210,7 @@ export function itemMods(it: Item): Mod[] {
   const em = enhanceMult(it.enh);
   const out: Mod[] = it.implicit.map(m => ({ ...m, value: statIsPct(m.stat) ? Math.round(m.value * em * 10) / 10 : Math.round(m.value * em) }));
   for (const a of it.affixes) out.push(affixMod(a));
+  for (const k of it.sockets ?? []) if (k) out.push(...jewelMods(k));
   return out;
 }
 

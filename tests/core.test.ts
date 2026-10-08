@@ -176,3 +176,44 @@ describe('離線、任務與轉生', () => {
     expect(g.state.rebirth.count).toBe(1);
   });
 });
+
+describe('魔晶與稱號', () => {
+  it('3 顆同級合成高一級，鑲嵌後裝備屬性增加，分解時魔晶退回', async () => {
+    const { heroStats } = await import('@/systems/hero');
+    const { combineJewel, socketJewel, punchSocket } = await import('@/systems/jewels');
+    const { salvageItems } = await import('@/systems/loot');
+    const { unequipItem } = await import('@/systems/forge');
+    const { g } = makeGame();
+    const s = g.state;
+    s.cur.gold = 1e9;
+    s.cur.stones = 1e6;
+    s.jewels['ruby:0'] = 3;
+    expect(combineJewel(g, 'ruby:0')).toBe(true);
+    expect(s.jewels['ruby:0']).toBeUndefined();
+    expect(s.jewels['ruby:1']).toBe(1);
+    // 給武器一個孔再鑲入
+    const w = s.equipment.weapon!;
+    w.rarity = 3;
+    w.sockets = undefined;
+    expect(punchSocket(g, w.uid)).toBe(true);
+    const before = heroStats(s).dmg;
+    expect(socketJewel(g, w.uid, 'ruby:1')).toBe(true);
+    expect(s.jewels['ruby:1']).toBeUndefined();
+    expect(heroStats(s).dmg).toBeCloseTo(before + 4, 5);
+    // 卸下後分解，魔晶回到魔晶袋
+    unequipItem(g, 'weapon');
+    salvageItems(g, [w.uid]);
+    expect(s.jewels['ruby:1']).toBe(1);
+  });
+
+  it('稱號需要解鎖才有加成', async () => {
+    const { heroStats } = await import('@/systems/hero');
+    const { g } = makeGame();
+    const s = g.state;
+    const base = heroStats(s).dmg;
+    s.title = 'savior';
+    expect(heroStats(s).dmg).toBe(base);
+    s.progress.best[0] = 79;
+    expect(heroStats(s).dmg).toBe(base + 5);
+  });
+});

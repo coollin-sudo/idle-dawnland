@@ -10,11 +10,12 @@ import { describePower } from '@/data/powers';
 import { CLASSES } from '@/data/classes';
 import { itemIcon, monsterThumb } from '@/render/icons';
 import { codexTiers } from '@/systems/hero';
-import { g } from '../store';
+import { g, refresh, uiTick } from '../store';
+import { TITLES } from '@/data/titles';
 import { NpcHeader, SkillIcon } from '../common';
 import { getSkill } from '@/data/skills';
 
-type Sub = 'ach' | 'codex' | 'legend' | 'records';
+type Sub = 'ach' | 'titles' | 'codex' | 'legend' | 'records';
 
 export function CollectionPanel() {
   const [sub, setSub] = useState<Sub>('ach');
@@ -22,11 +23,11 @@ export function CollectionPanel() {
     <div>
       <NpcHeader npc="mila" lines={['每種怪物打倒得夠多，我就能分析出牠們的弱點。', '傳說裝備都有自己的故事，你收集了幾件呢？', '成就帶來的加成是永久的，轉生也不會消失。']} />
       <div class="subtabs">
-        {([['ach', '🏆 成就'], ['codex', '📖 怪物圖鑑'], ['legend', '🌟 傳說收藏'], ['records', '📊 紀錄']] as [Sub, string][]).map(([id, n]) => (
+        {([['ach', '🏆 成就'], ['titles', '👑 稱號'], ['codex', '📖 怪物圖鑑'], ['legend', '🌟 傳說收藏'], ['records', '📊 紀錄']] as [Sub, string][]).map(([id, n]) => (
           <button class={'btn sm' + (sub === id ? ' primary' : '')} onClick={() => setSub(id)}>{rich(n)}</button>
         ))}
       </div>
-      {sub === 'ach' ? <Achievements /> : sub === 'codex' ? <Codex /> : sub === 'legend' ? <Legends /> : <Records />}
+      {sub === 'ach' ? <Achievements /> : sub === 'titles' ? <Titles /> : sub === 'codex' ? <Codex /> : sub === 'legend' ? <Legends /> : <Records />}
     </div>
   );
 }
@@ -140,6 +141,41 @@ function Records() {
     <>
       <div class="statgrid">{rows.map(([k, v]) => <div class="s"><span>{k}</span><b>{v}</b></div>)}</div>
       <div style={{ marginTop: '14px' }}><ShareCardButton /></div>
+    </>
+  );
+}
+
+/** 稱號：一次配戴一個，名字旁邊會顯示並給予加成 */
+function Titles() {
+  void uiTick.value;
+  const gm = g();
+  const s = gm.state;
+  const unlocked = TITLES.filter(t => t.unlocked(s));
+  const locked = TITLES.filter(t => !t.unlocked(s));
+  const wear = (id: string | null) => { s.title = id; gm.heroChanged(); gm.touch(); refresh(); };
+  return (
+    <>
+      <div class="small muted" style={{ marginBottom: '10px' }}>
+        已解鎖 {unlocked.length}/{TITLES.length} 個稱號。配戴的稱號會顯示在名字旁邊，並給予右側的加成（一次只能配戴一個）。
+      </div>
+      <div class="list">
+        {[...unlocked, ...locked].map(t => {
+          const ok = t.unlocked(s);
+          const on = s.title === t.id;
+          return (
+            <div class={'li' + (on ? ' hl' : '')} style={{ opacity: ok ? 1 : 0.45 }}>
+              <div class="ic" style={{ fontSize: '22px' }}>{rich(t.icon)}</div>
+              <div class="grow">
+                <div class="t">{t.name}{on && <span class="title-chip">配戴中</span>}</div>
+                <div class="d">{describeMod(t.mod)}・<span class="dim">{t.req}</span></div>
+              </div>
+              {ok && (on
+                ? <button class="btn sm" onClick={() => wear(null)}>卸下</button>
+                : <button class="btn sm primary" onClick={() => wear(t.id)}>配戴</button>)}
+            </div>
+          );
+        })}
+      </div>
     </>
   );
 }

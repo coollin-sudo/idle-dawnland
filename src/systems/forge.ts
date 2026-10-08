@@ -68,7 +68,9 @@ export function enhance(g: Game, uid: number, useProtect: boolean): EnhanceResul
     if (f.where === 'equip') g.state.equipment[f.slot!] = null;
     else g.state.inventory.splice(g.state.inventory.indexOf(it), 1);
     result = 'break';
-    g.toast(`${itemDisplayName(it)} 碎裂了……`, 'bad', '💔');
+    // 鑲在上面的魔晶不會跟著碎掉
+    for (const k of it.sockets ?? []) if (k) g.state.jewels[k] = (g.state.jewels[k] ?? 0) + 1;
+    g.toast(`${itemDisplayName(it)} 碎裂了……${it.sockets?.some(Boolean) ? '（魔晶已退回）' : ''}`, 'bad', '💔');
   } else {
     it.enh--;
     result = 'down';

@@ -1,4 +1,5 @@
 import { armorDR, evadeChance } from '@/core/formulas';
+import { TITLE_MAP } from '@/data/titles';
 import { BASE_CONVERSION, computeStats, PRIMARY, type Conversion, type Mod, type StatBlock } from '@/core/stats';
 import type { ClassDef, GameState, Item, SlotId } from '@/core/types';
 import { ADVANCES, CLASSES } from '@/data/classes';
@@ -97,6 +98,9 @@ export function heroMods(s: GameState, ov?: EquipOverride): Mod[] {
     const tier = s.achievements[a.id] ?? 0;
     if (tier > 0) mods.push({ ...a.reward, value: a.reward.value * tier });
   }
+
+  const title = s.title ? TITLE_MAP.get(s.title) : undefined;
+  if (title && title.unlocked(s)) mods.push(title.mod);
 
   const ct = codexTiers(s);
   if (ct > 0) mods.push({ stat: 'dmg', kind: 'flat', value: ct * CODEX_BONUS_PER_TIER }, { stat: 'hp', kind: 'inc', value: ct * CODEX_BONUS_PER_TIER });

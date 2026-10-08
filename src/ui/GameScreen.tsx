@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
+import { TITLE_MAP } from '@/data/titles';
 import { Emo, rich } from './emoji';
 import { fmt } from '@/core/format';
 import { xpToNext, ADVANCE_LEVEL } from '@/core/formulas';
@@ -56,7 +57,7 @@ function TopBar() {
           return <img class={'portrait' + (art ? ' art' : '')} src={art ?? portrait(heroLookOf(), 88)} alt="" />;
         })()}
         <div>
-          <div class="name">{h.name}</div>
+          <div class="name">{h.name}{s.title && TITLE_MAP.get(s.title)?.unlocked(s) && <span class="title-chip">{TITLE_MAP.get(s.title)!.name}</span>}</div>
           <div class="sub">Lv.<b>{h.level}</b> {h.advId ? ADVANCES[h.advId].name : c.name}{s.rebirth.count ? `・轉生 ${s.rebirth.count}` : ''}</div>
         </div>
       </div>

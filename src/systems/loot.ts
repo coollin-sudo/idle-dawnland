@@ -1,4 +1,5 @@
 import type { Game } from '@/core/game';
+import { jewelDrop, returnJewels } from './jewels';
 import { DIFFICULTIES, mobGold, mobXp, sellPrice } from '@/core/formulas';
 import type { Item, Rarity } from '@/core/types';
 import type { Unit } from '@/core/unit';
@@ -46,6 +47,7 @@ export function rewardKill(g: Game, u: Unit, killer: Unit | null, m: KillMods = 
   if (u.elite.length) g.count('eliteKills');
   if (u.boss) g.count('bossKills');
   s.codex[u.defId] = (s.codex[u.defId] ?? 0) + 1;
+  if (!m.noItems) jewelDrop(g, u);
   petXpFromKill(g, L, tier);
 
   // 材料
@@ -167,6 +169,7 @@ export function salvageValue(it: Item) {
 }
 
 function salvageOne(g: Game, it: Item) {
+  returnJewels(g, it);
   const v = salvageValue(it);
   g.state.cur.essence += v.essence;
   g.state.cur.stones += v.stones;
@@ -196,6 +199,7 @@ export function sellItems(g: Game, uids: number[]) {
   s.inventory = s.inventory.filter(it => {
     if (!uids.includes(it.uid) || it.locked) return true;
     gold += sellPrice(it.ilvl, it.rarity);
+    returnJewels(g, it);
     n++;
     return false;
   });

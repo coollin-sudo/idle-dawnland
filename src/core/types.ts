@@ -284,6 +284,8 @@ export interface Item {
   isNew?: boolean;
   /** 打造或掉落當下的職業（武器/副手用） */
   classId?: ClassId;
+  /** 魔晶鑲嵌孔：null 為空孔，字串為魔晶 key（例如 'ruby:2'） */
+  sockets?: (string | null)[];
 }
 
 export interface HeroState {
@@ -384,6 +386,10 @@ export interface GameState {
   pets: { owned: Record<string, PetState>; active: string | null; eggs: Egg[]; slots: number };
   quests: { main: number; mainProgress: number; daily: MissionState[]; dailyDate: string; dailyChest: boolean };
   achievements: Record<string, number>;
+  /** 魔晶袋：key 'ruby:2' → 數量 */
+  jewels: Record<string, number>;
+  /** 目前配戴的稱號 id */
+  title: string | null;
   counters: Record<string, number>;
   codex: Record<string, number>;
   uniquesFound: string[];
