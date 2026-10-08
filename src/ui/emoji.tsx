@@ -46,3 +46,10 @@ export function rich(text: string | null | undefined): ComponentChildren {
   if (last < text.length) out.push(text.slice(last));
   return out;
 }
+
+/** 星等：n 顆亮、max - n 顆暗；沒有星星美術圖時用 ★☆ */
+export function Stars({ n, max }: { n: number; max: number }) {
+  const url = artUrl('art/emo/star');
+  if (!url) return <>{'★'.repeat(n)}{'☆'.repeat(Math.max(0, max - n))}</>;
+  return <span class="stars-art">{Array.from({ length: max }, (_, i) => <img class={i < n ? '' : 'off'} src={url} alt="" />)}</span>;
+}

@@ -1,5 +1,5 @@
 import { fmt, fmtDuration } from '@/core/format';
-import { Emo } from '../emoji';
+import { Emo, Stars } from '../emoji';
 import { describeMod } from '@/core/stats';
 import type { PetDef } from '@/core/types';
 import { RARITIES } from '@/data/items';
@@ -26,7 +26,7 @@ function PetDetail({ id }: { id: string }) {
       <div class="row" style={{ gap: '14px', alignItems: 'flex-start' }}>
         <img src={petImg(def)} style={{ width: '110px', height: '110px' }} alt="" />
         <div class="grow">
-          <div style={{ color: RARITIES[def.rarity].color, fontWeight: 800 }}>{RARITIES[def.rarity].name}・{'★'.repeat(ps.stars)}{'☆'.repeat(PET_MAX_STARS - ps.stars)}</div>
+          <div style={{ color: RARITIES[def.rarity].color, fontWeight: 800 }}>{RARITIES[def.rarity].name}・<Stars n={ps.stars} max={PET_MAX_STARS} /></div>
           <div class="small muted">{def.desc}</div>
           <div style={{ marginTop: '6px' }}>Lv.{ps.level}{ps.level < PET_MAX_LEVEL ? '' : '（滿級）'}</div>
           {ps.level < PET_MAX_LEVEL && <Bar value={ps.xp} max={petXpToNext(ps.level)} kind="green" size="sm" />}
@@ -89,7 +89,7 @@ export function PetsPanel() {
               <div style={{ fontWeight: 800, fontSize: '13px' }}>{p.name}</div>
               {ps ? (
                 <>
-                  <div class="stars">{'★'.repeat(ps.stars)}{'☆'.repeat(PET_MAX_STARS - ps.stars)}</div>
+                  <div class="stars"><Stars n={ps.stars} max={PET_MAX_STARS} /></div>
                   <div class="tiny muted">Lv.{ps.level}{s.pets.active === p.id ? '・出戰中' : ''}</div>
                 </>
               ) : <div class="tiny dim">未擁有</div>}

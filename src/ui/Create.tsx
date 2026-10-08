@@ -6,6 +6,7 @@ import { saveState } from '@/save/storage';
 import { audio } from '@/audio/audio';
 import { HeroPreview } from './HeroPreview';
 import { startGame } from './store';
+import { artUrl } from '@/render/images';
 
 export function Create({ onDone, onImport }: { onDone: () => void; onImport: () => void }) {
   const [cls, setCls] = useState<ClassId>('warrior');
@@ -20,6 +21,8 @@ export function Create({ onDone, onImport }: { onDone: () => void; onImport: () 
   };
   return (
     <div class="create">
+      {(() => { const bg = artUrl('art/title/bg'); return bg ? <div class="title-bg" style={{ backgroundImage: `url(${bg})` }} /> : null; })()}
+      {(() => { const em = artUrl('art/title/emblem'); return em ? <img class="title-emblem" src={em} alt="" /> : null; })()}
       <div class="logo">放置冒險</div>
       <div class="logo-sub">晨 曦 大 陸</div>
       <div class="tagline">永晝水晶碎裂，暮影籠罩大陸。選擇你的道路，守護者——就算你離開，冒險也會繼續。</div>

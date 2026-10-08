@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { rich } from '../emoji';
+import { rich, Stars } from '../emoji';
 import { fmt, fmtDuration } from '@/core/format';
 import { ShareCardButton } from '../ShareCard';
 import { describeMod } from '@/core/stats';
@@ -73,7 +73,7 @@ function Codex() {
             <div class={'m' + (n ? '' : ' unknown')} title={n ? m.lore : '尚未遭遇'}>
               <img src={monsterThumb(m, 64)} alt="" />
               <div class="nm">{n ? m.name : '？？？'}</div>
-              <div class="stars">{'★'.repeat(stars)}{'☆'.repeat(3 - stars)}</div>
+              <div class="stars"><Stars n={stars} max={3} /></div>
               <div class="tiny muted">{fmt(n)}</div>
               {n > 0 && m.skills && m.skills.length > 0 && (
                 <div class="msk">{m.skills.map(id => <span title={getSkill(id).name + '：' + getSkill(id).desc}><SkillIcon def={getSkill(id)} size={18} /></span>)}</div>

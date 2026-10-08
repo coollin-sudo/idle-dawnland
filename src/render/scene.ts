@@ -13,7 +13,7 @@ import { Background, GROUND_Y, VIEW_H, VIEW_W } from './background';
 import { alpha, clamp01, easeOut, glow, lerp, rrect, type Ctx } from './draw';
 import { Beam, Bubble, Burst, Falling, Lightning, Particles, Pillar, Projectile, Ring, Slash, SpriteFx, Texts, Vortex, type Fx, type SpriteOpts } from './effects';
 import { paintHero, type Pose } from './heroPainter';
-import { artPending, classImage, monsterImage, petImage, preloadArt, skillImage, vfxImage } from './images';
+import { artPending, classImage, monsterImage, petImage, preloadArt, skillImage, statusImage, vfxImage } from './images';
 import { ARCH_HEIGHT, paintMonster } from './monsterPainter';
 
 interface Actor {
@@ -83,7 +83,7 @@ export class BattleScene {
 
   bind(game: Game) {
     // 特效貼圖數量不多，開場就全部載入，避免第一次施放時沒有圖
-    preloadArt([...VFX_SPRITES.map(n => `art/vfx/${n}`), ...PARTICLE_SPRITES.map(n => `art/particles/${n}`)]);
+    preloadArt([...VFX_SPRITES.map(n => `art/vfx/${n}`), ...PARTICLE_SPRITES.map(n => `art/particles/${n}`), ...Object.keys(STATUSES).map(id => `art/status/${id}`)]);
     this.unsubs.forEach(u => u());
     this.game = game;
     this.actors.clear();
@@ -545,7 +545,7 @@ export class BattleScene {
         onEach((t, x, y) => {
           delay(t, 0.2);
           const fire = e.element === 'fire';
-          if (fire && sp('firebreath', (sx + x) / 2, (sy + y) / 2 - 10, { size: Math.abs(x - sx) + 60, dur: 0.6, fade: 'inout', flip, grow: [0.8, 1.05] })) return;
+          if (fire && sp('firebreath', (sx + x) / 2, (sy + y) / 2 - 10, { size: Math.min(320, Math.abs(x - sx) + 40), squash: 0.5, dur: 0.6, fade: 'inout', flip, grow: [0.8, 1.05] })) return;
           if (!fire && e.element === 'ice' && sp('frostburst', x, y, { size: 110, dur: 0.5, grow: [0.5, 1.1] })) {
             sp('blizzard', (sx + x) / 2, (sy + y) / 2 - 10, { size: 200, dur: 0.6, fade: 'inout' });
             return;
@@ -917,10 +917,16 @@ export class BattleScene {
       ctx.textAlign = 'left';
       let ix = x;
       for (const s of u.statuses.slice(0, 5)) {
-        ctx.fillStyle = STATUSES[s.id].color;
-        ctx.beginPath();
-        ctx.arc(ix + 4, y + 13, 4, 0, Math.PI * 2);
-        ctx.fill();
+        const icon = statusImage(s.id);
+        if (icon) {
+          ctx.drawImage(icon, ix - 1, y + 7, 12, 12);
+          ix += 3;
+        } else {
+          ctx.fillStyle = STATUSES[s.id].color;
+          ctx.beginPath();
+          ctx.arc(ix + 4, y + 13, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
         if (s.stacks > 1) {
           ctx.fillStyle = '#fff';
           ctx.fillText(String(s.stacks), ix + 9, y + 17);
