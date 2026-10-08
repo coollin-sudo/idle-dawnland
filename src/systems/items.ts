@@ -96,9 +96,16 @@ function roundAffix(def: AffixDef, v: number): number {
   return Math.round(v);
 }
 
-export function rollAffixValue(rng: Rng, def: AffixDef, ilvl: number, mult = 1): AffixRoll {
+/**
+ * 詞綴品質保底（裝備預算制）：稀有度越高，數值下限越高，
+ * 確保高稀有度裝備的總預算穩定高於低稀有度（參考 WoW 的 item budget）。
+ * 普通、優良、稀有、史詩、傳說、神話
+ */
+export const QUALITY_FLOOR = [0, 0, 0.1, 0.25, 0.4, 0.55];
+
+export function rollAffixValue(rng: Rng, def: AffixDef, ilvl: number, mult = 1, qMin = 0): AffixRoll {
   const [lo, hi] = affixRange(def, ilvl);
-  const q = rng.next();
+  const q = qMin + (1 - qMin) * rng.next();
   const raw = (lo + (hi - lo) * q) * mult;
   let value = roundAffix(def, raw);
   if (value === 0) value = def.min < 0 ? -0.1 : 0.1;
@@ -107,10 +114,15 @@ export function rollAffixValue(rng: Rng, def: AffixDef, ilvl: number, mult = 1):
 
 /** 職業用不到的攻擊屬性：物理職業不需要魔攻，法系職業不需要物攻 */
 const OFF_CLASS_STATS: Record<'phys' | 'magic', string[]> = { phys: ['matk', 'magDmg'], magic: ['atk', 'physDmg'] };
+/** 效益很低的主屬性（降低出現率）：物理職業的智力、法師的力量；祭司兩者都用得到 */
+const WEAK_PRIMARY: Partial<Record<ClassId, string[]>> = { warrior: ['int'], ranger: ['int'], mage: ['str'] };
+/** 非戰鬥屬性：不佔主要詞綴格，改為稀有以上裝備的額外加成 */
+export const UTILITY_STATS = ['goldFind', 'magicFind', 'xpGain'];
 
-function affixPool(kind: ItemSlotKind, ilvl: number, exclude: Set<string>, classId?: ClassId): AffixDef[] {
+function affixPool(kind: ItemSlotKind, ilvl: number, exclude: Set<string>, classId?: ClassId, utility = false): AffixDef[] {
   const off = classId ? OFF_CLASS_STATS[CLASSES[classId].basic.dmgType] : [];
-  return AFFIXES.filter(a => !exclude.has(a.id) && !off.includes(a.stat) && (a.minIlvl ?? 0) <= ilvl && (a.slots === 'all' || a.slots.includes(kind)));
+  return AFFIXES.filter(a => !exclude.has(a.id) && !off.includes(a.stat) && UTILITY_STATS.includes(a.stat) === utility
+    && (a.minIlvl ?? 0) <= ilvl && (a.slots === 'all' || a.slots.includes(kind)));
 }
 
 /** 各職業（含轉職）技能會用到的元素，用來降低抽到用不到的元素傷害詞綴 */
@@ -129,11 +141,17 @@ function elementStatsOf(classId: ClassId): Set<string> {
 }
 const OFF_ELEMENT_WEIGHT = 0.15;
 
-export function rollAffix(rng: Rng, kind: ItemSlotKind, ilvl: number, exclude: Set<string>, classId?: ClassId): AffixRoll | null {
+export function rollAffix(rng: Rng, kind: ItemSlotKind, ilvl: number, exclude: Set<string>, classId?: ClassId, qMin = 0, utility = false): AffixRoll | null {
   const useful = classId ? elementStatsOf(classId) : null;
-  const weight = (a: AffixDef) => (useful && Object.values(ELEMENT_STAT).includes(a.stat) && !useful.has(a.stat) ? a.weight * OFF_ELEMENT_WEIGHT : a.weight);
-  const def = rng.weighted(affixPool(kind, ilvl, exclude, classId), weight);
-  return def ? rollAffixValue(rng, def, ilvl) : null;
+  const weak = (classId && WEAK_PRIMARY[classId]) || [];
+  const weight = (a: AffixDef) => {
+    let w = a.weight;
+    if (useful && Object.values(ELEMENT_STAT).includes(a.stat) && !useful.has(a.stat)) w *= OFF_ELEMENT_WEIGHT;
+    if (weak.includes(a.stat)) w *= 0.35;
+    return w;
+  };
+  const def = rng.weighted(affixPool(kind, ilvl, exclude, classId, utility), weight);
+  return def ? rollAffixValue(rng, def, ilvl, 1, qMin) : null;
 }
 
 // ---------------------------------------------------------------------
@@ -189,16 +207,21 @@ export function generateItem(ctx: ItemCtx, o: GenOpts): Item {
       used.add(ua.id);
     }
     if (rarity === 5) {
-      const extra = rollAffix(rng, kind, ilvl, used, classId);
+      const extra = rollAffix(rng, kind, ilvl, used, classId, QUALITY_FLOOR[rarity]);
       if (extra) affixes.push(extra);
     }
   } else {
     for (let i = 0; i < R.affixes; i++) {
-      const a = rollAffix(rng, kind, ilvl, used, classId);
+      const a = rollAffix(rng, kind, ilvl, used, classId, QUALITY_FLOOR[rarity]);
       if (!a) break;
       affixes.push(a);
       used.add(a.id);
     }
+  }
+  // 非戰鬥屬性：稀有以上有機會額外附加一條（不佔主要詞綴格）
+  if (rarity >= 2 && rng.chance(0.2 + 0.1 * (rarity - 2))) {
+    const extra = rollAffix(rng, kind, ilvl, used, classId, QUALITY_FLOOR[rarity], true);
+    if (extra) { affixes.push(extra); used.add(extra.id); }
   }
 
   let name: string;

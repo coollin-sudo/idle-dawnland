@@ -1,4 +1,5 @@
 import { computeStats, type Conversion, type Element, type Mod, type StatBlock, type StatKey } from './stats';
+import { softHaste } from './stats';
 import type { BasicAttack, Family, SkillDef, StatusId } from './types';
 import { STATUSES } from '@/data/statuses';
 
@@ -94,7 +95,7 @@ export function recalc(u: Unit): void {
   u.stats = computeStats({ base: u.statBase, mods, conversions: u.conversions });
   u.stats.cdr = Math.min(40, u.stats.cdr);
   u.stats.crit = Math.min(100, u.stats.crit);
-  u.stats.haste = Math.max(-60, u.stats.haste);
+  u.stats.haste = Math.max(-60, softHaste(u.stats.haste));
   if (u.hp > u.stats.hp) u.hp = u.stats.hp;
   if (u.mp > u.stats.mp) u.mp = u.stats.mp;
 }

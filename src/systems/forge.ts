@@ -2,7 +2,7 @@ import type { Game } from '@/core/game';
 import type { Item, ItemSlotKind, SlotId } from '@/core/types';
 import { AFFIX_MAP, SLOTS, UNIQUES } from '@/data/items';
 import { STAR_NODES } from '@/data/meta';
-import { rollAffix, rollAffixValue, generateItem, rollRarity, itemDisplayName, reqLevel } from './items';
+import { rollAffix, rollAffixValue, generateItem, rollRarity, itemDisplayName, reqLevel, QUALITY_FLOOR, UTILITY_STATS } from './items';
 import { itemCtx, receiveItem } from './loot';
 
 export const MAX_ENH = 20;
@@ -109,10 +109,11 @@ export function reforge(g: Game, uid: number, index: number, mode: 'reroll' | 'v
   if (mode === 'value') {
     const def = AFFIX_MAP.get(a.id)!;
     const uniqueMult = it.unique ? (UNIQUES.find(u => u.id === it.unique)?.affixes.find(x => x.id === a.id)?.mult ?? 1) * (it.rarity === 5 ? 1.25 : 1) : 1;
-    it.affixes[index] = rollAffixValue(g.rng, def, it.ilvl, uniqueMult);
+    it.affixes[index] = rollAffixValue(g.rng, def, it.ilvl, uniqueMult, QUALITY_FLOOR[it.rarity]);
   } else {
     const exclude = new Set(it.affixes.map(x => x.id));
-    const next = rollAffix(g.rng, it.slot, it.ilvl, exclude, g.state.hero.classId);
+    const utility = UTILITY_STATS.includes(AFFIX_MAP.get(a.id)?.stat ?? '');
+    const next = rollAffix(g.rng, it.slot, it.ilvl, exclude, g.state.hero.classId, QUALITY_FLOOR[it.rarity], utility);
     if (next) it.affixes[index] = next;
   }
   if (f.where === 'equip') g.heroChanged();

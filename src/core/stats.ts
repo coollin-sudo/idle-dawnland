@@ -186,3 +186,7 @@ export function mergeMods(mods: readonly Mod[]): Mod[] {
   }
   return [...map.values()];
 }
+
+/** 攻擊速度軟上限：超過 50% 的部分效果減半（避免後期攻速與傷害相乘失控） */
+export const HASTE_SOFT_CAP = 50;
+export const softHaste = (h: number) => (h <= HASTE_SOFT_CAP ? h : HASTE_SOFT_CAP + (h - HASTE_SOFT_CAP) * 0.5);

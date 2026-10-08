@@ -11,7 +11,7 @@ import { describePower } from '@/data/powers';
 import { NPCS, SCENES } from '@/data/story';
 import { CLASSES, ADVANCES } from '@/data/classes';
 import { currencyIcon, itemIcon, portrait, portraitArt, type CurrencyKey } from '@/render/icons';
-import { itemColor, itemMods, reqLevel, canEquip, affixRange } from '@/systems/items';
+import { itemColor, itemMods, reqLevel, canEquip, affixRange, UTILITY_STATS } from '@/systems/items';
 import { setCounts, upgradeDelta } from '@/systems/hero';
 import { salvageValue } from '@/systems/loot';
 import { sellPrice, enhanceMult } from '@/core/formulas';
@@ -82,9 +82,6 @@ export function itemStyle(it: Item | null): CSSProperties {
   const R = RARITIES[it.rarity];
   return { '--rc': itemColor(it), '--rg': it.set ? 'rgba(74,224,160,.35)' : R.glow } as CSSProperties;
 }
-
-/** 不影響戰鬥、因此不計入戰力的屬性 */
-const UTILITY_STATS: string[] = ['goldFind', 'magicFind', 'xpGain'];
 
 export function ItemSlot({ item, onClick, selected, label, showUp, small }: {
   item: Item | null; onClick?: () => void; selected?: boolean; label?: string; showUp?: boolean; small?: boolean;

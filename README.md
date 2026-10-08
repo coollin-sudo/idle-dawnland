@@ -59,7 +59,7 @@ tests/       Vitest 單元測試
 docs/        遊戲設計文件
 ```
 
-設計細節見 [docs/DESIGN.md](docs/DESIGN.md)。
+設計細節見 [docs/DESIGN.md](docs/DESIGN.md)；數值平衡的參考資料與驗證方式見 [docs/BALANCE.md](docs/BALANCE.md)。
 
 ## 美術
 
