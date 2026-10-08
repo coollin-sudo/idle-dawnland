@@ -7,7 +7,31 @@ export const TALENT_POINT_EVERY = 3;
 export const ADVANCE_LEVEL = 30;
 export const REBIRTH_REGION = 5; // 通關第 5 區（索引 4）後可轉生
 
-export const xpToNext = (lv: number) => Math.round(45 * Math.pow(lv, 2.15) * Math.pow(1.028, lv) * Math.pow(1.05, Math.max(0, lv - 15)));
+/** 原本的快速升級曲線（轉生後回到最高等級前使用） */
+export const xpToNextFast = (lv: number) => Math.round(45 * Math.pow(lv, 2.15) * Math.pow(1.028, lv) * Math.pow(1.05, Math.max(0, lv - 15)));
+
+/**
+ * 升級減速倍率：第 1～2 區（Lv 1～18）照原本速度，幾小時內就能打到首領；
+ * 之後每區（10 級）約掛機一週才會打到該區首領，留時間在週末研究首領機制。
+ * 控制點由 balance-sim 量測各等級的實際升級時間校準（目標：Lv27 約 7 天，之後每級約 17 小時），控制點之間以對數內插。
+ */
+const XP_SLOW: [number, number][] = [
+  [16, 1], [17, 38], [18, 80], [19, 125], [20, 200], [21, 260], [23, 225], [25, 190], [26, 145], [28, 78], [35, 55], [37, 31], [47, 21], [49, 12], [56, 8],
+  [58, 4.5], [65, 3.5], [67, 1.9], [79, 1.4], [90, 1], [120, 1],
+];
+export function xpSlow(lv: number): number {
+  if (lv <= XP_SLOW[0][0]) return 1;
+  for (let i = 1; i < XP_SLOW.length; i++) {
+    const [l1, v1] = XP_SLOW[i];
+    if (lv <= l1) {
+      const [l0, v0] = XP_SLOW[i - 1];
+      return Math.exp(Math.log(v0) + (Math.log(v1) - Math.log(v0)) * (lv - l0) / (l1 - l0));
+    }
+  }
+  return XP_SLOW[XP_SLOW.length - 1][1];
+}
+
+export const xpToNext = (lv: number) => Math.round(xpToNextFast(lv) * xpSlow(lv));
 
 // ---------- 怪物 ----------
 export const mobHp = (lv: number) => (25 + 10 * Math.pow(lv, 1.6)) * Math.pow(1.012, lv);

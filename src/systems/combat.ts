@@ -6,6 +6,14 @@ import type { Element, StatKey } from '@/core/stats';
 import { scale, type DmgType, type FxKey, type SkillDef, type SkillEffect, type StatusApply, type TargetMode } from '@/core/types';
 import { hasStatus, hpPct, isDisabled, recalc, resistOf, statusStacks, type StatusInst, type Unit } from '@/core/unit';
 import { ELEMENT_STATUS, ELEMENT_STATUS_CHANCE, STATUSES } from '@/data/statuses';
+import { MECH } from '@/data/bossMechanics';
+import { MONSTER_MAP } from '@/data/monsters';
+
+/** 首領機制的大招（不在一般技能表中，由機制排程施放） */
+const MECH_SKILLS: Record<string, SkillDef> = {
+  doom: { id: 'mech_doom', name: '滅魂咒', icon: '𓂀', classId: 'enemy', unlock: 1, mp: 0, cd: 0, cast: MECH.doomCast, fx: 'doom', effects: [], desc: '' },
+  breath: { id: 'mech_breath', name: '冰封吐息', icon: '🌬️', classId: 'enemy', unlock: 1, mp: 0, cd: 0, cast: MECH.breathCast, fx: 'breath', effects: [], desc: '' },
+};
 
 export interface BattleHooks {
   onKill(unit: Unit, killer: Unit | null): void;
@@ -105,6 +113,7 @@ export class Battle {
       for (const k in u.cds) if (u.cds[k] > 0) u.cds[k] = Math.max(0, u.cds[k] - dt * cdRate);
 
       if (u.powers.starfall) this.tickStarfall(u, dt);
+      if (u.mech) { this.tickMech(u, dt); if (!u.alive) continue; }
 
       if (isDisabled(u)) {
         if (u.casting) this.interrupt(u);
@@ -167,6 +176,7 @@ export class Battle {
   }
 
   private dotTick(u: Unit, s: StatusInst) {
+    if ((u.mem.barrier ?? 0) > 0) return;
     const def = STATUSES[s.id];
     const src = this.units.find(x => x.uid === s.srcUid) ?? null;
     let dmg = s.dps * s.stacks;
@@ -193,8 +203,13 @@ export class Battle {
   private act(u: Unit) {
     const foes = this.enemiesOf(u);
     if (!foes.length) return;
+    const bosses = u.side === 'hero' ? this.units.filter(e => e.alive && e.boss && e.side !== u.side) : [];
+    // 保留的技能：首領詠唱或熔核暴露期間才能施放
+    const holdLocked = bosses.length > 0 && !bosses.some(e => e.casting || (e.mech === 'inferno' && this.shellOpen(e)));
     for (const slot of u.skills) {
       if (slot.rank <= 0) continue;
+      // 保留的技能：有首領時只在首領詠唱或露出破綻的瞬間施放（見 react）
+      if (slot.hold && holdLocked) continue;
       const def = slot.def;
       if ((u.cds[def.id] ?? 0) > 0) continue;
       const cost = scale(def.mp, slot.rank);
@@ -204,8 +219,7 @@ export class Battle {
       u.cds[def.id] = def.cd;
       if (def.cond === 'once') u.mem['once:' + def.id] = 1;
       if (def.cast) {
-        u.casting = { skill: def, rank: slot.rank, remaining: def.cast, total: def.cast };
-        this.ev.emit('unit:cast', { src: u, skill: def, time: def.cast });
+        this.startCast(u, def, slot.rank);
       } else {
         this.executeSkill(u, def, slot.rank, false);
       }
@@ -264,6 +278,9 @@ export class Battle {
   private resolveTargets(u: Unit, mode: TargetMode): Unit[] {
     const foes = this.enemiesOf(u);
     if (!foes.length) return [];
+    // 反應施放：單體技能鎖定正在詠唱的首領
+    const rt = this.reactTarget;
+    if (rt && rt.alive && mode !== 'all' && mode !== 'self' && foes.includes(rt)) return [rt];
     switch (mode) {
       case 'front': return [foes[0]];
       case 'all': return foes;
@@ -275,6 +292,7 @@ export class Battle {
   }
 
   executeSkill(u: Unit, def: SkillDef, rank: number, isEcho: boolean): void {
+    if (def.id.startsWith('mech_')) { this.mechExecute(u, def); return; }
     for (const eff of def.effects) {
       if (!u.alive) return;
       this.runEffect(u, def, rank, eff);
@@ -367,6 +385,7 @@ export class Battle {
   hit(src: Unit, tgt: Unit, o: HitOpts): number {
     if (!tgt.alive) return 0;
     const S = src.stats;
+    if ((tgt.mem.barrier ?? 0) > 0) { this.barrierHit(tgt, src); return 0; }
 
     // 迴避：只有物理攻擊會被迴避
     if (o.dmgType === 'phys' && !o.proc && this.rng.chance(evadeChance(tgt.stats.eva, src.level))) {
@@ -413,6 +432,7 @@ export class Battle {
     dmg *= 1 - dr;
     dmg *= 1 - resistOf(tgt, o.element) / 100;
     dmg *= Math.max(0.1, 1 + tgt.stats.dmgTaken / 100);
+    if (tgt.mech) dmg *= this.mechTaken(tgt, o.pierce ?? 0);
     dmg *= this.rng.float(0.92, 1.08);
     dmg = Math.max(1, dmg);
 
@@ -434,7 +454,8 @@ export class Battle {
 
     // 異常狀態
     const statusBonus = 1 + S.statusChance / 100;
-    if (o.status) for (const st of o.status) if (this.rng.chance(st.chance * statusBonus)) this.applyStatus(tgt, st, src, dmg);
+    const sure = !!src.mem.sure && tgt === this.reactTarget;
+    if (o.status) for (const st of o.status) if ((sure && STATUSES[st.id].disable) || this.rng.chance(st.chance * statusBonus)) this.applyStatus(tgt, st, src, dmg);
     const elStatus = ELEMENT_STATUS[o.element];
     if (elStatus && !o.proc && this.rng.chance(ELEMENT_STATUS_CHANCE * statusBonus)) this.applyStatus(tgt, { id: elStatus, chance: 1 }, src, dmg);
     if (src.mem.eliteBurn && this.rng.chance(0.3)) this.applyStatus(tgt, { id: 'burn', chance: 1 }, src, dmg);
@@ -483,6 +504,13 @@ export class Battle {
     }
     tgt.hp -= dmg;
     this.ev.emit('unit:hit', { src, tgt, amount: amount, crit, element, dot, absorbed, proc });
+    if (tgt.casting?.skill.id === 'mech_doom' && tgt.hp > 0) {
+      tgt.mem.castDmg = (tgt.mem.castDmg ?? 0) + dmg;
+      if (tgt.mem.castDmg >= tgt.stats.hp * MECH.doomBreak) {
+        this.ev.emit('unit:proc', { src: tgt, name: '破咒！', fx: 'heavy', targets: [tgt], element: 'holy' });
+        this.interrupt(tgt);
+      }
+    }
 
     if (tgt.kind === 'hero' && tgt.hp > 0 && tgt.powers.guardian && hpPct(tgt) < 0.3 && (tgt.mem.guardianReady ?? 0) <= this.time) {
       tgt.mem.guardianReady = this.time + 30;
@@ -510,6 +538,14 @@ export class Battle {
   applyStatus(tgt: Unit, st: StatusApply, src: Unit, hitDmg: number) {
     if (!tgt.alive) return;
     const def = STATUSES[st.id];
+    if (def.disable && tgt.mech === 'breath') {
+      if ((tgt.mem.immuneText ?? -9) < this.time - 2) { tgt.mem.immuneText = this.time; this.ev.emit('unit:proc', { src: tgt, name: '免疫控制', fx: 'shield', targets: [], element: 'ice' }); }
+      return;
+    }
+    if (def.disable && tgt.mech === 'skin') {
+      if ((tgt.mem.skinBreak ?? 0) <= this.time) this.ev.emit('unit:proc', { src: tgt, name: '岩膚碎裂！', fx: 'heavy', targets: [tgt], element: 'phys' });
+      tgt.mem.skinBreak = this.time + MECH.skinBreak;
+    }
     let dur = def.dur;
     if (def.disable && tgt.boss) dur *= 0.5;
     const add = st.stacks ?? 1;
@@ -565,6 +601,237 @@ export class Battle {
       this.hooks.onKill(tgt, owner ?? killer);
     } else if (tgt.kind === 'hero') {
       this.hooks.onHeroDeath();
+    }
+  }
+
+  // =====================================================================
+  // 首領機制
+  // =====================================================================
+  /** 反應施放時鎖定的目標（正在詠唱的首領） */
+  private reactTarget: Unit | null = null;
+
+  private startCast(u: Unit, def: SkillDef, rank: number) {
+    u.casting = { skill: def, rank, remaining: def.cast!, total: def.cast! };
+    u.mem.castDmg = 0;
+    this.ev.emit('unit:cast', { src: u, skill: def, time: def.cast! });
+    if (u.boss) this.react(u);
+  }
+
+  /** 首領開始詠唱（或露出破綻）：英雄身上「保留」的技能立刻施放（控制效果必定命中這個首領） */
+  private react(caster: Unit, all = false) {
+    for (const h of this.units) {
+      if (!h.alive || h.kind !== 'hero' || h.side === caster.side || h.casting || isDisabled(h)) continue;
+      const foes = this.enemiesOf(h);
+      for (const slot of h.skills) {
+        if (!slot.hold || slot.rank <= 0) continue;
+        const def = slot.def;
+        if ((h.cds[def.id] ?? 0) > 0) continue;
+        const cost = scale(def.mp, slot.rank);
+        // 玩家刻意保留的技能不看生命條件（例如低血量才放的護盾，也能在大招前先張開）
+        if (h.mp < cost || (!def.cond?.startsWith('hpBelow') && !this.condOk(h, def, foes))) continue;
+        h.mp -= cost;
+        h.cds[def.id] = def.cd;
+        this.reactTarget = caster;
+        h.mem.sure = 1;
+        this.executeSkill(h, def, slot.rank, false);
+        h.mem.sure = 0;
+        this.reactTarget = null;
+        if (!all) break;
+      }
+    }
+  }
+
+  private minionCount(boss: Unit) {
+    return this.units.filter(e => e.alive && e.side === boss.side && e.kind === 'monster' && !e.boss).length;
+  }
+
+  /** 機制造成的受傷倍率 */
+  private mechTaken(tgt: Unit, pierce: number): number {
+    const phase = this.finalePhase(tgt);
+    if (tgt.mech === 'guard') return 1 - Math.min(MECH.guardMax, this.minionCount(tgt) * MECH.guardPer);
+    if (phase === 1) return 1 - Math.min(MECH.finaleGuardMax, this.minionCount(tgt) * MECH.finaleGuardPer);
+    if (tgt.mech === 'inferno') return this.shellOpen(tgt) ? 1 + MECH.shellOpenTaken : 1 - MECH.shellDR;
+    if (tgt.mech === 'skin') {
+      if ((tgt.mem.skinBreak ?? 0) > this.time) return 1 + MECH.skinBreakTaken;
+      return 1 - MECH.skinDR * (1 - Math.min(1, pierce));
+    }
+    return 1;
+  }
+
+  /** 熔岩外殼是否裂開（開打先硬化） */
+  private shellOpen(u: Unit) {
+    const cyc = MECH.shellHard + MECH.shellOpen;
+    return ((u.mem.mt ?? 0) % cyc) >= MECH.shellHard;
+  }
+
+  /** 終焉三階段：1 手下護駕、2 滅魂咒、3 風暴結界 */
+  private finalePhase(u: Unit): 0 | 1 | 2 | 3 {
+    if (u.mech !== 'finale') return 0;
+    const p = hpPct(u);
+    return p > 0.7 ? 1 : p > 0.35 ? 2 : 3;
+  }
+
+  private heroOf(boss: Unit): Unit | undefined {
+    return this.units.find(h => h.alive && h.kind === 'hero' && h.side !== boss.side);
+  }
+
+  /** 依英雄最大生命造成的機制傷害（套用元素抗性、受到傷害修正，可被護盾吸收） */
+  private mechDamage(boss: Unit, hero: Unit, pct: number, element: Element, trueDmg = false) {
+    let dmg = hero.stats.hp * pct;
+    if (trueDmg) { this.applyDamage(hero, dmg, boss, element, false, false, true); return; }
+    dmg *= 1 - resistOf(hero, element) / 100;
+    dmg *= Math.max(0.1, 1 + hero.stats.dmgTaken / 100);
+    this.applyDamage(hero, dmg, boss, element, false, false, true);
+  }
+
+  private tickMech(u: Unit, dt: number) {
+    const m = u.mem;
+    m.mt = (m.mt ?? 0) + dt;
+    const t = m.mt;
+    const phase = this.finalePhase(u);
+    const free = !u.casting && !isDisabled(u);
+
+    // 手下護駕：手下少於 2 隻就再叫
+    if ((u.mech === 'guard' || phase === 1) && t >= (m.nextSummon ?? 3)) {
+      m.nextSummon = t + MECH.guardSummonEvery;
+      const minion = MONSTER_MAP.get(u.defId)?.minion;
+      const n = 2 - this.minionCount(u);
+      if (minion && n > 0) {
+        this.ev.emit('unit:proc', { src: u, name: '護駕！', fx: 'summon', targets: [], element: 'phys' });
+        for (let i = 0; i < n; i++) this.hooks.spawn(minion, u);
+      }
+    }
+
+    // 腐根再生：沒有持續傷害時每秒回血
+    if (u.mech === 'regen') {
+      m.regenAcc = (m.regenAcc ?? 0) + dt;
+      while (m.regenAcc >= 1) {
+        m.regenAcc -= 1;
+        const dotted = u.statuses.some(s => s.id === 'bleed' || s.id === 'poison' || s.id === 'burn');
+        if (dotted) {
+          if (!m.suppressed) this.ev.emit('unit:proc', { src: u, name: '再生被抑制', fx: 'poison', targets: [], element: 'shadow' });
+          m.suppressed = 1;
+        } else {
+          if (m.suppressed || t - (m.regenText ?? -9) > 4) { m.regenText = t; this.ev.emit('unit:proc', { src: u, name: '腐根再生', fx: 'heal', targets: [], element: 'holy' }); }
+          m.suppressed = 0;
+          this.heal(u, u.stats.hp * MECH.regenPct, true);
+        }
+      }
+    }
+
+    // 滅魂咒
+    if ((u.mech === 'doomcast' || phase === 2) && free && t >= (m.nextDoom ?? MECH.doomFirst)) {
+      m.nextDoom = t + MECH.doomEvery;
+      this.startCast(u, MECH_SKILLS.doom, 1);
+    }
+
+    // 冰封吐息
+    if (u.mech === 'breath' && free && t >= (m.nextBreath ?? MECH.breathFirst)) {
+      m.nextBreath = t + MECH.breathEvery;
+      this.startCast(u, MECH_SKILLS.breath, 1);
+    }
+
+    // 熔岩外殼 + 熔核爆發
+    if (u.mech === 'inferno') {
+      const open = this.shellOpen(u) ? 1 : 0;
+      if (open !== (m.shell ?? 0)) {
+        m.shell = open;
+        this.ev.emit('unit:proc', { src: u, name: open ? '熔核暴露！' : '外殼硬化', fx: open ? 'heavy' : 'shield', targets: [u], element: 'fire' });
+        if (open) this.react(u, true);
+      }
+      if (t >= MECH.infernoAt - 10 && !m.infernoWarn) {
+        m.infernoWarn = 1;
+        this.ev.emit('unit:proc', { src: u, name: '核心開始沸騰…', fx: 'nova', targets: [], element: 'fire' });
+      }
+      if (t >= MECH.infernoAt) {
+        if (!m.inferno) { m.inferno = 1; m.infernoAcc = 1; this.ev.emit('unit:proc', { src: u, name: '熔核爆發！', fx: 'nova', targets: [], element: 'fire' }); }
+        m.infernoAcc += dt;
+        while (m.infernoAcc >= 1) {
+          m.infernoAcc -= 1;
+          const hero = this.heroOf(u);
+          if (!hero) break;
+          const k = Math.floor(t - MECH.infernoAt);
+          this.ev.emit('unit:act', { src: u, targets: [hero], fx: 'nova', element: 'fire' });
+          this.mechDamage(u, hero, MECH.infernoDmg + MECH.infernoGrow * k, 'fire');
+        }
+      }
+    }
+
+    // 風暴結界
+    if (u.mech === 'barrier' || phase === 3) {
+      const hits = u.mech === 'finale' ? MECH.barrierHits - 3 : MECH.barrierHits;
+      const every = u.mech === 'finale' ? MECH.barrierEvery - 2 : MECH.barrierEvery;
+      if ((m.barrier ?? 0) > 0) {
+        if (t - (m.barrierAt ?? t) >= MECH.barrierBlast) {
+          m.barrier = 0;
+          const hero = this.heroOf(u);
+          this.ev.emit('unit:proc', { src: u, name: '雷霆爆發！', fx: 'storm', targets: hero ? [hero] : [], element: 'lightning' });
+          if (hero) this.mechDamage(u, hero, MECH.barrierBlastDmg, 'lightning');
+          this.heal(u, u.stats.hp * MECH.barrierHeal, true);
+        }
+      } else if (t >= (m.nextBarrier ?? MECH.barrierFirst)) {
+        m.nextBarrier = t + every;
+        m.barrier = hits;
+        m.barrierAt = t;
+        this.ev.emit('unit:proc', { src: u, name: '風暴結界', fx: 'shield', targets: [u], element: 'lightning' });
+      }
+    }
+  }
+
+  /** 給介面顯示的機制狀態 */
+  mechStatus(u: Unit): { text: string; good: boolean } | null {
+    if (!u.mech) return null;
+    const m = u.mem;
+    const phase = this.finalePhase(u);
+    if ((m.barrier ?? 0) > 0) return { text: `⚡ 風暴結界 剩 ${m.barrier} 次命中・${Math.max(0, MECH.barrierBlast - ((m.mt ?? 0) - (m.barrierAt ?? 0))).toFixed(0)} 秒後爆發`, good: false };
+    if (u.mech === 'guard' || phase === 1) {
+      const n = this.minionCount(u);
+      const red = u.mech === 'guard' ? Math.min(MECH.guardMax, n * MECH.guardPer) : Math.min(MECH.finaleGuardMax, n * MECH.finaleGuardPer);
+      return n ? { text: `🛡 手下護駕：首領受到傷害 -${Math.round(red * 100)}%`, good: false } : { text: '🛡 手下全滅：首領失去保護', good: true };
+    }
+    if (u.mech === 'regen') return m.suppressed ? { text: '🌿 再生被持續傷害抑制', good: true } : { text: `🌿 腐根再生：每秒 +${MECH.regenPct * 100}% 生命`, good: false };
+    if (u.mech === 'skin') return (m.skinBreak ?? 0) > this.time ? { text: `🪨 岩膚碎裂！受到傷害 +${MECH.skinBreakTaken * 100}%`, good: true } : { text: `🪨 岩膚：受到傷害 -${MECH.skinDR * 100}%（暈眩／冰凍可擊碎）`, good: false };
+    if (u.mech === 'inferno') {
+      const left = MECH.infernoAt - (m.mt ?? 0);
+      const shell = this.shellOpen(u) ? `熔核暴露 +${MECH.shellOpenTaken * 100}%` : `外殼硬化 -${MECH.shellDR * 100}%`;
+      return left > 0 ? { text: `🔥 ${shell}・爆發倒數 ${Math.ceil(left)} 秒`, good: this.shellOpen(u) } : { text: `🔥 熔核爆發中！${shell}`, good: false };
+    }
+    if (u.mech === 'barrier' || phase === 3) return { text: `⚡ 下次結界 ${Math.max(0, (m.nextBarrier ?? MECH.barrierFirst) - (m.mt ?? 0)).toFixed(0)} 秒`, good: true };
+    if (u.mech === 'doomcast' || phase === 2) return { text: `𓂀 滅魂咒 ${Math.max(0, (m.nextDoom ?? MECH.doomFirst) - (m.mt ?? 0)).toFixed(0)} 秒後詠唱`, good: true };
+    if (u.mech === 'breath') return { text: `🌬 冰封吐息 ${Math.max(0, (m.nextBreath ?? MECH.breathFirst) - (m.mt ?? 0)).toFixed(0)} 秒後`, good: true };
+    return null;
+  }
+
+  /** 命中結界：擋下傷害、消耗一次結界 */
+  private barrierHit(tgt: Unit, src: Unit) {
+    tgt.mem.barrier = Math.max(0, (tgt.mem.barrier ?? 0) - 1);
+    this.ev.emit('unit:hit', { src, tgt, amount: 0, crit: false, element: 'lightning', dot: false, absorbed: 1, proc: true });
+    if (tgt.mem.barrier > 0) return;
+    this.ev.emit('unit:proc', { src: tgt, name: '結界破碎！', fx: 'heavy', targets: [tgt], element: 'lightning' });
+    if (tgt.casting) this.interrupt(tgt);
+    tgt.statuses = tgt.statuses.filter(x => x.id !== 'stun');
+    tgt.statuses.push({ id: 'stun', stacks: 1, remaining: MECH.barrierStun, dps: 0, tickAcc: 0, srcUid: src.uid });
+    this.ev.emit('unit:status', { tgt, status: 'stun', stacks: 1 });
+  }
+
+  private mechExecute(u: Unit, def: SkillDef) {
+    const hero = this.heroOf(u);
+    if (!hero) return;
+    if (def.id === 'mech_doom') {
+      this.ev.emit('unit:act', { src: u, targets: [hero], fx: 'doom', skill: def, element: 'shadow' });
+      this.mechDamage(u, hero, MECH.doomDmg, 'shadow', true);
+      if (hero.alive) this.applyStatus(hero, { id: 'curse', chance: 1 }, u, 0);
+    } else if (def.id === 'mech_breath') {
+      this.ev.emit('unit:act', { src: u, targets: [hero], fx: 'breath', skill: def, element: 'ice' });
+      for (let i = 0; i < MECH.breathShards && hero.alive; i++) {
+        if (this.rng.chance(evadeChance(hero.stats.eva, u.level))) { this.ev.emit('unit:miss', { src: u, tgt: hero }); continue; }
+        let dmg = hero.stats.hp * MECH.breathShard * (1 - armorDR(hero.stats.def, u.level));
+        if (hero.shield > 0) dmg *= MECH.breathShielded;
+        dmg *= 1 - resistOf(hero, 'ice') / 100;
+        dmg *= Math.max(0.1, 1 + hero.stats.dmgTaken / 100);
+        this.applyDamage(hero, dmg, u, 'ice', false, false, true);
+        if (hero.alive && this.rng.chance(0.3)) this.applyStatus(hero, { id: 'chill', chance: 1 }, u, 0);
+      }
     }
   }
 

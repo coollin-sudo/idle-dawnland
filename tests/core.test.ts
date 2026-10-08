@@ -332,3 +332,115 @@ describe('技能專精與天賦取捨', () => {
     expect(m.hero.talentRanks[tier4[0].id]).toBeUndefined();
   });
 });
+
+describe('首領機制', () => {
+  async function arena(bossId: string, cls: ClassId = 'warrior') {
+    const { makeMonsterUnit, makeHeroUnit } = await import('@/systems/units');
+    const { getMonster } = await import('@/data/monsters');
+    const { g, tick } = makeGame(cls);
+    const b = g.battle;
+    for (const u of b.units) u.alive = false;
+    b.sweep();
+    b.units = [];
+    const hero = b.add(makeHeroUnit(g.state, b.nextUid()));
+    const boss = b.add(makeMonsterUnit(getMonster(bossId), { level: 10, diffMult: 1, boss: true, slot: 1 }, b.nextUid(), g.rng));
+    return { g, tick, b, hero, boss };
+  }
+  const avgHit = (b: import('@/systems/combat').Battle, hero: import('@/core/unit').Unit, boss: import('@/core/unit').Unit) => {
+    let sum = 0;
+    for (let i = 0; i < 40; i++) { boss.hp = boss.stats.hp; sum += b.hit(hero, boss, { mult: 1, dmgType: 'phys', element: 'phys', proc: true }); }
+    boss.hp = boss.stats.hp;
+    return sum / 40;
+  };
+
+  it('每個區域首領都有機制與四個職業的解法', async () => {
+    const { BOSS_MECHS } = await import('@/data/bossMechanics');
+    for (const r of REGIONS) {
+      const m = MONSTERS.find(x => x.id === r.boss)!;
+      expect(m.mech).toBeTruthy();
+      for (const cls of ['warrior', 'ranger', 'mage', 'cleric'] as ClassId[]) expect(BOSS_MECHS[m.mech!].counters[cls].length).toBeGreaterThan(0);
+    }
+  });
+
+  it('手下護駕：有手下時首領受到的傷害降低', async () => {
+    const { b, hero, boss } = await arena('goblin_king');
+    const alone = avgHit(b, hero, boss);
+    const { makeMonsterUnit } = await import('@/systems/units');
+    const { getMonster } = await import('@/data/monsters');
+    b.add(makeMonsterUnit(getMonster('goblin'), { level: 10, diffMult: 1, slot: 0 }, b.nextUid(), b.rng));
+    b.add(makeMonsterUnit(getMonster('goblin'), { level: 10, diffMult: 1, slot: 2 }, b.nextUid(), b.rng));
+    expect(avgHit(b, hero, boss)).toBeLessThan(alone * 0.6);
+  });
+
+  it('腐根再生：沒有持續傷害會回血，流血時被抑制', async () => {
+    const { b, boss, hero } = await arena('treant');
+    hero.alive = false;
+    boss.hp = boss.stats.hp * 0.5;
+    for (let i = 0; i < 5; i++) b.tick(1);
+    expect(boss.hp).toBeGreaterThan(boss.stats.hp * 0.55);
+    boss.hp = boss.stats.hp * 0.5;
+    boss.statuses.push({ id: 'bleed', stacks: 1, remaining: 99, dps: 0.0001, tickAcc: 0, srcUid: -1 });
+    const before = boss.hp;
+    for (let i = 0; i < 5; i++) b.tick(1);
+    expect(boss.hp).toBeLessThanOrEqual(before + boss.stats.hpRegen * 5 + 1);
+  });
+
+  it('岩膚：大幅減傷，被暈眩後碎裂並易傷', async () => {
+    const { b, hero, boss } = await arena('troll');
+    const hard = avgHit(b, hero, boss);
+    b.applyStatus(boss, { id: 'stun', chance: 1 }, hero, 0);
+    expect(avgHit(b, hero, boss)).toBeGreaterThan(hard * 3);
+  });
+
+  it('滅魂咒：保留的暈眩技能在首領詠唱瞬間施放並打斷', async () => {
+    const { g, b, boss } = await arena('pharaoh');
+    const h = g.state.hero;
+    h.level = 30; h.skillRanks.w_bash = 5; h.loadout = ['w_bash', 'w_slash', null, null]; h.loadoutHold = [true, false, false, false];
+    const { makeHeroUnit } = await import('@/systems/units');
+    b.units = b.units.filter(u => u.kind !== 'hero');
+    b.add(makeHeroUnit(g.state, b.nextUid()));
+    boss.mem.mt = 5.9;
+    for (let i = 0; i < 4; i++) b.tick(0.1);
+    expect(boss.casting).toBeNull();
+    expect(boss.mem.nextDoom).toBeGreaterThan(6);
+  });
+
+  it('風暴結界：擋下傷害，命中 10 次破碎並暈眩首領', async () => {
+    const { b, hero, boss } = await arena('storm_king');
+    boss.mem.mt = 4.95;
+    b.tick(0.1);
+    expect(boss.mem.barrier).toBe(10);
+    const hp = boss.hp;
+    for (let i = 0; i < 9; i++) b.hit(hero, boss, { mult: 1, dmgType: 'phys', element: 'phys', proc: true });
+    expect(boss.hp).toBe(hp);
+    b.hit(hero, boss, { mult: 1, dmgType: 'phys', element: 'phys', proc: true });
+    expect(boss.mem.barrier).toBe(0);
+    expect(boss.statuses.some(s => s.id === 'stun')).toBe(true);
+  });
+
+  it('手動排過技能欄後，自動配點不會重排；保留標記跟著技能移動', async () => {
+    const { swapLoadout, toggleHold, autoSkills } = await import('@/systems/progression');
+    const { g } = makeGame();
+    const h = g.state.hero;
+    h.level = 25; h.skillRanks = { w_slash: 3, w_sweep: 3, w_warcry: 3, w_bash: 3 }; h.loadout = ['w_slash', 'w_sweep', 'w_warcry', 'w_bash'];
+    toggleHold(g, 3);
+    swapLoadout(g, 3, 0);
+    expect(h.loadout[0]).toBe('w_bash');
+    expect(h.loadoutHold[0]).toBe(true);
+    h.skillPoints = 2;
+    autoSkills(g.state);
+    expect(h.loadout[0]).toBe('w_bash');
+  });
+
+  it('轉生後回到最高等級前用快速升級曲線', async () => {
+    const { xpNeed } = await import('@/systems/progression');
+    const { xpToNextFast } = await import('@/core/formulas');
+    const { g } = makeGame();
+    const h = g.state.hero;
+    h.level = 30; h.maxLevel = 50;
+    expect(xpNeed(h)).toBe(xpToNextFast(30));
+    h.maxLevel = 30;
+    expect(xpNeed(h)).toBe(xpToNext(30));
+    expect(xpToNext(30)).toBeGreaterThan(xpToNextFast(30) * 10);
+  });
+});

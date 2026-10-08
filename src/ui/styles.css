@@ -564,3 +564,15 @@ select.input { padding: 6px 10px; }
 .compare .cmp-label, .cmp-label { font-size: 11px; color: var(--muted); font-weight: 700; margin-bottom: 4px; }
 @media (max-width: 640px) { .compare { grid-template-columns: 1fr; } }
 .modal:has(.compare) { max-width: 780px; }
+
+/* 首領情報 */
+.boss-intel { margin: 8px 0 10px; padding: 10px 12px; border-radius: 10px; background: linear-gradient(180deg, rgba(255,120,90,.10), rgba(255,120,90,.04)); border: 1px solid rgba(255,140,110,.35); }
+.boss-intel .bi-h { font-size: 14px; margin-bottom: 4px; }
+.boss-intel .bi-list { margin-top: 6px; display: grid; gap: 4px; }
+.boss-intel .bi-c { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; padding: 4px 6px; border-radius: 6px; background: var(--panel2); }
+.boss-intel .bi-c.ok { background: rgba(80,200,120,.14); }
+.boss-intel .bi-c.off { opacity: .5; }
+.boss-intel .bi-mark { font-weight: 900; width: 14px; text-align: center; color: var(--dim); }
+.boss-intel .bi-c.ok .bi-mark { color: #6fe08a; }
+.loadout .ls .btn.hold { margin-top: 4px; font-size: 10px; padding: 1px 6px; }
+.loadout .ls .btn.hold.on { background: #4a3a8a; border-color: #9a8aff; color: #fff; }

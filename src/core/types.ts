@@ -157,6 +157,8 @@ export type Archetype =
 
 export type Family = 'beast' | 'undead' | 'demon' | 'elemental' | 'construct' | 'humanoid' | 'plant' | 'dragon' | 'slime';
 
+export type BossMechId = 'guard' | 'regen' | 'skin' | 'doomcast' | 'breath' | 'inferno' | 'barrier' | 'finale';
+
 export interface MonsterDef {
   id: string;
   name: string;
@@ -177,6 +179,10 @@ export interface MonsterDef {
   resist?: Partial<Record<Element, number>>;
   skills?: string[];
   boss?: boolean;
+  /** 首領機制（src/data/bossMechanics.ts） */
+  mech?: BossMechId;
+  /** 機制召喚的手下 */
+  minion?: string;
   lore?: string;
 }
 
@@ -302,6 +308,12 @@ export interface HeroState {
   /** 技能專精：技能 id → 選擇的專精（0 或 1） */
   skillSpecs: Record<string, number>;
   loadout: (string | null)[];
+  /** 技能欄「保留」：有首領時，留到首領開始詠唱或露出破綻的瞬間才施放（打斷、護盾） */
+  loadoutHold: boolean[];
+  /** 玩家手動調整過技能欄：自動配點不再重排技能欄 */
+  loadoutManual: boolean;
+  /** 曾達到的最高等級（轉生後低於此等級時經驗加倍） */
+  maxLevel: number;
   talentRanks: Record<string, number>;
   hp: number;
   mp: number;

@@ -25,6 +25,7 @@ export function newGameState(name: string, classId: ClassId, now = Date.now(), s
       name, classId, advId: null, level: 1, xp: 0,
       statPoints: 0, alloc: { str: 0, dex: 0, int: 0, vit: 0 }, autoAlloc: true,
       skillPoints: 0, skillRanks: { [first.id]: 1 }, skillSpecs: {}, loadout: [first.id, null, null, null],
+      loadoutHold: [false, false, false, false], loadoutManual: false, maxLevel: 1,
       talentRanks: {}, hp: 0, mp: 0,
     },
     equipment: { weapon: null, offhand: null, helmet: null, armor: null, gloves: null, belt: null, boots: null, amulet: null, ring1: null, ring2: null },

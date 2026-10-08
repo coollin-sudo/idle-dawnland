@@ -1,6 +1,6 @@
 import { computeStats, type Conversion, type Element, type Mod, type StatBlock, type StatKey } from './stats';
 import { softHaste } from './stats';
-import type { BasicAttack, Family, SkillDef, StatusId } from './types';
+import type { BasicAttack, BossMechId, Family, SkillDef, StatusId } from './types';
 import { STATUSES } from '@/data/statuses';
 
 export type Side = 'hero' | 'enemy';
@@ -26,6 +26,8 @@ export interface BuffInst {
 export interface SkillSlot {
   def: SkillDef;
   rank: number;
+  /** 保留：有首領時只在首領詠唱或露出破綻的瞬間施放 */
+  hold?: boolean;
 }
 
 export interface Unit {
@@ -37,6 +39,8 @@ export interface Unit {
   level: number;
   family?: Family;
   boss: boolean;
+  /** 首領機制 */
+  mech?: BossMechId;
   elite: string[];
   slot: number;
 

@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'preact/hooks';
 import { TITLE_MAP } from '@/data/titles';
 import { Emo, rich } from './emoji';
 import { fmt } from '@/core/format';
-import { xpToNext, ADVANCE_LEVEL } from '@/core/formulas';
+import { ADVANCE_LEVEL } from '@/core/formulas';
 import { CLASSES, ADVANCES } from '@/data/classes';
 import { UNLOCKS } from '@/data/quests';
 import { getSkill } from '@/data/skills';
@@ -15,7 +15,7 @@ import { weaponLook } from '@/systems/units';
 import { advise } from '@/systems/advisor';
 import { setMode } from '@/systems/activities';
 import { claimQuest, currentQuest, questProgress, describeReward, dailyProgress } from '@/systems/quests';
-import { loadoutSlots, talentAvailable } from '@/systems/progression';
+import { loadoutSlots, talentAvailable, xpNeed } from '@/systems/progression';
 import { CHAPTERS } from '@/data/quests';
 import { Bar, CIcon, SkillIcon } from './common';
 import { g, getScene, logs, refresh, setScene, tab, uiTick, type TabId } from './store';
@@ -47,7 +47,7 @@ function TopBar() {
   const h = s.hero;
   const st = heroStats(s);
   const c = CLASSES[h.classId];
-  const need = xpToNext(h.level);
+  const need = xpNeed(h);
   return (
     <div class="topbar">
       <div class="brand">放置冒險<small>晨曦大陸</small></div>

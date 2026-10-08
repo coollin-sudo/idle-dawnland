@@ -1,4 +1,5 @@
 import type { Game } from '@/core/game';
+import { mechOf } from '@/data/bossMechanics';
 import { BOSS_TIME_MS, DIFFICULTIES, REGION_COUNT, STAGES_PER_REGION, WAVES_PER_STAGE, stageLevel } from '@/core/formulas';
 import { todayKey } from '@/core/format';
 import type { Unit } from '@/core/unit';
@@ -262,6 +263,8 @@ export class StageActivity implements Activity {
     const p = g.state.progress;
     g.ev.emit('boss:fail', { reason });
     g.toast(reason === 'time' ? '時間到！首領撤退了，先回前一關變強吧' : '被首領擊敗了，先回前一關變強吧', 'bad', '⏱️');
+    const mech = mechOf(getMonster(regionOfStage(this.stage).boss).mech);
+    if (mech) g.toast(`「${mech.name}」${mech.hint}（地圖或技能頁可看首領情報）`, 'info', '💡');
     p.stage = Math.max(0, p.stage - 1);
     p.mode = 'farm';
     this.markFail();

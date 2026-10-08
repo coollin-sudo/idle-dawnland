@@ -39,6 +39,7 @@ export function rebirth(g: Game) {
   const start = startStageAfterRebirth(g);
   const h = s.hero;
   const first = classSkills(h.classId).find(sk => !sk.advId && sk.unlock === 1)!;
+  h.maxLevel = Math.max(h.maxLevel ?? 1, h.level);
   h.level = 1;
   h.xp = 0;
   h.statPoints = 0;
@@ -46,6 +47,8 @@ export function rebirth(g: Game) {
   h.skillPoints = 0;
   h.skillRanks = { [first.id]: 1 };
   h.loadout = [first.id, null, null, null];
+  h.loadoutHold = [false, false, false, false];
+  h.loadoutManual = false;
   h.talentRanks = {};
   h.hp = 0;
   s.cur.gold = 0;

@@ -96,7 +96,7 @@ const ranger: SkillDef[] = [
   S({
     id: 'm_snipe', name: '致命狙擊', icon: '🎯', classId: 'ranger', advId: 'marksman', unlock: 30, mp: [18, 1.2], cd: 12, fx: 'snipe',
     desc: '瞄準血量最高的敵人，暴擊率大幅提升。',
-    effects: [{ type: 'damage', target: 'highest', hits: 1, mult: [5, 0.4], dmgType: 'phys', element: 'phys', bonusCrit: 40, pierce: 0.3 }],
+    effects: [{ type: 'damage', target: 'highest', hits: 1, mult: [3.8, 0.3], dmgType: 'phys', element: 'phys', bonusCrit: 25, pierce: 0.3 }],
   }),
   S({
     id: 'm_rain', name: '箭雨', icon: '🌧️', classId: 'ranger', advId: 'marksman', unlock: 40, mp: [20, 1.4], cd: 10, fx: 'rain',
@@ -201,7 +201,7 @@ const cleric: SkillDef[] = [
   S({
     id: 'c_bolt', name: '聖光彈', icon: '✨', classId: 'cleric', unlock: 1, mp: [6, 0.5], cd: 3, fx: 'holy',
     desc: '射出聖光，對不死生物特別有效。',
-    effects: [{ type: 'damage', target: 'front', hits: 1, mult: [1.8, 0.14], dmgType: 'magic', element: 'holy' }],
+    effects: [{ type: 'damage', target: 'front', hits: 1, mult: [2.1, 0.16], dmgType: 'magic', element: 'holy' }],
   }),
   S({
     id: 'c_heal', name: '治癒術', icon: '💚', classId: 'cleric', unlock: 5, mp: [10, 0.8], cd: 8, fx: 'heal', cond: 'hpBelow70',
@@ -217,7 +217,7 @@ const cleric: SkillDef[] = [
     id: 'c_nova', name: '神聖新星', icon: '🌟', classId: 'cleric', unlock: 22, mp: [14, 1], cd: 9, fx: 'nova',
     desc: '聖光爆發，傷害所有敵人並治療自己。',
     effects: [
-      { type: 'damage', target: 'all', hits: 1, mult: [1.5, 0.12], dmgType: 'magic', element: 'holy' },
+      { type: 'damage', target: 'all', hits: 1, mult: [1.75, 0.14], dmgType: 'magic', element: 'holy' },
       { type: 'heal', pct: [0.08, 0.008] },
     ],
   }),
@@ -233,7 +233,7 @@ const cleric: SkillDef[] = [
   S({
     id: 'h_divine', name: '神聖之光', icon: '☀️', classId: 'cleric', advId: 'archbishop', unlock: 40, mp: [20, 1.4], cd: 10, fx: 'holy',
     desc: '自天而降的三道聖光。',
-    effects: [{ type: 'damage', target: 'all', hits: 3, mult: [1.2, 0.1], dmgType: 'magic', element: 'holy' }],
+    effects: [{ type: 'damage', target: 'all', hits: 3, mult: [1.4, 0.12], dmgType: 'magic', element: 'holy' }],
   }),
   S({
     id: 'h_angel', name: '天使降臨', icon: '👼', classId: 'cleric', advId: 'archbishop', unlock: 60, mp: [45, 2], cd: 60, fx: 'nova', ultimate: true,
@@ -248,7 +248,7 @@ const cleric: SkillDef[] = [
   S({
     id: 'q_hammer', name: '聖錘', icon: '🔨', classId: 'cleric', advId: 'inquisitor', unlock: 30, mp: [16, 1], cd: 7, fx: 'hammer',
     desc: '以聖錘重擊，暈眩敵人。',
-    effects: [{ type: 'damage', target: 'front', hits: 1, mult: [3.5, 0.28], dmgType: 'magic', element: 'holy', status: [{ id: 'stun', chance: 0.5 }] }],
+    effects: [{ type: 'damage', target: 'front', hits: 1, mult: [4, 0.32], dmgType: 'magic', element: 'holy', status: [{ id: 'stun', chance: 0.5 }] }],
   }),
   S({
     id: 'q_condemn', name: '制裁', icon: '⚖️', classId: 'cleric', advId: 'inquisitor', unlock: 40, mp: [20, 1.2], cd: 12, fx: 'nova',

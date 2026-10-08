@@ -6,6 +6,7 @@ import { REGIONS } from '@/data/regions';
 import { monsterThumb } from '@/render/icons';
 import { travel } from '@/systems/activities';
 import { g, refresh, uiTick } from '../store';
+import { BossIntel } from '../BossIntel';
 
 export function MapPanel() {
   void uiTick.value;
@@ -24,7 +25,7 @@ export function MapPanel() {
         ))}
       </div>
       <div class="small muted" style={{ marginBottom: '10px' }}>
-        {DIFFICULTIES[diff].name}難度：怪物等級 +{DIFFICULTIES[diff].lvOffset}、能力 ×{DIFFICULTIES[diff].mult}、掉寶 +{DIFFICULTIES[diff].dropBonus}%。每關 5 波，第 10 關是首領戰（限時 60 秒）。
+        {DIFFICULTIES[diff].name}難度：怪物等級 +{DIFFICULTIES[diff].lvOffset}、能力 ×{DIFFICULTIES[diff].mult}、掉寶 +{DIFFICULTIES[diff].dropBonus}%。每關 5 波，第 10 關是首領戰（限時 60 秒）。每個首領都有自己的機制，展開區域可以看首領情報與本職業的解法。
       </div>
       <div class="regions">
         {REGIONS.map((r, ri) => {
@@ -63,6 +64,7 @@ export function MapPanel() {
                   })}
                 </div>
               )}
+              {open === ri && unlocked && <BossIntel s={gm.state} bossId={r.boss} />}
             </div>
           );
         })}

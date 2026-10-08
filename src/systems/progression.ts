@@ -1,5 +1,5 @@
 import type { Game } from '@/core/game';
-import { ADVANCE_LEVEL, MAX_LEVEL, SKILL_POINTS_PER_LEVEL, STAT_POINTS_PER_LEVEL, xpToNext } from '@/core/formulas';
+import { ADVANCE_LEVEL, MAX_LEVEL, SKILL_POINTS_PER_LEVEL, STAT_POINTS_PER_LEVEL, xpToNext, xpToNextFast } from '@/core/formulas';
 import { LOADOUT_UNLOCK } from '@/core/state';
 import { PRIMARY, type Primary } from '@/core/stats';
 import type { AdvId, GameState, SkillDef } from '@/core/types';
@@ -10,13 +10,18 @@ import { SPEC_RANK } from '@/data/skillSpecs';
 import { talentSpent, talentTotal } from './hero';
 import { generateItem } from './items';
 
+/** 升到下一級需要的經驗；轉生後還沒回到最高等級前，用原本的快速曲線（老手經驗） */
+export function xpNeed(h: GameState['hero']) {
+  return h.level < (h.maxLevel ?? 1) ? xpToNextFast(h.level) : xpToNext(h.level);
+}
+
 export function gainXp(g: Game, amount: number) {
   const h = g.state.hero;
   if (h.level >= MAX_LEVEL) return;
   h.xp += amount;
   let ups = 0;
-  while (h.level < MAX_LEVEL && h.xp >= xpToNext(h.level)) {
-    h.xp -= xpToNext(h.level);
+  while (h.level < MAX_LEVEL && h.xp >= xpNeed(h)) {
+    h.xp -= xpNeed(h);
     h.level++;
     ups++;
     h.statPoints += STAT_POINTS_PER_LEVEL;
@@ -24,6 +29,7 @@ export function gainXp(g: Game, amount: number) {
   }
   if (h.level >= MAX_LEVEL) h.xp = 0;
   if (!ups) return;
+  h.maxLevel = Math.max(h.maxLevel ?? 1, h.level);
   if (h.autoAlloc) autoSpend(g.state);
   g.countMax('maxLevel', h.level);
   g.heroChanged();
@@ -73,9 +79,19 @@ export function autoSkills(s: GameState) {
     }
   }
   // 2. 技能欄放入最重要的技能，施放順序也依重要度
+  //    玩家手動排過技能欄（例如為了首領調整順序）就不重排，只補空格
   const slots = loadoutSlots(h.level);
-  const learned = avail.filter(sk => (h.skillRanks[sk.id] ?? 0) > 0).slice(0, slots);
-  for (let i = 0; i < h.loadout.length; i++) h.loadout[i] = learned[i]?.id ?? null;
+  let learned = avail.filter(sk => (h.skillRanks[sk.id] ?? 0) > 0).slice(0, slots);
+  if (h.loadoutManual) {
+    for (const sk of learned) {
+      if (h.loadout.includes(sk.id)) continue;
+      const free = h.loadout.findIndex((x, i) => !x && i < slots);
+      if (free >= 0) h.loadout[free] = sk.id;
+    }
+    learned = h.loadout.filter((x): x is string => !!x).map(id => getSkill(id));
+  } else {
+    for (let i = 0; i < h.loadout.length; i++) h.loadout[i] = learned[i]?.id ?? null;
+  }
   // 3. 剩下的點數平均升級技能欄中的技能（重要的先）
   let guard = 400;
   while (h.skillPoints > 0 && guard-- > 0) {
@@ -142,18 +158,50 @@ export function learnSkill(g: Game, id: string) {
 export function setLoadout(g: Game, index: number, id: string | null) {
   const h = g.state.hero;
   if (index >= loadoutSlots(h.level)) return;
+  const H = holdOf(h);
   if (id) {
     if ((h.skillRanks[id] ?? 0) <= 0) return;
     const existing = h.loadout.indexOf(id);
-    if (existing >= 0) h.loadout[existing] = h.loadout[index];
-  }
+    if (existing >= 0) { h.loadout[existing] = h.loadout[index]; [H[existing], H[index]] = [H[index], H[existing]]; }
+    else H[index] = false;
+  } else H[index] = false;
   h.loadout[index] = id;
+  h.loadoutManual = true;
   g.heroChanged();
 }
 
 export function swapLoadout(g: Game, a: number, b: number) {
-  const L = g.state.hero.loadout;
+  const h = g.state.hero;
+  const L = h.loadout;
+  const H = holdOf(h);
   [L[a], L[b]] = [L[b], L[a]];
+  [H[a], H[b]] = [H[b], H[a]];
+  h.loadoutManual = true;
+  g.heroChanged();
+}
+
+function holdOf(h: GameState['hero']) {
+  if (!h.loadoutHold) h.loadoutHold = [];
+  while (h.loadoutHold.length < h.loadout.length) h.loadoutHold.push(false);
+  return h.loadoutHold;
+}
+
+/** 切換技能欄的「保留」：有首領時，留到首領開始詠唱或露出破綻的瞬間才施放 */
+export function toggleHold(g: Game, index: number) {
+  const h = g.state.hero;
+  if (!h.loadout[index]) return;
+  const H = holdOf(h);
+  H[index] = !H[index];
+  h.loadoutManual = true;
+  g.heroChanged();
+}
+
+/** 讓自動配點重新接手技能欄 */
+export function resetLoadoutAuto(g: Game) {
+  const h = g.state.hero;
+  h.loadoutManual = false;
+  h.loadoutHold = h.loadout.map(() => false);
+  autoSkills(g.state);
   g.heroChanged();
 }
 

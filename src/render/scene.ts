@@ -582,6 +582,10 @@ export class BattleScene {
       else if (e.proc) color = ELEMENT_COLOR[e.element as Element] ?? '#ffe08a';
       if (e.crit) { color = '#ffd34a'; size = 32; }
       const [x, y] = this.center(t);
+      if (e.amount <= 0 && e.absorbed > 0) {
+        this.texts.add({ x: x + (Math.random() - 0.5) * 30, y: y - 30, text: '結界', color: '#9ad8ff', size: 16, max: 0.6, crit: false });
+        return;
+      }
       this.texts.add({ x: x + (Math.random() - 0.5) * 30, y: y - 20 - Math.random() * 20, text: fmt(e.amount) + (e.crit ? '!' : ''), color, size, max: e.crit ? 1.1 : 0.85, crit: e.crit });
       if (e.absorbed > 0 && !e.dot) this.texts.add({ x, y: y - 40, text: `吸收 ${fmt(e.absorbed)}`, color: '#8ad0ff', size: 14, max: 0.8, crit: false });
       if (!e.dot) this.parts.burst(x, y, e.crit ? 10 : 4, { color: e.crit ? '#ffd34a' : ELEMENT_COLOR[e.element as Element] ?? '#fff', shape: 'spark', speed: e.crit ? 300 : 180, additive: true, size: 2.4, max: 0.4 });
@@ -1020,6 +1024,13 @@ export class BattleScene {
     ctx.font = '700 11px system-ui, sans-serif';
     ctx.fillStyle = '#fff';
     ctx.fillText(`${fmt(Math.max(0, boss.hp))} / ${fmt(boss.stats.hp)}`, x + W / 2, y + 27);
+    const ms = this.game.battle.mechStatus(boss);
+    if (ms) {
+      ctx.font = '700 12px "Noto Sans TC", system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = ms.good ? '#9affb0' : '#ffb07a';
+      ctx.fillText(ms.text, x + W / 2, y - 14);
+    }
     if (boss.casting) {
       const k = 1 - boss.casting.remaining / boss.casting.total;
       rrect(ctx, x + W * 0.25, y + 36, W * 0.5, 6, 3);
@@ -1030,7 +1041,8 @@ export class BattleScene {
       ctx.fill();
       ctx.font = '700 12px "Noto Sans TC", system-ui, sans-serif';
       ctx.fillStyle = '#ffc8ff';
-      const label = `${boss.casting.skill.name}（暈眩可打斷）`;
+      const id = boss.casting.skill.id;
+      const label = `${boss.casting.skill.name}（${id === 'mech_doom' ? '暈眩／冰凍或重創可打斷' : id === 'mech_breath' ? '無法打斷，準備防禦！' : '暈眩可打斷'}）`;
       const icon = skillImage(boss.casting.skill.id);
       if (icon) {
         const tw = ctx.measureText(label).width;

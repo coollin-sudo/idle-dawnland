@@ -7,7 +7,8 @@ import { ADVANCES } from '@/data/classes';
 import { classSkills, SKILL_MAX_RANK } from '@/data/skills';
 import { STATUSES } from '@/data/statuses';
 import { LOADOUT_UNLOCK } from '@/core/state';
-import { learnSkill, loadoutSlots, resetSkills, RESET_SKILLS_GOLD, setLoadout, swapLoadout, setSkillSpec } from '@/systems/progression';
+import { learnSkill, loadoutSlots, resetLoadoutAuto, resetSkills, RESET_SKILLS_GOLD, setLoadout, swapLoadout, setSkillSpec, toggleHold } from '@/systems/progression';
+import { BossIntel, nextBossId } from '../BossIntel';
 import { CIcon, SkillIcon, confirmModal } from '../common';
 import { g, refresh, uiTick } from '../store';
 
@@ -76,6 +77,8 @@ export function SkillsPanel() {
                     <button class="btn xs" onClick={e => { e.stopPropagation(); setLoadout(gm, i, null); refresh(); }}>✕</button>
                     <button class="btn xs" disabled={i >= slots - 1} onClick={e => { e.stopPropagation(); swapLoadout(gm, i, i + 1); refresh(); }}>▶</button>
                   </div>
+                  <button class={'btn xs hold' + (h.loadoutHold?.[i] ? ' on' : '')} title="保留：有首領時，留到首領開始詠唱或露出破綻的瞬間才施放（控制效果必定命中）"
+                    onClick={e => { e.stopPropagation(); toggleHold(gm, i); refresh(); }}>{h.loadoutHold?.[i] ? '⏸ 保留中' : '⏸ 保留'}</button>
                 </>
               ) : <div class="small muted" style={{ marginTop: '22px' }}>點擊選擇</div>}
             </div>
@@ -83,6 +86,11 @@ export function SkillsPanel() {
         })}
       </div>
       {pick !== null && <div class="small gold" style={{ marginBottom: '8px' }}>👉 點下方技能的「放入」來放進第 {pick + 1} 格</div>}
+      <div class="tiny muted" style={{ marginBottom: '8px' }}>
+        英雄每次行動會從第 1 格開始找「冷卻好了」的技能施放，所以排在前面的技能會先放。「⏸ 保留」的技能在首領戰中會留到首領開始詠唱或露出破綻時才施放，用來打斷、擋大招或集中爆發。
+        {h.loadoutManual && h.autoAlloc && <> 你調整過技能欄，自動配點不會再重排。<a href="#" onClick={e => { e.preventDefault(); resetLoadoutAuto(gm); refresh(); }}>交回自動排列</a></>}
+      </div>
+      {(() => { const id = nextBossId(s); return id ? <BossIntel s={s} bossId={id} compact /> : null; })()}
 
       {groups.map(([title, list]) => (
         <>

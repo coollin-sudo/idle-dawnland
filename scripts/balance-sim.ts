@@ -2,17 +2,17 @@
  * 平衡模擬器：用無畫面模式跑真實戰鬥邏輯，模擬一個「會基本操作」的玩家連續掛機。
  * 用法：npm run sim -- [小時=48] [職業=all]
  */
+import { writeFileSync } from 'node:fs';
 import { Game } from '@/core/game';
 import { SKILL_SPECS, SPEC_RANK } from '@/data/skillSpecs';
 import { newGameState } from '@/core/state';
 import type { AdvId, ClassId } from '@/core/types';
 import { advancesOf } from '@/data/classes';
 import { SLOTS } from '@/data/items';
-import { TALENT_TREES } from '@/data/talents';
 import { combatPower, heroStats, upgradeDelta } from '@/systems/hero';
 import { canEquip } from '@/systems/items';
 import { enhance, equipItem, enhanceCost, findItem } from '@/systems/forge';
-import { advance, canTalent, talentUp } from '@/systems/progression';
+import { advance } from '@/systems/progression';
 import { buyPotion } from '@/systems/shop';
 import { claimQuest, currentQuest, questDone } from '@/systems/quests';
 import { claimEgg, startHatch } from '@/systems/pets';
@@ -21,6 +21,7 @@ import { STAR_NODES, starCost } from '@/data/meta';
 import { travel } from '@/systems/activities';
 import { regionOfStage } from '@/data/regions';
 import { dungeonEntries, startDungeon, startTower } from '@/systems/activities';
+import { allocTalents, smartSetup } from './lib/smart';
 
 const hours = Number(process.argv[2] ?? 48);
 const only = (process.argv[3] ?? 'all') as ClassId | 'all';
@@ -30,10 +31,16 @@ const REBIRTH = process.argv.includes('--rebirth') || process.argv.includes('--l
 const LONG = process.argv.includes('--long');
 const STALL_H = 6;
 /** --spec=0 / --spec=1：所有技能統一選第一或第二種專精（比較專精強度） */
+/** --smart：打到首領時，依首領機制調整技能欄（模擬會動腦的玩家）；預設是完全不調整的玩家 */
+const SMART = process.argv.includes('--smart');
+/** --weeks：輸出每區「到達首領」與「打倒首領」的時間 */
+/** --snap=目錄：到達每區首領時存下遊戲狀態（給 boss-trial.ts 測試用） */
+const SNAP = (() => { const a = process.argv.find(x => x.startsWith('--snap=')); return a ? a.slice(7) : undefined; })();
 const SPEC = (() => { const a = process.argv.find(x => x.startsWith('--spec=')); return a ? Number(a.slice(7)) : undefined; })();
 
 function manage(g: Game) {
   const s = g.state;
+  if (SMART) smartSetup(g);
   // 任務
   for (let i = 0; i < 3; i++) { const q = currentQuest(g); if (q && questDone(g, q)) claimQuest(g); }
   // 換上更好的裝備（含傳說／套裝）
@@ -45,7 +52,7 @@ function manage(g: Game) {
   // 轉職
   if (s.hero.level >= 30 && !s.hero.advId) advance(g, advancesOf(s.hero.classId)[0].id as AdvId);
   // 天賦：依順序點
-  for (const node of TALENT_TREES[s.hero.classId].nodes) while (canTalent(s, node.id) === null) talentUp(g, node.id);
+  allocTalents(g);
   // 藥水
   const tier = s.hero.level < 20 ? 0 : s.hero.level < 50 ? 1 : 2;
   if (s.potions[tier] < 15 && s.cur.gold > 5000 * (tier + 1)) buyPotion(g, tier as 0, 10);
@@ -89,9 +96,11 @@ for (const cls of classes) {
   const g = new Game(state, { headless: true, now: () => clock });
   const t0 = performance.now();
   const rows: string[] = [];
-  const marks = new Set(LONG ? [24, 48, 72, 120, 168, 240, 336, 504, 720] : [0.5, 1, 2, 3, 6, 12, 24, 36, 48, 72, 96, 120, 168]);
+  const marks = new Set(LONG ? [24, 48, 72, 120, 168, 240, 336, 504, 720] : hours > 200 ? [1, 3, 24, 72, 168, 336, 504, 672, 840, 1008, 1176] : [0.5, 1, 2, 3, 6, 12, 24, 36, 48, 72, 96, 120, 168]);
   let lastBestSum = -99, lastImprove = 0;
   const rebirthLog: string[] = [];
+  const arrive: number[] = [], clear: number[] = [];
+  const lvAt: number[] = [];
   for (let min = 1; min <= hours * 60; min++) {
     for (let i = 0; i < 6; i++) { g.advance(10_000); clock += 10_000; }
     manage(g);
@@ -107,6 +116,17 @@ for (const cls of classes) {
         lastBestSum = -99; lastImprove = min;
       }
     } else if (REBIRTH && canRebirth(g) && g.state.progress.mode === 'farm' && g.state.rebirth.count < 3 && min % 60 === 0) rebirth(g);
+    if (lvAt[g.state.hero.level] === undefined) lvAt[g.state.hero.level] = min / 60;
+    {
+      const b = g.state.progress.best[0];
+      for (let z = 0; z < 8; z++) {
+        if (arrive[z] === undefined && b >= z * 10 + 8) {
+          arrive[z] = min / 60;
+          if (SNAP) writeFileSync(`${SNAP}/${cls}_z${z + 1}.json`, JSON.stringify(g.state));
+        }
+        if (clear[z] === undefined && b >= z * 10 + 9) clear[z] = min / 60;
+      }
+    }
     const h = min / 60;
     if (marks.has(h) || min === hours * 60) {
       const s = g.state;
@@ -133,4 +153,7 @@ for (const cls of classes) {
   console.log(`\n=== ${cls}（${((performance.now() - t0) / 1000).toFixed(1)}s）===`);
   console.log(rows.join('\n'));
   if (rebirthLog.length) console.log('  ' + rebirthLog.join('\n  '));
+  const d = (x?: number) => (x === undefined ? '  -  ' : x < 48 ? `${x.toFixed(1)}h` : `${(x / 24).toFixed(1)}d`);
+  if (process.argv.includes('--levels')) console.log('  LVAT ' + JSON.stringify(lvAt.map(x => (x === undefined ? null : +x.toFixed(2)))));
+  console.log('  首領：' + arrive.map((a, z) => `${z + 1}區 到${d(a)} 卡${clear[z] === undefined ? '∞' : (clear[z] - a).toFixed(1) + 'h'}`).join('｜'));
 }

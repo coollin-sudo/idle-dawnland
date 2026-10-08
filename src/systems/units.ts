@@ -33,12 +33,14 @@ const WEAPON_METAL = ['#b8a890', '#c8ccd4', '#b8cce0', '#eef2f8', '#bff0ff', '#d
 export function makeHeroUnit(s: GameState, uid: number): Unit {
   const c = classOf(s);
   const skills: SkillSlot[] = [];
-  for (const id of s.hero.loadout) {
-    if (!id) continue;
+  s.hero.loadout.forEach((id, i) => {
+    if (!id) return;
     const rank = s.hero.skillRanks[id] ?? 0;
     const base = getSkill(id);
-    if (rank > 0 && s.hero.level >= base.unlock && (!base.advId || base.advId === s.hero.advId)) skills.push({ def: applySpec(base, s.hero.skillSpecs?.[id], rank), rank });
-  }
+    if (rank > 0 && s.hero.level >= base.unlock && (!base.advId || base.advId === s.hero.advId)) {
+      skills.push({ def: applySpec(base, s.hero.skillSpecs?.[id], rank), rank, hold: !!s.hero.loadoutHold?.[i] });
+    }
+  });
   const u: Unit = {
     uid, side: 'hero', kind: 'hero', name: s.hero.name, defId: s.hero.classId, level: s.hero.level, boss: false, elite: [], slot: 0,
     statBase: heroStatBase(s), baseMods: heroMods(s), conversions: heroConversions(s), stats: emptyStats(),
@@ -106,7 +108,7 @@ export function makeMonsterUnit(def: MonsterDef, o: MonsterOpts, uid: number, rn
 
   const u: Unit = {
     uid, side: 'enemy', kind: 'monster', name: (eliteIds.length ? eliteIds.map(id => ELITE_MAP.get(id)!.name).join('・') + '的' : '') + def.name,
-    defId: def.id, level: L, family: def.family, boss, elite: eliteIds, slot: o.slot,
+    defId: def.id, level: L, family: def.family, boss, mech: boss ? def.mech : undefined, elite: eliteIds, slot: o.slot,
     statBase, baseMods, conversions: [], stats: emptyStats(),
     hp: 0, mp: 100, shield: 0, shieldTime: 0, alive: true, targetable: true,
     interval: def.interval ?? (boss ? 1.6 : 1.8), actTimer: rng.float(0, 0.8),

@@ -42,6 +42,9 @@ export function migrate(raw: unknown): GameState | null {
     for (const n of STAR_NODES) for (let r = 0; r < (s.rebirth.ranks[n.id] ?? 0); r++) spent += starCost(n, r);
     s.rebirth.soulsEarned = spent + (s.cur.starSouls ?? 0);
   }
+  // 舊存檔：到過的最高等級（轉生後回到這個等級前用快速升級曲線）
+  s.hero.maxLevel = Math.max(s.hero.maxLevel ?? 1, s.hero.level, s.counters?.maxLevel ?? 1);
+  if (!Array.isArray(s.hero.loadoutHold)) s.hero.loadoutHold = [false, false, false, false];
   s.version = SAVE_VERSION;
   return s;
 }
