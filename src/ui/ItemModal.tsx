@@ -1,4 +1,5 @@
 import type { Item, SlotId } from '@/core/types';
+import { Emo, rich } from './emoji';
 import { SLOTS, slotKind } from '@/data/items';
 import { canEquip } from '@/systems/items';
 import { equipItem, findItem, toggleLock, unequipItem } from '@/systems/forge';
@@ -40,16 +41,16 @@ function ItemModalBody({ uid }: { uid: number }) {
           <button class="btn primary" disabled={!equippable} onClick={() => act(() => { equipItem(gm, uid, target); closeModal(); })}>裝備</button>
         )}
         {f.where === 'equip' && <button class="btn" onClick={() => act(() => { unequipItem(gm, f.slot!); closeModal(); })}>卸下</button>}
-        <button class="btn" onClick={() => { forgeItem.value = uid; tab.value = 'forge'; closeModal(); }}>🔨 鍛造</button>
-        <button class="btn" onClick={() => act(() => toggleLock(gm, uid))}>{it.locked ? '🔓 解鎖' : '🔒 上鎖'}</button>
+        <button class="btn" onClick={() => { forgeItem.value = uid; tab.value = 'forge'; closeModal(); }}><Emo e="🔨" /> 鍛造</button>
+        <button class="btn" onClick={() => act(() => toggleLock(gm, uid))}>{rich(it.locked ? '🔓 解鎖' : '🔒 上鎖')}</button>
         {f.where === 'inv' && (
           <>
             <button class="btn" disabled={it.locked} onClick={() => {
               const go = () => act(() => { salvageItems(gm, [uid]); closeModal(); });
               if (it.rarity >= 4 || it.enh >= 7) confirmModal('確定分解？', <p>{it.name}（+{it.enh}）將被分解。</p>, go, '分解', true);
               else go();
-            }}>♻️ 分解</button>
-            <button class="btn" disabled={it.locked} onClick={() => act(() => { sellItems(gm, [uid]); closeModal(); })}>💰 賣出</button>
+            }}><Emo e="♻️" /> 分解</button>
+            <button class="btn" disabled={it.locked} onClick={() => act(() => { sellItems(gm, [uid]); closeModal(); })}><Emo e="💰" /> 賣出</button>
           </>
         )}
         <button class="btn ghost" onClick={closeModal}>關閉</button>

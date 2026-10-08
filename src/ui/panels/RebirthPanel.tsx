@@ -1,4 +1,5 @@
 import { fmt } from '@/core/format';
+import { Emo, rich } from '../emoji';
 import { STAR_NODES, starCost } from '@/data/meta';
 import { canRebirth, rebirth, soulsPreview, starUpgrade, startStageAfterRebirth } from '@/systems/rebirth';
 import { CIcon, Cost, NpcHeader, confirmModal } from '../common';
@@ -15,7 +16,7 @@ export function RebirthPanel() {
       <div class="card hl">
         <div class="row" style={{ gap: '12px' }}>
           <img src={undefined} alt="" style={{ display: 'none' }} />
-          <div style={{ fontSize: '40px' }}>🌌</div>
+          <div style={{ fontSize: '40px' }}><Emo e="🌌" /></div>
           <div class="grow">
             <div style={{ fontWeight: 900, fontSize: '16px' }}>轉生</div>
             <div class="small muted">放棄目前的等級、關卡進度、金幣、技能與天賦點，換取「星魂」。裝備、寵物、寶石、材料、成就與圖鑑都會保留。</div>
@@ -35,7 +36,7 @@ export function RebirthPanel() {
           const cost = starCost(n, r);
           return (
             <div class="li">
-              <div class="ic">{n.icon}</div>
+              <div class="ic">{rich(n.icon)}</div>
               <div class="grow">
                 <div class="t">{n.name} <span class="small muted">{r}/{n.max}</span></div>
                 <div class="d">{r > 0 ? n.desc(r) : '尚未學習'}{!max && <span class="dim">　→ {n.desc(r + 1)}</span>}</div>

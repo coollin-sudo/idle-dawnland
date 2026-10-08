@@ -1,4 +1,5 @@
 import { fmt } from '@/core/format';
+import { Emo } from '../emoji';
 import { ADVANCE_LEVEL, armorDR, evadeChance } from '@/core/formulas';
 import { describeMod, PRIMARY, statLabel, type Primary, type StatBlock, type StatKey } from '@/core/stats';
 import type { AdvId, SlotId } from '@/core/types';
@@ -166,7 +167,7 @@ function AdvanceBox() {
   };
   return (
     <div class="card hl" style={{ marginTop: '12px' }}>
-      <h3 style={{ marginTop: '0px' }}>🌟 轉職</h3>
+      <h3 style={{ marginTop: '0px' }}><Emo e="🌟" /> 轉職</h3>
       <div class="small muted" style={{ marginBottom: '8px' }}>你已達到 {ADVANCE_LEVEL} 級，可以選擇 {c.name} 的進階道路。</div>
       <div class="row" style={{ gap: '10px', alignItems: 'stretch' }}>
         {advancesOf(s.hero.classId).map(a => (

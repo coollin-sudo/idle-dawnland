@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { Emo } from './emoji';
 import { fmt, fmtDuration } from '@/core/format';
 import { ADVANCES, CLASSES } from '@/data/classes';
 import { DIFFICULTIES } from '@/core/formulas';
@@ -112,5 +113,5 @@ function ShareBody() {
 }
 
 export function ShareCardButton() {
-  return <button class="btn primary" onClick={() => openModal(() => <ShareBody />)}>📸 產生角色分享卡</button>;
+  return <button class="btn primary" onClick={() => openModal(() => <ShareBody />)}><Emo e="📸" /> 產生角色分享卡</button>;
 }

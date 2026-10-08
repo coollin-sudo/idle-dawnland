@@ -1,4 +1,5 @@
 import { DUNGEONS, TOWER_BOSSES, towerGems, towerLevel } from '@/data/dungeons';
+import { rich } from '../emoji';
 import { GEM_SHOP } from '@/data/shop';
 import { getMonster } from '@/data/monsters';
 import { UNLOCKS } from '@/data/quests';
@@ -26,7 +27,7 @@ export function ChallengePanel() {
             <div class="li" style={{ borderColor: d.color + '55' }}>
               <div class="ic"><img src={monsterThumb(mon, 48)} alt="" /></div>
               <div class="grow">
-                <div class="t">{d.icon} {d.name}</div>
+                <div class="t">{rich(d.icon)} {d.name}</div>
                 <div class="d">{d.desc}</div>
                 <div class="tiny muted">剩餘 {left} 次・最佳紀錄擊殺 {s.dungeons.best[d.id] ?? 0}</div>
               </div>

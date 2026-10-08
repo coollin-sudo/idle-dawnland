@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { Emo } from '../emoji';
 import type { Item, ItemSlotKind, Rarity } from '@/core/types';
 import { RARITIES } from '@/data/items';
 import { bulkFilter, invCapacity, salvageItems, sellItems, salvageValue } from '@/systems/loot';
@@ -65,9 +66,9 @@ export function BagPanel() {
       <div class="small muted" style={{ marginBottom: '6px' }}>上鎖、套裝、傳說，以及比身上裝備更好的不會被處理。</div>
       <div class="row wrap" style={{ gap: '6px' }}>
         {([0, 1, 2, 3] as Rarity[]).map(r => (
-          <button class="btn sm" onClick={() => bulk(r, 'salvage')}>♻️ 分解<span style={{ color: RARITIES[r].color }}>{RARITIES[r].name}</span>{r > 0 ? '以下' : ''}</button>
+          <button class="btn sm" onClick={() => bulk(r, 'salvage')}><Emo e="♻️" /> 分解<span style={{ color: RARITIES[r].color }}>{RARITIES[r].name}</span>{r > 0 ? '以下' : ''}</button>
         ))}
-        <button class="btn sm" onClick={() => bulk(1, 'sell')}>💰 賣出優良以下</button>
+        <button class="btn sm" onClick={() => bulk(1, 'sell')}><Emo e="💰" /> 賣出優良以下</button>
       </div>
     </div>
   );

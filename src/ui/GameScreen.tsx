@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
+import { Emo, rich } from './emoji';
 import { fmt } from '@/core/format';
 import { xpToNext, ADVANCE_LEVEL } from '@/core/formulas';
 import { CLASSES, ADVANCES } from '@/data/classes';
@@ -101,8 +102,8 @@ function BattleView() {
         {act.kind === 'stage' ? (
           <div class="stage-ctl">
             <MuteButton />
-            <button class={'btn xs' + (p.mode === 'push' ? ' on' : '')} onClick={() => setMode(gm, 'push')} title="自動前往下一關">⏩ 推進</button>
-            <button class={'btn xs' + (p.mode === 'farm' ? ' on' : '')} onClick={() => setMode(gm, 'farm')} title="停留在這一關刷怪">🔁 刷怪</button>
+            <button class={'btn xs' + (p.mode === 'push' ? ' on' : '')} onClick={() => setMode(gm, 'push')} title="自動前往下一關"><Emo e="⏩" /> 推進</button>
+            <button class={'btn xs' + (p.mode === 'farm' ? ' on' : '')} onClick={() => setMode(gm, 'farm')} title="停留在這一關刷怪"><Emo e="🔁" /> 刷怪</button>
           </div>
         ) : (
           <div class="stage-ctl">
@@ -125,7 +126,7 @@ function MuteButton() {
     audio.setVolumes(s.sfx, s.music);
     refresh();
   };
-  return <button class="btn xs" onClick={toggle} title={muted ? '開啟聲音' : '靜音'}>{muted ? '🔇' : '🔊'}</button>;
+  return <button class="btn xs" onClick={toggle} title={muted ? '開啟聲音' : '靜音'}>{rich(muted ? '🔇' : '🔊')}</button>;
 }
 
 function Hud() {
@@ -191,12 +192,12 @@ function QuestTracker() {
   void uiTick.value;
   const gm = g();
   const q = currentQuest(gm);
-  if (!q) return <div class="quest panel"><span class="qicon">🏆</span><div class="grow"><div class="title">主線完成</div><div class="name">你已完成所有主線任務！</div></div></div>;
+  if (!q) return <div class="quest panel"><span class="qicon"><Emo e="🏆" /></span><div class="grow"><div class="title">主線完成</div><div class="name">你已完成所有主線任務！</div></div></div>;
   const p = questProgress(gm, q);
   const done = p.cur >= p.goal;
   return (
     <div class={'quest panel' + (done ? ' done' : '')}>
-      <span class="qicon">{done ? '✅' : '📜'}</span>
+      <span class="qicon">{rich(done ? '✅' : '📜')}</span>
       <div class="grow">
         <div class="title">第 {q.chapter + 1} 章・{CHAPTERS[q.chapter]}</div>
         <div class="name">{q.name}</div>
@@ -214,7 +215,7 @@ function Advisor() {
   if (!list.length) return null;
   return (
     <div class="advisor">
-      {list.map(a => <button class="adv" onClick={() => { tab.value = a.tab as TabId; }}><span>{a.icon}</span>{a.text}</button>)}
+      {list.map(a => <button class="adv" onClick={() => { tab.value = a.tab as TabId; }}><span>{rich(a.icon)}</span>{a.text}</button>)}
     </div>
   );
 }
@@ -223,7 +224,7 @@ function LogBox() {
   return (
     <div class="log panel">
       {logs.value.length === 0 && <div class="dim">戰鬥紀錄會顯示在這裡</div>}
-      {logs.value.slice(0, 40).map(l => <div key={l.id} class={l.kind}><time>{l.t}</time>{l.text}</div>)}
+      {logs.value.slice(0, 40).map(l => <div key={l.id} class={l.kind}><time>{l.t}</time>{rich(l.text)}</div>)}
     </div>
   );
 }

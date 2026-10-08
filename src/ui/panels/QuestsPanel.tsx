@@ -1,4 +1,5 @@
 import { fmt } from '@/core/format';
+import { Emo } from '../emoji';
 import { DAILY_CHEST_GEMS } from '@/data/meta';
 import { CHAPTERS, MAIN_QUESTS } from '@/data/quests';
 import { SCENES } from '@/data/story';
@@ -30,7 +31,7 @@ export function QuestsPanel() {
             </div>
           </div>
         );
-      })() : <div class="card hl">🏆 所有主線任務都完成了！</div>}
+      })() : <div class="card hl"><Emo e="🏆" /> 所有主線任務都完成了！</div>}
 
       <h3>每日任務 <span class="count">每天 0 點更新</span></h3>
       <div class="list">
@@ -51,7 +52,7 @@ export function QuestsPanel() {
       </div>
       <div class={'card' + (allClaimed && !s.quests.dailyChest ? ' hl' : '')} style={{ marginTop: '10px' }}>
         <div class="row between">
-          <div>🎁 <b>每日寶箱</b><div class="tiny muted">完成全部每日任務：<Cost k="gems" n={DAILY_CHEST_GEMS} /> <Cost k="stones" n={10} /> + 普通寵物蛋</div></div>
+          <div><Emo e="🎁" /> <b>每日寶箱</b><div class="tiny muted">完成全部每日任務：<Cost k="gems" n={DAILY_CHEST_GEMS} /> <Cost k="stones" n={10} /> + 普通寵物蛋</div></div>
           <button class="btn sm primary" disabled={!allClaimed || s.quests.dailyChest} onClick={() => { claimDailyChest(gm); refresh(); }}>{s.quests.dailyChest ? '已領取' : '開啟'}</button>
         </div>
       </div>

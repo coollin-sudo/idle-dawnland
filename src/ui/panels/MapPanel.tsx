@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { rich } from '../emoji';
 import { DIFFICULTIES, stageLevel } from '@/core/formulas';
 import { getMonster } from '@/data/monsters';
 import { REGIONS } from '@/data/regions';
@@ -17,7 +18,7 @@ export function MapPanel() {
       <div class="diffs">
         {DIFFICULTIES.map(d => (
           <button class={'btn sm' + (diff === d.id ? ' primary' : '')} disabled={d.id > p.unlockedDifficulty} onClick={() => setDiff(d.id)} style={{ color: diff === d.id ? undefined : d.color }}>
-            {d.id > p.unlockedDifficulty ? '🔒 ' : ''}{d.name}
+            {rich(d.id > p.unlockedDifficulty ? '🔒 ' : '')}{d.name}
           </button>
         ))}
       </div>
@@ -36,10 +37,10 @@ export function MapPanel() {
               <div class="rh" style={{ background: `linear-gradient(90deg, ${r.bg.sky[0]}, ${r.bg.mid} 70%, ${r.bg.near})` }} onClick={() => unlocked && setOpen(open === ri ? null : ri)}>
                 <img src={monsterThumb(boss, 48)} style={{ width: '44px', height: '44px' }} alt="" />
                 <div class="grow">
-                  <div class="rn">{ri + 1}. {r.name} {cleared && '✅'}</div>
+                  <div class="rn">{ri + 1}. {r.name} {cleared && rich('✅')}</div>
                   <div class="rs">{r.subtitle}・{lvl}</div>
                 </div>
-                <span class="small" style={{ textShadow: '0 1px 3px #000' }}>{unlocked ? (open === ri ? '▲' : '▼') : '🔒'}</span>
+                <span class="small" style={{ textShadow: '0 1px 3px #000' }}>{unlocked ? (open === ri ? '▲' : '▼') : rich('🔒')}</span>
               </div>
               {open === ri && unlocked && (
                 <div class="stages">
@@ -55,7 +56,7 @@ export function MapPanel() {
                         title={`${ri + 1}-${i + 1}（Lv.${stageLevel(diff, idx)}）`}
                         onClick={() => { if (!locked) { travel(gm, idx, diff); refresh(); } }}
                       >
-                        {i === 9 ? '👑' : i + 1}
+                        {i === 9 ? rich('👑') : i + 1}
                       </div>
                     );
                   })}

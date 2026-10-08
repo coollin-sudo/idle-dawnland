@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { rich } from '../emoji';
 import { fmt, fmtDuration } from '@/core/format';
 import { ShareCardButton } from '../ShareCard';
 import { describeMod } from '@/core/stats';
@@ -22,7 +23,7 @@ export function CollectionPanel() {
       <NpcHeader npc="mila" lines={['每種怪物打倒得夠多，我就能分析出牠們的弱點。', '傳說裝備都有自己的故事，你收集了幾件呢？', '成就帶來的加成是永久的，轉生也不會消失。']} />
       <div class="subtabs">
         {([['ach', '🏆 成就'], ['codex', '📖 怪物圖鑑'], ['legend', '🌟 傳說收藏'], ['records', '📊 紀錄']] as [Sub, string][]).map(([id, n]) => (
-          <button class={'btn sm' + (sub === id ? ' primary' : '')} onClick={() => setSub(id)}>{n}</button>
+          <button class={'btn sm' + (sub === id ? ' primary' : '')} onClick={() => setSub(id)}>{rich(n)}</button>
         ))}
       </div>
       {sub === 'ach' ? <Achievements /> : sub === 'codex' ? <Codex /> : sub === 'legend' ? <Legends /> : <Records />}
@@ -43,7 +44,7 @@ function Achievements() {
           const next = a.tiers[tier];
           return (
             <div class="a">
-              <div class="row"><span style={{ fontSize: '20px' }}>{a.icon}</span><b>{a.name}</b></div>
+              <div class="row"><span style={{ fontSize: '20px' }}>{rich(a.icon)}</span><b>{a.name}</b></div>
               <div class="tiers">{a.tiers.map((_, i) => <i class={i < tier ? 'on' : ''} />)}</div>
               <div class="tiny">{next !== undefined ? `${a.desc(next)}（${fmt(v)}/${fmt(next)}）` : '已全部達成！'}</div>
               <div class="tiny" style={{ color: '#9ad0ff' }}>每階 {describeMod(a.reward, 1)}{tier ? `（目前 ${describeMod({ ...a.reward, value: a.reward.value * tier }, 1)}）` : ''}</div>

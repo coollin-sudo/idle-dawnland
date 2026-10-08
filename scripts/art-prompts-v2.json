@@ -543,7 +543,7 @@
    "challenge",
    "shop"
   ],
-  "prompt": "Please generate an image. Fantasy RPG game user interface menu icons, hand-painted style with clean dark outlines, soft cel shading, vibrant colors with gold accents, matching a cute chibi fantasy game art style. Each icon is a single object with no background tile. TRANSPARENT background (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no frames, no grid lines. Draw a 3x3 grid of 9 separate icons, evenly spaced, each centered in its own cell and filling about 70% of the cell, with wide empty transparent gaps so none of them touch. Icons in reading order (left to right, top to bottom): 1. a heroic knight helmet with a red plume. 2. a leather adventurer backpack with a bedroll. 3. a glowing spellbook with sparkles. 4. a small magical tree with glowing golden leaves. 5. an iron anvil with a blacksmith hammer. 6. a cute pink paw print badge. 7. a rolled-open treasure map with a red X. 8. a tall stone wizard tower with a flag. 9. a small merchant stall with a striped red and white awning."
+  "prompt": ""
  },
  {
   "name": "ui__b",
@@ -554,7 +554,7 @@
    "rebirth",
    "settings"
   ],
-  "prompt": "Please generate an image. Fantasy RPG game user interface menu icons, hand-painted style with clean dark outlines, soft cel shading, vibrant colors with gold accents, matching a cute chibi fantasy game art style. Each icon is a single object with no background tile. TRANSPARENT background (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no frames, no grid lines. Draw a 2x2 grid of 4 separate icons, evenly spaced, each centered in its own cell and filling about 70% of the cell, with wide empty transparent gaps so none of them touch. Icons in reading order (left to right, top to bottom): 1. a quest scroll with a red wax seal. 2. an ornate open record book with a bookmark. 3. a swirling cosmic galaxy orb with stars. 4. a golden gear cog."
+  "prompt": ""
  },
  {
   "name": "particles__a",
@@ -570,6 +570,86 @@
    "coin",
    "dust"
   ],
-  "prompt": "Please generate an image. Tiny 2D game particle sprites for weather and loot effects in a cute chibi fantasy RPG, hand-painted style, vibrant colors, soft glow where noted. TRANSPARENT background (PNG), square 1:1 image. No text, no watermark, no frames, no grid lines. Draw a 3x3 grid of 9 separate icons, evenly spaced, each centered in its own cell and filling about 70% of the cell, with wide empty transparent gaps so none of them touch. Icons in reading order (left to right, top to bottom): 1. a single green leaf. 2. a single orange autumn leaf. 3. a white snowflake crystal. 4. a tiny glowing orange ember with soft glow. 5. a tiny glowing yellow-green firefly light orb. 6. a tiny blue-white electric spark. 7. a tiny glowing purple crystal mote. 8. a single shiny gold coin seen at an angle. 9. a soft beige dust mote puff."
+  "prompt": ""
+ },
+ {
+  "name": "emo__a",
+  "grid": 3,
+  "cells": [
+   "star",
+   "lock",
+   "unlock",
+   "salvage",
+   "reroll",
+   "chest",
+   "trophy",
+   "sparkles",
+   "hatch"
+  ],
+  "prompt": "Please generate an image. Small fantasy RPG game interface emblem icons, hand-painted style with clean dark outlines, soft cel shading, vibrant colors with gold accents, matching a cute chibi fantasy game art style. Each icon is a single simple object with no background tile, readable at small sizes. TRANSPARENT background (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no frames, no grid lines. Draw a 3x3 grid of 9 separate icons, evenly spaced, each centered in its own cell and filling about 70% of the cell, with wide empty transparent gaps so none of them touch. Icons in reading order (left to right, top to bottom): 1. a shiny golden five-pointed star. 2. a closed iron padlock. 3. an open golden padlock. 4. a broken sword dissolving into purple sparkles. 5. two curved golden arrows chasing each other in a circle. 6. a small wooden treasure chest overflowing with gold. 7. a golden trophy cup. 8. a cluster of three twinkling sparkles. 9. a cute yellow chick hatching from a cracked egg."
+ },
+ {
+  "name": "emo__b",
+  "grid": 3,
+  "cells": [
+   "check",
+   "dice",
+   "crown",
+   "calendar",
+   "temple",
+   "swords",
+   "camera",
+   "fastforward",
+   "mute"
+  ],
+  "prompt": "Please generate an image. Small fantasy RPG game interface emblem icons, hand-painted style with clean dark outlines, soft cel shading, vibrant colors with gold accents, matching a cute chibi fantasy game art style. Each icon is a single simple object with no background tile, readable at small sizes. TRANSPARENT background (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no frames, no grid lines. Draw a 3x3 grid of 9 separate icons, evenly spaced, each centered in its own cell and filling about 70% of the cell, with wide empty transparent gaps so none of them touch. Icons in reading order (left to right, top to bottom): 1. a green check mark badge. 2. a white six-sided die. 3. a golden crown with red gems. 4. a parchment calendar page. 5. an ancient stone temple entrance with pillars. 6. two crossed steel swords. 7. an old brass camera. 8. golden fast-forward double arrows. 9. a speaker with a red cross (muted)."
+ },
+ {
+  "name": "emo__c",
+  "grid": 3,
+  "cells": [
+   "sound",
+   "moon",
+   "chart",
+   "save",
+   "clipboard",
+   "strength",
+   "crate",
+   "brokenheart",
+   "back"
+  ],
+  "prompt": "Please generate an image. Small fantasy RPG game interface emblem icons, hand-painted style with clean dark outlines, soft cel shading, vibrant colors with gold accents, matching a cute chibi fantasy game art style. Each icon is a single simple object with no background tile, readable at small sizes. TRANSPARENT background (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no frames, no grid lines. Draw a 3x3 grid of 9 separate icons, evenly spaced, each centered in its own cell and filling about 70% of the cell, with wide empty transparent gaps so none of them touch. Icons in reading order (left to right, top to bottom): 1. a speaker with sound waves. 2. a glowing crescent moon. 3. a parchment with a colorful bar chart. 4. a glowing blue save crystal. 5. a wooden clipboard with paper. 6. a flexing muscular arm. 7. a wooden supply crate. 8. a cracked broken red heart. 9. a golden curved return arrow."
+ },
+ {
+  "name": "emo__d",
+  "grid": 3,
+  "cells": [
+   "fire",
+   "stopwatch",
+   "crystalball",
+   "skull",
+   "rising",
+   "explosion",
+   "infinity",
+   "heart",
+   "tome"
+  ],
+  "prompt": "Please generate an image. Small fantasy RPG game interface emblem icons, hand-painted style with clean dark outlines, soft cel shading, vibrant colors with gold accents, matching a cute chibi fantasy game art style. Each icon is a single simple object with no background tile, readable at small sizes. TRANSPARENT background (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no frames, no grid lines. Draw a 3x3 grid of 9 separate icons, evenly spaced, each centered in its own cell and filling about 70% of the cell, with wide empty transparent gaps so none of them touch. Icons in reading order (left to right, top to bottom): 1. a bright orange flame. 2. a silver stopwatch. 3. a purple crystal ball on a stand. 4. a white skull. 5. a green arrow rising upward over a small chart. 6. a yellow and orange comic explosion burst. 7. a golden infinity symbol. 8. a shiny red heart. 9. a blue leather spell tome."
+ },
+ {
+  "name": "emo__e",
+  "grid": 3,
+  "cells": [
+   "clover",
+   "wind",
+   "target",
+   "hourglass",
+   "swirl",
+   "hammer",
+   "shield",
+   "bolt",
+   "warn"
+  ],
+  "prompt": "Please generate an image. Small fantasy RPG game interface emblem icons, hand-painted style with clean dark outlines, soft cel shading, vibrant colors with gold accents, matching a cute chibi fantasy game art style. Each icon is a single simple object with no background tile, readable at small sizes. TRANSPARENT background (PNG), square 1:1 image. No text, no letters, no numbers, no watermark, no frames, no grid lines. Draw a 3x3 grid of 9 separate icons, evenly spaced, each centered in its own cell and filling about 70% of the cell, with wide empty transparent gaps so none of them touch. Icons in reading order (left to right, top to bottom): 1. a lucky four-leaf clover. 2. a white wind gust puff. 3. a red and white target with an arrow in the bullseye. 4. a golden hourglass with blue sand. 5. a blue magic swirl. 6. a blacksmith hammer. 7. a round steel shield with a gold rim. 8. a yellow lightning bolt. 9. a yellow warning triangle with an exclamation mark."
  }
 ]

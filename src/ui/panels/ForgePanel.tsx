@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { Emo, rich } from '../emoji';
 import { fmt } from '@/core/format';
 import { enhanceMult } from '@/core/formulas';
 import { describeMod, statIsPct, statLabel } from '@/core/stats';
@@ -25,7 +26,7 @@ export function ForgePanel() {
       <NpcHeader npc="glenn" lines={['+5 之前都很安全。再往上……就看你的運氣了，哈哈！', '分解不用的裝備，精華可以拿來重鑄詞綴。', '傳說碎片收集到 50 個，老頭子幫你打一件傳說！', '強化到 +10 的武器，會發出不一樣的光。']} />
       <div class="subtabs">
         {([['enhance', '🔨 強化'], ['reforge', '🎲 重鑄'], ['craft', '⚒️ 打造']] as [Sub, string][]).map(([id, n]) => (
-          <button class={'btn sm' + (sub === id ? ' primary' : '')} onClick={() => setSub(id)}>{n}</button>
+          <button class={'btn sm' + (sub === id ? ' primary' : '')} onClick={() => setSub(id)}>{rich(n)}</button>
         ))}
         <span class="spacer" />
         <span class="row small" style={{ gap: '10px' }}>
@@ -114,8 +115,8 @@ function Reforge({ item }: { item: Item }) {
           <div class="affix-row">
             <span class="grow">{describeMod({ stat: def.stat, kind: def.kind, value: a.value }, 1)}</span>
             <span class="qbar" title={`品質 ${Math.round(a.q * 100)}%`}><i style={{ width: `${a.q * 100}%` }} /></span>
-            <button class="btn xs" title="保留詞綴種類，重新骰數值" onClick={() => { reforge(gm, item.uid, i, 'value'); refresh(); }}>🎲 數值 <Cost k="essence" n={cv.essence} have={s.cur.essence} /></button>
-            {!item.unique && <button class="btn xs" title="換成另一個隨機詞綴" onClick={() => { reforge(gm, item.uid, i, 'reroll'); refresh(); }}>🔄 換詞綴 <Cost k="essence" n={cr.essence} have={s.cur.essence} /></button>}
+            <button class="btn xs" title="保留詞綴種類，重新骰數值" onClick={() => { reforge(gm, item.uid, i, 'value'); refresh(); }}><Emo e="🎲" /> 數值 <Cost k="essence" n={cv.essence} have={s.cur.essence} /></button>
+            {!item.unique && <button class="btn xs" title="換成另一個隨機詞綴" onClick={() => { reforge(gm, item.uid, i, 'reroll'); refresh(); }}><Emo e="🔄" /> 換詞綴 <Cost k="essence" n={cr.essence} have={s.cur.essence} /></button>}
           </div>
         );
       })}
@@ -141,10 +142,10 @@ function Craft() {
       </div>
       <div class="row wrap" style={{ gap: '10px' }}>
         <button class="btn primary" onClick={() => { craft(gm, slot, false); refresh(); }}>
-          ⚒️ 打造{SLOT_LABEL[slot]}　<Cost k="essence" n={cost.essence} have={s.cur.essence} /> <Cost k="gold" n={cost.gold} have={s.cur.gold} />
+          <Emo e="⚒️" /> 打造{SLOT_LABEL[slot]}　<Cost k="essence" n={cost.essence} have={s.cur.essence} /> <Cost k="gold" n={cost.gold} have={s.cur.gold} />
         </button>
         <button class="btn" style={{ borderColor: 'var(--r4)' }} onClick={() => { craft(gm, slot, true); refresh(); }}>
-          🌟 打造傳說{SLOT_LABEL[slot]}　<Cost k="shards" n={LEGEND_SHARDS} have={s.cur.shards} />
+          <Emo e="🌟" /> 打造傳說{SLOT_LABEL[slot]}　<Cost k="shards" n={LEGEND_SHARDS} have={s.cur.shards} />
         </button>
       </div>
       <div class="tiny dim" style={{ marginTop: '10px' }}>傳說碎片來自分解傳說／神話裝備。打造的物品會依自動規則放進背包。</div>

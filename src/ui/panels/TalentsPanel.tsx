@@ -1,4 +1,5 @@
 import { fmt } from '@/core/format';
+import { rich } from '../emoji';
 import { TALENT_TIER_REQ, TALENT_TREES } from '@/data/talents';
 import { talentSpent, talentTotal } from '@/systems/hero';
 import { canTalent, resetTalents, RESET_TALENT_GOLD, talentAvailable, talentUp } from '@/systems/progression';
@@ -33,7 +34,7 @@ export function TalentsPanel() {
                   onClick={() => { if (!why) { talentUp(gm, n.id); refresh(); } }}
                   title={why ?? '點擊升級'}
                 >
-                  <div class="ic">{n.icon}</div>
+                  <div class="ic">{rich(n.icon)}</div>
                   <div class="nm">{n.name}</div>
                   <div class="rk">{r}/{n.maxRank}</div>
                   <div class="ds">{n.desc(Math.max(1, r))}</div>

@@ -1,4 +1,5 @@
 import { fmt, fmtDuration } from '@/core/format';
+import { Emo } from '../emoji';
 import { describeMod } from '@/core/stats';
 import type { PetDef } from '@/core/types';
 import { RARITIES } from '@/data/items';
@@ -38,7 +39,7 @@ function PetDetail({ id }: { id: string }) {
         {s.pets.active !== id ? <button class="btn primary" onClick={() => act(() => setActivePet(gm, id))}>出戰</button> : <button class="btn" onClick={() => act(() => setActivePet(gm, null))}>休息</button>}
         <button class="btn" disabled={ps.level >= PET_MAX_LEVEL} onClick={() => act(() => feedPet(gm, id, 1))}>餵食 ×1 <Cost k="petFood" n={1} have={s.cur.petFood} /></button>
         <button class="btn" disabled={ps.level >= PET_MAX_LEVEL} onClick={() => act(() => feedPet(gm, id, 10))}>×10</button>
-        <button class="btn" disabled={ps.stars >= PET_MAX_STARS || ps.dupes < cost} onClick={() => act(() => starUp(gm, id))}>⭐ 升星（{ps.dupes}/{cost}）</button>
+        <button class="btn" disabled={ps.stars >= PET_MAX_STARS || ps.dupes < cost} onClick={() => act(() => starUp(gm, id))}><Emo e="⭐" /> 升星（{ps.dupes}/{cost}）</button>
       </div>
     </Modal>
   );

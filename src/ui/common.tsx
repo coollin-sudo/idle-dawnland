@@ -1,4 +1,5 @@
 import type { ComponentChildren, CSSProperties } from 'preact';
+import { Emo, rich } from './emoji';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { fmt, fmtDuration } from '@/core/format';
 import { describeMod, statIsPct, statLabel } from '@/core/stats';
@@ -75,7 +76,7 @@ export function ItemSlot({ item, onClick, selected, label, showUp, small }: {
       <img src={itemIcon(item.slot, item.classId, tierOf(item.ilvl), item.unique)} alt="" draggable={false} />
       {item.enh > 0 && <span class="enh">+{item.enh}</span>}
       {up && <span class="up">▲</span>}
-      {item.locked && <span class="lock">🔒</span>}
+      {item.locked && <span class="lock"><Emo e="🔒" /></span>}
       {item.isNew && <span class="new" />}
       {tooLow && <span class="req">Lv{reqLevel(item)}</span>}
     </div>
@@ -168,7 +169,7 @@ export function Toasts() {
   return (
     <div class="toasts">
       {toasts.value.map(t => (
-        <div key={t.id} class={`toast ${t.kind}${t.out ? ' out' : ''}`}>{t.icon && <span>{t.icon}</span>}<span>{t.text}</span></div>
+        <div key={t.id} class={`toast ${t.kind}${t.out ? ' out' : ''}`}>{t.icon && <span>{rich(t.icon)}</span>}<span>{t.text}</span></div>
       ))}
     </div>
   );
@@ -250,7 +251,7 @@ export function OfflineModal() {
   return (
     <div class="modal-bg" onClick={e => { if (e.target === e.currentTarget) close(); }}>
       <div class="modal panel">
-        <h2>🌙 歡迎回來</h2>
+        <h2><Emo e="🌙" /> 歡迎回來</h2>
         <div class="muted">你離開了 {fmtDuration(r.away)}{r.away > r.counted ? `（計算上限 ${fmtDuration(r.counted)}）` : ''}，你的角色仍在持續冒險：</div>
         <div class="offline-grid">
           <div class="c"><div class="k">經驗</div><div class="v">+{fmt(r.xp)}</div></div>

@@ -1,4 +1,5 @@
 import { fmt, fmtDuration } from '@/core/format';
+import { Emo, rich } from '../emoji';
 import { potionHeal, potionPrice, stonePrice } from '@/core/formulas';
 import { BLESSINGS, GEM_SHOP } from '@/data/shop';
 import { invCapacity } from '@/systems/loot';
@@ -50,7 +51,7 @@ export function ShopPanel() {
           const active = s.buffs.find(x => x.id === b.id && x.until > now);
           return (
             <div class={'li' + (active ? ' done' : '')}>
-              <div class="ic">{b.icon}</div>
+              <div class="ic">{rich(b.icon)}</div>
               <div class="grow"><div class="t">{b.name}</div><div class="d">{b.desc}{active ? `・剩餘 ${fmtDuration(active.until - now)}` : ''}</div></div>
               <button class="btn sm" onClick={() => act(() => buyBlessing(gm, b.id))}><Cost k="gems" n={b.gems} have={s.cur.gems} /></button>
             </div>
@@ -76,7 +77,7 @@ export function ShopPanel() {
       <h3>其他</h3>
       <div class="list">
         <div class="li">
-          <div class="ic">🎒</div>
+          <div class="ic"><Emo e="🎒" /></div>
           <div class="grow"><div class="t">擴充背包 +{GEM_SHOP.invSlots.amount}</div><div class="d">目前容量 {invCapacity(gm)}</div></div>
           <button class="btn sm" disabled={s.invCapacity >= GEM_SHOP.invSlots.max} onClick={() => act(() => buyInvSlots(gm))}><Cost k="gems" n={GEM_SHOP.invSlots.gems} have={s.cur.gems} /></button>
         </div>
