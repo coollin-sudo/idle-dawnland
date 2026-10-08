@@ -13,7 +13,7 @@ type SfxName =
 /** 每種音效有幾個取樣檔（audio/sfx/{name}_{i}.wav） */
 const SAMPLE_COUNT: Partial<Record<SfxName, number>> = {
   hit: 5, crit: 5, hurt: 5, slash: 3, shield: 3, coin: 2, loot: 2, legend: 1, levelup: 1, achievement: 1, herodeath: 1, bossdown: 1,
-  boss: 2, enhance: 3, fail: 1, break: 3, click: 2, holy: 2, heal: 2, magic: 2, death: 2,
+  boss: 2, enhance: 3, fail: 1, break: 3, click: 2, holy: 2, heal: 2, magic: 2, death: 2, fire: 5, ice: 5, lightning: 5,
 };
 /** 各音效的取樣音量（取樣本身響度不一，在這裡校正） */
 const SAMPLE_GAIN: Partial<Record<SfxName, number>> = {

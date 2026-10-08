@@ -84,6 +84,7 @@ docs/        遊戲設計文件
 所有音訊素材皆為 CC0（公眾領域，可自由使用、不需標示作者），以下列出來源以示感謝：
 
 - 音效：[Kenney](https://kenney.nl) — RPG Audio、Impact Sounds、Interface Sounds、Music Jingles
+- 法術音效：[Basic Spell Impacts](https://lentikula.itch.io/freecc0-basic-spell-impacts-sfx) — lentikula（火焰、冰霜、雷電）
 - 配樂（[OpenGameArt](https://opengameart.org)）：
   - 標題：Intro Music — RonyDkid
   - 晨露草原：GrassLands Theme — DST
