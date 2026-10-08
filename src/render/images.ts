@@ -3,6 +3,8 @@ import { signal } from '@preact/signals';
 /** 可選的外部美術圖：public/art/manifest.json 列出的圖才會載入，沒有就用程式繪製 */
 const cache = new Map<string, HTMLImageElement | null>();
 const failures = new Map<string, number>();
+/** 下載中的圖片保留引用，避免在 onload 之前被回收 */
+const loading = new Set<HTMLImageElement>();
 let available: Set<string> | null = null;
 /** 清單載入或任何圖片載入完成時遞增，讓介面重新繪製 */
 export const artVersion = signal(0);
@@ -14,13 +16,24 @@ export function setArtEnabled(on: boolean) {
   artVersion.value++;
 }
 
-if (typeof fetch !== 'undefined' && typeof window !== 'undefined') {
-  fetch(import.meta.env.BASE_URL + 'art/manifest.json')
-    .then(r => (r.ok ? r.json() : []))
-    .then((list: string[]) => { available = new Set(list); })
-    .catch(() => { available = new Set(); })
-    .finally(() => { artVersion.value++; });
+/** 讀取美術清單；網路失敗時稍後重試（期間先用程式繪製） */
+function loadManifest(attempt = 0) {
+  fetch(import.meta.env.BASE_URL + 'art/manifest.json', { cache: 'no-cache' })
+    .then(r => {
+      if (!r.ok) throw new Error('manifest ' + r.status);
+      return r.json();
+    })
+    .then((list: string[]) => {
+      available = new Set(list);
+      artVersion.value++;
+    })
+    .catch(() => {
+      if (!available) available = new Set();
+      artVersion.value++;
+      setTimeout(() => loadManifest(attempt + 1), Math.min(30_000, 2000 * (attempt + 1)));
+    });
 }
+if (typeof fetch !== 'undefined' && typeof window !== 'undefined') loadManifest();
 
 /** 'art/monsters/slime' → 清單裡實際存在的檔案（優先 webp） */
 function resolve(base: string): string | null {
@@ -36,12 +49,14 @@ export function getImage(base: string): HTMLImageElement | null {
   if (cache.has(path)) return cache.get(path)!;
   cache.set(path, null);
   const img = new Image();
-  img.onload = () => { cache.set(path, img); artVersion.value++; };
-  // 載入失敗（例如網路不穩）時稍後重試，最多 5 次
+  loading.add(img);
+  img.onload = () => { loading.delete(img); cache.set(path, img); artVersion.value++; };
+  // 載入失敗（網路不穩、快取換版本）時稍後重試；間隔逐漸拉長，但不放棄
   img.onerror = () => {
+    loading.delete(img);
     const n = (failures.get(path) ?? 0) + 1;
     failures.set(path, n);
-    if (n < 5) setTimeout(() => cache.delete(path), 1500 * n);
+    setTimeout(() => cache.delete(path), Math.min(30_000, 1500 * n));
   };
   img.src = import.meta.env.BASE_URL + path;
   return null;

@@ -1,5 +1,5 @@
 // 離線快取：頁面走網路優先（確保拿到新版），其餘靜態檔走快取優先
-const CACHE = 'dawnland-v3';
+const CACHE = 'dawnland-v4';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
@@ -23,10 +23,14 @@ self.addEventListener('fetch', e => {
     return;
   }
   e.respondWith((async () => {
-    const hit = await caches.match(req);
+    const hit = await caches.match(req).catch(() => null);
     if (hit) return hit;
     const res = await fetch(req);
-    if (res.ok && !req.url.includes('manifest.json')) (await caches.open(CACHE)).put(req, res.clone());
+    // 寫入快取失敗（空間不足、快取正在換版本）不能影響這次的回應
+    if (res.ok && !req.url.includes('manifest.json')) {
+      const copy = res.clone();
+      e.waitUntil(caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {}));
+    }
     return res;
   })());
 });
