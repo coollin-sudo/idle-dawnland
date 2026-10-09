@@ -15,7 +15,7 @@ import { ShareCardButton } from '../ShareCard';
 import { heroLookOf } from '../GameScreen';
 import { openItem } from '../ItemModal';
 import { closeModal, g, gearView, openModal, refresh, uiTick } from '../store';
-import { equipToGear, GEAR_NAMES, gearOf, requestGear } from '@/systems/gearsets';
+import { equipToGear, GEAR_NAMES, gearOf, requestGear, unequipFromGear } from '@/systems/gearsets';
 import { canEquip, itemDisplayName, reqLevel } from '@/systems/items';
 
 const LEFT: SlotId[] = ['weapon', 'helmet', 'armor', 'gloves', 'belt'];
@@ -42,7 +42,7 @@ export function HeroPanel() {
   const eq = gearOf(s, view);
   const viewPower = view === s.gear.active ? combatPower(s, st) : (() => { const t = { ...s, equipment: s.gear.alt }; return combatPower(t, heroStats(t)); })();
   const slotEl = (sl: SlotId) => (
-    <ItemSlot item={eq[sl]} label={SLOT_LABEL[slotKind(sl)]} onClick={() => (eq[sl] ? openItem(eq[sl]!.uid) : openPicker(view, sl))} />
+    <ItemSlot item={eq[sl]} label={SLOT_LABEL[slotKind(sl)]} onClick={() => openPicker(view, sl)} />
   );
   return (
     <div>
@@ -210,7 +210,7 @@ function AdvanceBox() {
 }
 
 // ---------------------------------------------------------------------
-// 點空的裝備欄：列出背包裡可以放進這一格的裝備，點一下就穿上
+// 點裝備欄：列出背包裡可以放進這一格的裝備，點一下就穿上（已有裝備時直接替換，舊的回到背包）
 // ---------------------------------------------------------------------
 function openPicker(set: 0 | 1, slot: SlotId) {
   openModal(() => <EquipPicker set={set} slot={slot} />);
@@ -233,8 +233,22 @@ function EquipPicker({ set, slot }: { set: 0 | 1; slot: SlotId }) {
     })
     .sort((a, b) => Number(b.ok) - Number(a.ok) || b.gain - a.gain);
   const pick = (uid: number) => { equipToGear(gm, uid, set, slot); closeModal(); refresh(); };
+  const cur = eq[slot];
   return (
     <Modal title={`選擇${SLOT_LABEL[kind]}${set !== s.gear.active ? `（配裝 ${GEAR_NAMES[set]}）` : ''}`} actions={<button class="btn" onClick={closeModal}>取消</button>}>
+      {cur && (
+        <div class="pick-cur">
+          <ItemSlot item={cur} small />
+          <span class="pk-name">
+            <span class="tiny muted">目前裝備</span>
+            <b style={{ color: RARITIES[cur.rarity].color }}>{itemDisplayName(cur)}</b>
+          </span>
+          <span class="row" style={{ gap: '4px' }}>
+            <button class="btn xs" onClick={() => { closeModal(); openItem(cur.uid); }}>詳細</button>
+            <button class="btn xs" onClick={() => { unequipFromGear(gm, set, slot); closeModal(); refresh(); }}>卸下</button>
+          </span>
+        </div>
+      )}
       {rows.length === 0 ? <p class="muted">背包裡沒有可以放進這一格的裝備。</p> : (
         <div class="picker">
           {rows.map(({ it, ok, gain }) => (
@@ -249,7 +263,7 @@ function EquipPicker({ set, slot }: { set: 0 | 1; slot: SlotId }) {
           ))}
         </div>
       )}
-      <div class="tiny muted" style={{ marginTop: '6px' }}>右邊數字是穿上後的戰力變化。</div>
+      <div class="tiny muted" style={{ marginTop: '6px' }}>右邊數字是穿上後的戰力變化{cur ? '（換下的裝備會回到背包）' : ''}。</div>
     </Modal>
   );
 }

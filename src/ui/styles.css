@@ -613,3 +613,6 @@ select.input { padding: 6px 10px; }
 .pick-row .pk-gain { font-weight: 800; white-space: nowrap; }
 .pick-row .pk-gain.up { color: #7dff9a; }
 .pick-row .pk-gain.down { color: #ff8a8a; }
+.pick-cur { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 6px 8px; margin-bottom: 8px; border-radius: 8px; background: rgba(240,194,90,.08); border: 1px solid var(--gold3); }
+.pick-cur .islot { pointer-events: none; }
+.pick-cur .pk-name { display: flex; flex-direction: column; min-width: 0; }
