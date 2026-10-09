@@ -12,10 +12,15 @@ export const ENH_RATES = [100, 100, 100, 95, 90, 80, 70, 62, 55, 48, 42, 36, 31,
 export const ENH_DOWN_FROM = 5;
 export const ENH_BREAK_FROM = 10;
 
-export function findItem(g: Game, uid: number): { item: Item; where: 'inv' | 'equip'; slot?: SlotId } | null {
+export function findItem(g: Game, uid: number): { item: Item; where: 'inv' | 'equip' | 'alt'; slot?: SlotId } | null {
   for (const sl of SLOTS) {
     const it = g.state.equipment[sl];
     if (it?.uid === uid) return { item: it, where: 'equip', slot: sl };
+  }
+  // 另一套配裝（還沒換上的那套）
+  for (const sl of SLOTS) {
+    const it = g.state.gear?.alt[sl];
+    if (it?.uid === uid) return { item: it, where: 'alt', slot: sl };
   }
   const it = g.state.inventory.find(i => i.uid === uid);
   return it ? { item: it, where: 'inv' } : null;
@@ -67,6 +72,7 @@ export function enhance(g: Game, uid: number, useProtect: boolean): EnhanceResul
     result = 'protected';
   } else if (it.enh >= ENH_BREAK_FROM) {
     if (f.where === 'equip') g.state.equipment[f.slot!] = null;
+    else if (f.where === 'alt') g.state.gear.alt[f.slot!] = null;
     else g.state.inventory.splice(g.state.inventory.indexOf(it), 1);
     result = 'break';
     // 鑲在上面的魔晶不會跟著碎掉

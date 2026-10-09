@@ -29,6 +29,7 @@ export function newGameState(name: string, classId: ClassId, now = Date.now(), s
       talentRanks: {}, hp: 0, mp: 0,
     },
     equipment: { weapon: null, offhand: null, helmet: null, armor: null, gloves: null, belt: null, boots: null, amulet: null, ring1: null, ring2: null },
+    gear: { active: 0, want: 0, alt: { weapon: null, offhand: null, helmet: null, armor: null, gloves: null, belt: null, boots: null, amulet: null, ring1: null, ring2: null } },
     inventory: [],
     invCapacity: BASE_INV,
     cur: { gold: 0, gems: 50, stones: 2, essence: 0, shards: 0, petFood: 0, protect: 0, starSouls: 0, keys: 0 },

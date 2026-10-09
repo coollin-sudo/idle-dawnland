@@ -14,7 +14,8 @@ import { HeroPreview } from '../HeroPreview';
 import { ShareCardButton } from '../ShareCard';
 import { heroLookOf } from '../GameScreen';
 import { openItem } from '../ItemModal';
-import { closeModal, g, openModal, refresh, uiTick } from '../store';
+import { closeModal, g, gearView, openModal, refresh, uiTick } from '../store';
+import { GEAR_NAMES, gearOf, requestGear } from '@/systems/gearsets';
 
 const LEFT: SlotId[] = ['weapon', 'helmet', 'armor', 'gloves', 'belt'];
 const RIGHT: SlotId[] = ['offhand', 'amulet', 'ring1', 'ring2', 'boots'];
@@ -36,18 +37,41 @@ export function HeroPanel() {
   const items = Object.values(s.equipment).filter(Boolean) as NonNullable<typeof s.equipment.weapon>[];
   const sets = setCounts(items);
   const powers = heroPowers(s);
+  const view = gearView.value ?? s.gear.active;
+  const eq = gearOf(s, view);
+  const viewPower = view === s.gear.active ? combatPower(s, st) : (() => { const t = { ...s, equipment: s.gear.alt }; return combatPower(t, heroStats(t)); })();
   const slotEl = (sl: SlotId) => (
-    <ItemSlot item={s.equipment[sl]} label={SLOT_LABEL[slotKind(sl)]} onClick={() => s.equipment[sl] && openItem(s.equipment[sl]!.uid)} />
+    <ItemSlot item={eq[sl]} label={SLOT_LABEL[slotKind(sl)]} onClick={() => eq[sl] && openItem(eq[sl]!.uid)} />
   );
   return (
     <div>
+      <div class="gearsets">
+        {([0, 1] as const).map(n => (
+          <button class={'btn sm' + (view === n ? ' primary' : '')} onClick={() => { gearView.value = n; refresh(); }}>
+            配裝 {GEAR_NAMES[n]}
+            {s.gear.active === n && <span class="gs-tag on">使用中</span>}
+            {s.gear.want === n && s.gear.active !== n && <span class="gs-tag next">下一波換上</span>}
+          </button>
+        ))}
+        <span class="spacer" />
+        {view !== s.gear.want
+          ? <button class="btn sm good" onClick={() => { requestGear(gm, view); refresh(); }}>下一波改用配裝 {GEAR_NAMES[view]}</button>
+          : s.gear.want !== s.gear.active
+            ? <button class="btn sm ghost" onClick={() => { requestGear(gm, s.gear.active); refresh(); }}>取消切換</button>
+            : null}
+      </div>
+      {view !== s.gear.active && (
+        <div class="small muted" style={{ marginBottom: '6px' }}>
+          正在編輯配裝 {GEAR_NAMES[view]}（尚未穿上，換上後戰力 {fmt(viewPower)}）。在背包點裝備會穿到這一套；切換在下一波戰鬥開始時生效。
+        </div>
+      )}
       <div class="paperdoll">
         <div class="colslots">{LEFT.map(slotEl)}</div>
         <div class="figure">
           <HeroPreview look={heroLookOf()} art={[h.advId, h.classId]} size={220} attackEvery={3.2} />
           <div style={{ position: 'absolute', top: '8px', left: '0px', right: '0px', textAlign: 'center' }}>
             <div style={{ fontWeight: 900, fontSize: '16px' }}>{h.advId ? ADVANCES[h.advId].name : c.name}</div>
-            <div class="small gold">戰力 {fmt(combatPower(s, st))}</div>
+            <div class="small gold">戰力 {fmt(viewPower)}{view !== s.gear.active ? '（換上後）' : ''}</div>
           </div>
         </div>
         <div class="colslots">{RIGHT.map(slotEl)}</div>

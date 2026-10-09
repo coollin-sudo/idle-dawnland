@@ -595,3 +595,9 @@ select.input { padding: 6px 10px; }
 .rank-row .sc { font-weight: 800; color: var(--gold2); white-space: nowrap; }
 .rank-gap { text-align: center; color: var(--dim); }
 .panel-note { padding: 14px; border-radius: 10px; background: var(--panel2); }
+
+/* 兩套配裝 */
+.gearsets { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+.gearsets .gs-tag { margin-left: 6px; font-size: 10px; padding: 1px 6px; border-radius: 8px; font-weight: 800; }
+.gearsets .gs-tag.on { background: #2f6a3f; color: #c8ffd8; }
+.gearsets .gs-tag.next { background: #6a4a1f; color: #ffe0a8; }

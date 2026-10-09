@@ -25,6 +25,8 @@ export const offlineReport = signal<OfflineReport | null>(null);
 export const tip = signal<{ item: Item; x: number; y: number; compare?: boolean } | null>(null);
 export const selectedItem = signal<number | null>(null);
 export const forgeItem = signal<number | null>(null);
+/** 角色頁正在看哪一套配裝（null＝正在用的那套） */
+export const gearView = signal<0 | 1 | null>(null);
 tab.subscribe(() => { tip.value = null; });
 
 let scene: BattleScene | null = null;

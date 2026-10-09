@@ -22,7 +22,7 @@ export function ForgePanel() {
   const gm = g();
   const s = gm.state;
   const [sub, setSub] = useState<Sub>('enhance');
-  const equipped = SLOTS.map(sl => s.equipment[sl]).filter((x): x is Item => !!x);
+  const equipped = [...SLOTS.map(sl => s.equipment[sl]), ...SLOTS.map(sl => s.gear.alt[sl])].filter((x): x is Item => !!x);
   if (!forgeItem.value || !findItem(gm, forgeItem.value)) forgeItem.value = equipped[0]?.uid ?? s.inventory[0]?.uid ?? null;
   const sel = forgeItem.value ? findItem(gm, forgeItem.value)?.item ?? null : null;
   return (

@@ -501,3 +501,25 @@ describe('存檔簽章', () => {
     expect((await importText(noSig))?.online.tainted).toBe(true);
   });
 });
+
+describe('兩套配裝', () => {
+  it('切換要等下一波戰鬥開始才生效；裝備可以穿到另一套', async () => {
+    const { requestGear, equipToGear, applyGearSwap } = await import('@/systems/gearsets');
+    const { findItem } = await import('@/systems/forge');
+    const { g, tick } = makeGame();
+    const s = g.state;
+    const it = generateItem({ classId: 'warrior', rng: new Rng(3), nextUid: () => s.nextUid++, heroLevel: 1 } as never, { ilvl: 1, rarity: 2, slot: 'helmet' } as never);
+    s.inventory.push(it);
+    equipToGear(g, it.uid, 1);
+    expect(s.gear.alt.helmet?.uid).toBe(it.uid);
+    expect(findItem(g, it.uid)?.where).toBe('alt');
+    const helmA = s.equipment.helmet?.uid ?? null;
+    requestGear(g, 1);
+    expect(s.gear.active).toBe(0); // 還沒換
+    tick(60_000); // 打完幾波
+    expect(s.gear.active).toBe(1);
+    expect(s.equipment.helmet?.uid).toBe(it.uid);
+    expect(s.gear.alt.helmet?.uid ?? null).toBe(helmA);
+    expect(applyGearSwap(g)).toBe(false);
+  });
+});

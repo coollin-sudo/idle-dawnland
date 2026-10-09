@@ -14,6 +14,8 @@ import { combatPower, heroStats } from '@/systems/hero';
 import { weaponLook } from '@/systems/units';
 import { advise } from '@/systems/advisor';
 import { setMode } from '@/systems/activities';
+import { GEAR_NAMES, requestGear } from '@/systems/gearsets';
+import { SLOTS } from '@/data/items';
 import { claimQuest, currentQuest, questProgress, describeReward, dailyProgress } from '@/systems/quests';
 import { loadoutSlots, talentAvailable, xpNeed } from '@/systems/progression';
 import { CHAPTERS } from '@/data/quests';
@@ -105,6 +107,7 @@ function BattleView() {
         {act.kind === 'stage' ? (
           <div class="stage-ctl">
             <MuteButton />
+            <GearToggle />
             <button class={'btn xs' + (p.mode === 'push' ? ' on' : '')} onClick={() => setMode(gm, 'push')} title="自動前往下一關"><Emo e="⏩" /> 推進</button>
             <button class={'btn xs' + (p.mode === 'farm' ? ' on' : '')} onClick={() => setMode(gm, 'farm')} title="停留在這一關刷怪"><Emo e="🔁" /> 刷怪</button>
           </div>
@@ -115,6 +118,21 @@ function BattleView() {
         )}
       </div>
     </div>
+  );
+}
+
+/** 配裝快速切換：按下後下一波戰鬥開始才換上 */
+function GearToggle() {
+  void uiTick.value;
+  const gm = g();
+  const s = gm.state;
+  if (!SLOTS.some(sl => s.gear.alt[sl])) return null; // 另一套是空的就不顯示
+  const pending = s.gear.want !== s.gear.active;
+  return (
+    <button class={'btn xs' + (pending ? ' on' : '')} title={pending ? '下一波戰鬥開始時換裝（再按一次取消）' : '切換配裝（下一波戰鬥開始時生效）'}
+      onClick={() => { requestGear(gm, (1 - s.gear.want) as 0 | 1); refresh(); }}>
+      {rich('🛡')} {GEAR_NAMES[s.gear.active]}{pending ? ` → ${GEAR_NAMES[s.gear.want]}` : ''}
+    </button>
   );
 }
 

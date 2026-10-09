@@ -392,6 +392,11 @@ export interface GameState {
   nextUid: number;
   hero: HeroState;
   equipment: Record<SlotId, Item | null>;
+  /**
+   * 兩套配裝：equipment 永遠是「正在用」的那套，alt 是另一套。
+   * 玩家隨時可以指定 want，下一波戰鬥開始時才真正換裝。
+   */
+  gear: { active: 0 | 1; want: 0 | 1; alt: Record<SlotId, Item | null> };
   inventory: Item[];
   invCapacity: number;
   cur: Currencies;

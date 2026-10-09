@@ -1,6 +1,7 @@
 import type { Game } from '@/core/game';
 import { mechOf } from '@/data/bossMechanics';
 import { weekKey } from '@/online/week';
+import { applyGearSwap } from './gearsets';
 import { BOSS_TIME_MS, DIFFICULTIES, REGION_COUNT, STAGES_PER_REGION, WAVES_PER_STAGE, stageLevel } from '@/core/formulas';
 import { todayKey } from '@/core/format';
 import type { Unit } from '@/core/unit';
@@ -98,6 +99,7 @@ export class StageActivity implements Activity {
 
   private spawnWave() {
     const g = this.g;
+    applyGearSwap(g);
     const b = g.battle;
     b.sweep();
     const region = regionOfStage(this.stage);
@@ -386,6 +388,7 @@ export class DungeonActivity implements Activity {
     const g = this.g;
     g.state.dungeons.used[this.def.id] = (g.state.dungeons.used[this.def.id] ?? 0) + 1;
     this.level = dungeonLevel(g);
+    applyGearSwap(g);
     setupHero(g, true);
     this.timeLeft = this.timeTotal = this.def.durationMs;
     for (let i = 0; i < 3; i++) this.spawnOne();
@@ -478,6 +481,7 @@ export class TowerActivity implements Activity {
   start() {
     const g = this.g;
     g.count('towerTries');
+    applyGearSwap(g);
     setupHero(g, true);
     const f = this.floor;
     const bossId = TOWER_BOSSES[(f - 1) % TOWER_BOSSES.length];

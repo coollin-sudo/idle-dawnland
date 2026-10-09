@@ -2,11 +2,12 @@ import type { Item, SlotId } from '@/core/types';
 import { Emo, rich } from './emoji';
 import { SLOTS, slotKind } from '@/data/items';
 import { canEquip } from '@/systems/items';
-import { equipItem, findItem, toggleLock, unequipItem } from '@/systems/forge';
+import { findItem, toggleLock } from '@/systems/forge';
+import { equipToGear, GEAR_NAMES, gearOf, unequipFromGear } from '@/systems/gearsets';
 import { salvageItems, sellItems } from '@/systems/loot';
 import { upgradeDelta } from '@/systems/hero';
 import { ItemCard, confirmModal } from './common';
-import { closeModal, forgeItem, g, openModal, refresh, tab, tip, uiTick } from './store';
+import { closeModal, forgeItem, g, gearView, openModal, refresh, tab, tip, uiTick } from './store';
 
 function ItemModalBody({ uid }: { uid: number }) {
   void uiTick.value;
@@ -16,10 +17,16 @@ function ItemModalBody({ uid }: { uid: number }) {
   const it = f.item;
   const s = gm.state;
   const equippable = canEquip(it, s.hero.classId, s.hero.level);
-  const target: SlotId | undefined = f.where === 'inv' && equippable ? upgradeDelta(s, it).slot : undefined;
+  // 背包裝備會穿到角色頁正在看的那套配裝
+  const set = (gearView.value ?? s.gear.active) as 0 | 1;
+  const eq = gearOf(s, set);
+  const other = set !== s.gear.active;
+  const target: SlotId | undefined = f.where === 'inv' && equippable ? (other ? (it.slot === 'ring' ? undefined : it.slot as SlotId) : upgradeDelta(s, it).slot) : undefined;
   const compareWith = f.where === 'inv'
-    ? (it.slot === 'ring' ? [s.equipment.ring1, s.equipment.ring2] : [s.equipment[it.slot as SlotId]]).filter((x): x is Item => !!x)
+    ? (it.slot === 'ring' ? [eq.ring1, eq.ring2] : [eq[it.slot as SlotId]]).filter((x): x is Item => !!x)
     : [];
+  const equip = (slot?: SlotId) => act(() => { equipToGear(gm, uid, set, slot); closeModal(); });
+  const setLabel = `配裝 ${GEAR_NAMES[set]}`;
   if (it.isNew) it.isNew = false;
   const act = (fn: () => void) => { fn(); refresh(); };
   return (
@@ -32,27 +39,28 @@ function ItemModalBody({ uid }: { uid: number }) {
             <div class="card"><ItemCard item={it} /></div>
           </div>
           <div>
-            <div class="cmp-label">目前裝備中</div>
+            <div class="cmp-label">{other ? `${setLabel}（未穿上）` : '目前裝備中'}</div>
             {compareWith.map(c => <div class="card" style={{ marginBottom: '6px' }}><ItemCard item={c} compare={false} /></div>)}
           </div>
         </div>
       ) : (
         <div class="card" style={{ marginBottom: '10px' }}>
-          {f.where === 'inv' && <div class="cmp-label">目前這個部位沒有裝備</div>}
+          {f.where === 'inv' && <div class="cmp-label">{other ? `${setLabel}這個部位沒有裝備` : '目前這個部位沒有裝備'}</div>}
+          {f.where === 'alt' && <div class="cmp-label">{`配裝 ${GEAR_NAMES[(1 - s.gear.active) as 0 | 1]}（未穿上）`}</div>}
           <ItemCard item={it} />
         </div>
       )}
       <div class="actions">
         {f.where === 'inv' && it.slot === 'ring' && equippable && (
           <>
-            <button class="btn sm" onClick={() => act(() => { equipItem(gm, uid, 'ring1'); closeModal(); })}>戴左手</button>
-            <button class="btn sm" onClick={() => act(() => { equipItem(gm, uid, 'ring2'); closeModal(); })}>戴右手</button>
+            <button class="btn sm" onClick={() => equip('ring1')}>戴左手{other ? `（${setLabel}）` : ''}</button>
+            <button class="btn sm" onClick={() => equip('ring2')}>戴右手{other ? `（${setLabel}）` : ''}</button>
           </>
         )}
         {f.where === 'inv' && it.slot !== 'ring' && (
-          <button class="btn primary" disabled={!equippable} onClick={() => act(() => { equipItem(gm, uid, target); closeModal(); })}>裝備</button>
+          <button class="btn primary" disabled={!equippable} onClick={() => equip(target)}>{other ? `穿到${setLabel}` : '裝備'}</button>
         )}
-        {f.where === 'equip' && <button class="btn" onClick={() => act(() => { unequipItem(gm, f.slot!); closeModal(); })}>卸下</button>}
+        {f.where !== 'inv' && <button class="btn" onClick={() => act(() => { unequipFromGear(gm, f.where === 'equip' ? s.gear.active : (1 - s.gear.active) as 0 | 1, f.slot!); closeModal(); })}>卸下</button>}
         <button class="btn" onClick={() => { forgeItem.value = uid; tab.value = 'forge'; closeModal(); }}><Emo e="🔨" /> 鍛造</button>
         <button class="btn" onClick={() => act(() => toggleLock(gm, uid))}>{rich(it.locked ? '🔓 解鎖' : '🔒 上鎖')}</button>
         {f.where === 'inv' && (
