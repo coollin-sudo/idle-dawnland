@@ -405,13 +405,14 @@ describe('首領機制', () => {
     expect(boss.mem.nextDoom).toBeGreaterThan(6);
   });
 
-  it('風暴結界：擋下傷害，命中 10 次破碎並暈眩首領', async () => {
+  it('風暴結界：擋下傷害，命中指定次數後破碎並暈眩首領', async () => {
+    const { MECH } = await import('@/data/bossMechanics');
     const { b, hero, boss } = await arena('storm_king');
-    boss.mem.mt = 4.95;
+    boss.mem.mt = MECH.barrierFirst - 0.05;
     b.tick(0.1);
-    expect(boss.mem.barrier).toBe(10);
+    expect(boss.mem.barrier).toBe(MECH.barrierHits);
     const hp = boss.hp;
-    for (let i = 0; i < 9; i++) b.hit(hero, boss, { mult: 1, dmgType: 'phys', element: 'phys', proc: true });
+    for (let i = 0; i < MECH.barrierHits - 1; i++) b.hit(hero, boss, { mult: 1, dmgType: 'phys', element: 'phys', proc: true });
     expect(boss.hp).toBe(hp);
     b.hit(hero, boss, { mult: 1, dmgType: 'phys', element: 'phys', proc: true });
     expect(boss.mem.barrier).toBe(0);
