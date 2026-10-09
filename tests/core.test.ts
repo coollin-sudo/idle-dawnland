@@ -445,3 +445,19 @@ describe('首領機制', () => {
     expect(xpToNext(30)).toBeGreaterThan(xpToNextFast(30) * 10);
   });
 });
+
+describe('存檔匯出 JSON', () => {
+  it('匯出的 JSON 檔可以匯入回來，也相容舊存檔碼', async () => {
+    const { exportJson, importText, exportCode } = await import('@/save/storage');
+    const { g } = makeGame('mage');
+    g.state.hero.level = 23;
+    const { filename, blob } = exportJson(g.state, new Date(2026, 9, 9, 8, 5));
+    expect(filename).toBe('晨曦大陸_測試_Lv23_20261009-0805.json');
+    const back = await importText(await blob.text());
+    expect(back?.hero.classId).toBe('mage');
+    expect(back?.hero.level).toBe(23);
+    const old = await importText(await exportCode(g.state));
+    expect(old?.hero.level).toBe(23);
+    expect(await importText('{壞掉的')).toBeNull();
+  });
+});

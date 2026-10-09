@@ -101,6 +101,28 @@ export async function exportCode(s: GameState): Promise<string> {
   return 'DJ1:' + toB64(json);
 }
 
+/** 匯出成 JSON 檔：回傳檔名與內容 */
+export function exportJson(s: GameState, now = new Date()): { filename: string; blob: Blob } {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const date = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+  const safeName = s.hero.name.replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 20) || 'hero';
+  const filename = `晨曦大陸_${safeName}_Lv${s.hero.level}_${date}.json`;
+  const blob = new Blob([JSON.stringify({ game: 'idle-dawnland', exportedAt: now.toISOString(), save: s })], { type: 'application/json' });
+  return { filename, blob };
+}
+
+/** 匯入：支援 JSON 檔內容，也相容舊的存檔碼（DZ1:/DJ1:） */
+export async function importText(text: string): Promise<GameState | null> {
+  const t = text.trim().replace(/^\uFEFF/, '');
+  if (!t.startsWith('{')) return importCode(t);
+  try {
+    const data = JSON.parse(t) as { save?: unknown };
+    return migrate(data && typeof data === 'object' && 'save' in data ? data.save : data);
+  } catch {
+    return null;
+  }
+}
+
 export async function importCode(code: string): Promise<GameState | null> {
   try {
     code = code.trim();

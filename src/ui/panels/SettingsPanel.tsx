@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import { setNumberStyle, fmtDuration } from '@/core/format';
 import type { Settings } from '@/core/types';
 import { RARITIES } from '@/data/items';
 import { audio } from '@/audio/audio';
 import { setArtEnabled } from '@/render/images';
-import { clearState, exportCode, importCode, saveState } from '@/save/storage';
+import { clearState, exportJson, importText, saveState } from '@/save/storage';
 import { Modal, Switch, confirmModal } from '../common';
 import { closeModal, g, openModal, refresh, saveNow, startGame, stopGame, game, uiTick } from '../store';
 
@@ -58,11 +58,11 @@ export function SettingsPanel() {
       {row('自動挑戰首領', '首領失敗後刷幾關會自動再挑戰', <Switch on={st.autoBoss} onChange={v => set('autoBoss', v)} />)}
 
       <h3>存檔</h3>
-      <div class="small muted" style={{ marginBottom: '8px' }}>進度每 15 秒自動存在這個瀏覽器。換裝置時用存檔碼轉移。已遊玩 {fmtDuration(gm.state.playMs)}。</div>
+      <div class="small muted" style={{ marginBottom: '8px' }}>進度每 15 秒自動存在這個瀏覽器。換裝置或備份時，匯出成 JSON 檔再到另一台匯入。已遊玩 {fmtDuration(gm.state.playMs)}。</div>
       <div class="row wrap" style={{ gap: '6px' }}>
         <button class="btn sm" onClick={() => { saveNow(); gm.toast('已存檔', 'good', '💾'); }}>立即存檔</button>
-        <button class="btn sm" onClick={() => openExport()}>匯出存檔碼</button>
-        <button class="btn sm" onClick={() => openImport()}>匯入存檔碼</button>
+        <button class="btn sm" onClick={() => downloadSave()}>匯出存檔（JSON）</button>
+        <button class="btn sm" onClick={() => openImport()}>匯入存檔</button>
         <button class="btn sm danger" onClick={() => confirmModal('刪除角色？', <p>{gm.state.hero.name} 的所有進度會永久消失，無法復原。</p>, () => { stopGame(); clearState(); game.value = null; location.reload(); }, '永久刪除', true)}>刪除角色</button>
       </div>
 
@@ -74,45 +74,55 @@ export function SettingsPanel() {
   );
 }
 
-function ExportBody() {
-  void uiTick.value;
-  const [code, setCode] = useState('產生中…');
-  useEffect(() => { void exportCode(g().state).then(setCode); }, []);
-  return (
-    <Modal title="匯出存檔碼" actions={<>
-      <button class="btn" onClick={closeModal}>關閉</button>
-      <button class="btn primary" onClick={() => { void navigator.clipboard?.writeText(code).then(() => g().toast('已複製', 'good', '📋')); }}>複製</button>
-    </>}>
-      <p class="small muted">把這段文字存好，在其他裝置選「匯入存檔碼」貼上即可。</p>
-      <textarea class="input" readOnly value={code} onFocus={e => (e.target as HTMLTextAreaElement).select()} />
-    </Modal>
-  );
-}
-
-function openExport() {
-  openModal(() => <ExportBody />);
+/** 把目前進度下載成 JSON 檔 */
+function downloadSave() {
+  const gm = g();
+  saveNow();
+  const { filename, blob } = exportJson(gm.state);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  gm.toast(`已匯出 ${filename}`, 'good', '💾');
 }
 
 function ImportBody() {
   void uiTick.value;
   const [text, setText] = useState('');
   const [err, setErr] = useState('');
-  const go = async () => {
-    const s = await importCode(text);
-    if (!s) { setErr('存檔碼無效'); return; }
+  const load = async (raw: string) => {
+    const s = await importText(raw);
+    if (!s) { setErr('無法讀取這個存檔，請確認是晨曦大陸匯出的 JSON 檔'); return; }
     stopGame();
     saveState(s);
     closeModal();
     startGame(s);
     refresh();
   };
+  const pickFile = (e: Event) => {
+    const f = (e.target as HTMLInputElement).files?.[0];
+    if (!f) return;
+    setErr('');
+    void f.text().then(load);
+  };
   return (
-    <Modal title="匯入存檔碼" actions={<>
+    <Modal title="匯入存檔" actions={<>
       <button class="btn" onClick={closeModal}>取消</button>
-      <button class="btn primary" onClick={() => void go()}>匯入</button>
+      {text.trim() && <button class="btn primary" onClick={() => void load(text)}>匯入貼上的內容</button>}
     </>}>
       <p class="small muted">會覆蓋這個瀏覽器目前的角色。</p>
-      <textarea class="input" placeholder="貼上存檔碼（DZ1: 開頭）" value={text} onInput={e => setText((e.target as HTMLTextAreaElement).value)} />
+      <label class="btn primary" style={{ display: 'inline-block', cursor: 'pointer' }}>
+        選擇存檔檔案（.json）
+        <input type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={pickFile} />
+      </label>
+      <details style={{ marginTop: '10px' }}>
+        <summary class="small muted">或貼上 JSON 內容／舊版存檔碼</summary>
+        <textarea class="input" placeholder="貼上 JSON 內容，或 DZ1: 開頭的舊存檔碼" value={text} onInput={e => setText((e.target as HTMLTextAreaElement).value)} />
+      </details>
       {err && <div class="bad small">{err}</div>}
     </Modal>
   );

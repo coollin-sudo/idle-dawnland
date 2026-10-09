@@ -48,7 +48,7 @@ export function Create({ onDone, onImport }: { onDone: () => void; onImport: () 
         <button class="btn primary lg" onClick={start}>踏上旅程</button>
       </div>
       <div style={{ marginTop: '18px' }}>
-        <button class="btn ghost sm" onClick={onImport}>已有存檔碼？匯入存檔</button>
+        <button class="btn ghost sm" onClick={onImport}>已有存檔？匯入 JSON 存檔</button>
       </div>
       <div class="small dim" style={{ marginTop: '26px' }}>原創作品・進度保存在你的瀏覽器・建議使用電腦或手機的最新版瀏覽器</div>
     </div>
