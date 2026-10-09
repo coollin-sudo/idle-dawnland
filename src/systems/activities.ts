@@ -1,5 +1,6 @@
 import type { Game } from '@/core/game';
 import { mechOf } from '@/data/bossMechanics';
+import { weekKey } from '@/online/week';
 import { BOSS_TIME_MS, DIFFICULTIES, REGION_COUNT, STAGES_PER_REGION, WAVES_PER_STAGE, stageLevel } from '@/core/formulas';
 import { todayKey } from '@/core/format';
 import type { Unit } from '@/core/unit';
@@ -198,6 +199,7 @@ export class StageActivity implements Activity {
       p.best[this.diff] = this.stage;
       const eff = this.diff * 80 + this.stage;
       if (eff > g.state.rebirth.bestStageEver) g.state.rebirth.bestStageEver = eff;
+      if (eff > g.state.records.bestEff) g.state.records.bestEff = eff;
       const gems = this.isBossStage() ? 20 + Math.floor(this.stage / 10) * 10 + this.diff * 30 : 2 + this.diff * 2;
       g.state.cur.gems += gems;
       g.ev.emit('loot:currency', { key: 'gems', amount: gems });
@@ -279,9 +281,24 @@ export class StageActivity implements Activity {
       this.g.toast('打倒寶藏哥布林！', 'legend', '💰');
       return;
     }
+    if (u.boss && this.timeTotal > 0) this.recordBossTime(u);
     // 已經打倒過的首領再刷：獎勵降為精英等級，避免反覆刷首領造成傳說氾濫
     const repeat = u.boss && this.g.state.progress.best[this.diff] >= this.stage;
     rewardKill(this.g, u, killer, repeat ? { repeatBoss: true } : {});
+  }
+
+  /** 首領速通紀錄：英雄等級不高於首領時才算（避免高等級回頭秒殺） */
+  private recordBossTime(u: Unit) {
+    const g = this.g;
+    if (g.state.hero.level > u.level) return;
+    const ms = Math.round(this.timeTotal - this.timeLeft);
+    const key = `${this.diff}:${u.defId}`;
+    const rec = g.state.records.boss;
+    if (rec[key] !== undefined && rec[key] <= ms) return;
+    const first = rec[key] === undefined;
+    rec[key] = ms;
+    if (!first) g.toast(`首領速通新紀錄：${u.name} ${(ms / 1000).toFixed(1)} 秒`, 'epic', '⏱️');
+    g.ev.emit('record:boss', { key, ms });
   }
 
   onHeroDeath() {
@@ -516,6 +533,9 @@ export class TowerActivity implements Activity {
     }
     g.state.tower.floor++;
     if (g.state.tower.best < f) g.state.tower.best = f;
+    const wk = weekKey(g.now());
+    if (g.state.tower.week !== wk) { g.state.tower.week = wk; g.state.tower.weekBest = 0; }
+    if (g.state.tower.weekBest < f) g.state.tower.weekBest = f;
     g.countMax('towerBest', f);
     g.toast(`通過第 ${f} 層！寶石 +${gems}`, 'good', '🗼');
     this.result = 'win';

@@ -30,6 +30,8 @@ import { MapPanel } from './panels/MapPanel';
 import { ChallengePanel } from './panels/ChallengePanel';
 import { ShopPanel } from './panels/ShopPanel';
 import { QuestsPanel } from './panels/QuestsPanel';
+import { RankPanel } from './panels/RankPanel';
+import { leaderboardEnabled } from '@/online/leaderboard';
 import { CollectionPanel } from './panels/CollectionPanel';
 import { RebirthPanel } from './panels/RebirthPanel';
 import { SettingsPanel } from './panels/SettingsPanel';
@@ -244,6 +246,7 @@ const TABS: { id: TabId; name: string; icon: string }[] = [
   { id: 'shop', name: '商店', icon: '🛒' },
   { id: 'quests', name: '任務', icon: '📜' },
   { id: 'collection', name: '收藏', icon: '📖' },
+  { id: 'rank', name: '排行', icon: '🏆' },
   { id: 'rebirth', name: '轉生', icon: '🌌' },
   { id: 'settings', name: '設定', icon: '⚙️' },
 ];
@@ -280,7 +283,7 @@ function Tabs() {
   void uiTick.value;
   return (
     <div class="tabs panel">
-      {TABS.map(t => {
+      {TABS.filter(t => t.id !== 'rank' || leaderboardEnabled()).map(t => {
         const lock = tabLocked(t.id);
         return (
           <button
@@ -288,7 +291,7 @@ function Tabs() {
             title={lock ?? t.name}
             onClick={() => { if (!lock) tab.value = t.id; else g().toast(lock, 'warn', '🔒'); }}
           >
-            <span class="ti">{(() => { const art = artUrl(`art/ui/${t.id}`); return art ? <img class="tiimg" src={art} alt="" /> : t.icon; })()}</span>
+            <span class="ti">{(() => { const art = artUrl(t.id === 'rank' ? 'art/emo/trophy' : `art/ui/${t.id}`); return art ? <img class="tiimg" src={art} alt="" /> : t.icon; })()}</span>
             {t.name}
             {!lock && tabBadge(t.id) && <span class="badge" />}
           </button>
@@ -312,6 +315,7 @@ function Panel() {
     case 'shop': return <ShopPanel />;
     case 'quests': return <QuestsPanel />;
     case 'collection': return <CollectionPanel />;
+    case 'rank': return <RankPanel />;
     case 'rebirth': return <RebirthPanel />;
     case 'settings': return <SettingsPanel />;
   }

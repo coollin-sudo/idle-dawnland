@@ -23,6 +23,7 @@ export interface GameEvents extends Record<string, unknown> {
   'stage:enter': { stage: number; difficulty: number };
   'stage:clear': { stage: number; first: boolean };
   'boss:fail': { reason: 'time' | 'death' };
+  'record:boss': { key: string; ms: number };
   'hero:death': Record<string, never>;
   'hero:revive': Record<string, never>;
   // ---- 成長與獎勵 ----

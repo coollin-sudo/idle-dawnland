@@ -398,7 +398,16 @@ export interface GameState {
   potions: [number, number, number];
   progress: Progress;
   dungeons: { date: string; used: Record<string, number>; bought: Record<string, number>; best: Record<string, number> };
-  tower: { floor: number; best: number };
+  tower: { floor: number; best: number; /** 本週（台灣時間 ISO 週）通過的最高層 */ week: string; weekBest: number };
+  /** 個人紀錄（排行榜用） */
+  records: {
+    /** 首領速通：'難度:首領 id' → 毫秒（英雄等級不高於首領時才算） */
+    boss: Record<string, number>;
+    /** 曾經推到的最遠進度：難度 × 80 + 關卡 */
+    bestEff: number;
+  };
+  /** 線上排行榜 */
+  online: { token: string; joined: boolean; lastSubmit: number };
   pets: { owned: Record<string, PetState>; active: string | null; eggs: Egg[]; slots: number };
   quests: { main: number; mainProgress: number; daily: MissionState[]; dailyDate: string; dailyChest: boolean };
   achievements: Record<string, number>;

@@ -461,3 +461,29 @@ describe('存檔匯出 JSON', () => {
     expect(await importText('{壞掉的')).toBeNull();
   });
 });
+
+describe('排行榜', () => {
+  it('週次以台灣時間計算，週一 00:00 換週', async () => {
+    const { weekKey } = await import('@/online/week');
+    // 2026-10-04（日）23:59 台灣時間 → W40；10-05（一）00:00 → W41
+    expect(weekKey(Date.UTC(2026, 9, 4, 15, 59))).toBe('2026-W40');
+    expect(weekKey(Date.UTC(2026, 9, 4, 16, 0))).toBe('2026-W41');
+    expect(weekKey(Date.UTC(2021, 0, 3, 0, 0))).toBe('2020-W53');
+  });
+  it('上傳內容：最遠進度、本週塔層、首領速通', async () => {
+    const { scoresOf } = await import('@/online/leaderboard');
+    const { weekKey } = await import('@/online/week');
+    const { g } = makeGame();
+    const now = Date.UTC(2026, 9, 8);
+    g.state.progress.best = [79, 12, -1];
+    g.state.records.bestEff = 50;
+    g.state.tower.week = weekKey(now); g.state.tower.weekBest = 17;
+    g.state.records.boss = { '0:troll': 31000 };
+    const sc = scoresOf(g.state, now);
+    expect(sc.progress).toBe(92);
+    expect(sc.tower).toBe(17);
+    expect(sc.boss).toEqual({ '0:troll': 31000 });
+    g.state.tower.week = '2000-W01';
+    expect(scoresOf(g.state, now).tower).toBeUndefined();
+  });
+});

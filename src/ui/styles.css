@@ -576,3 +576,22 @@ select.input { padding: 6px 10px; }
 .boss-intel .bi-c.ok .bi-mark { color: #6fe08a; }
 .loadout .ls .btn.hold { margin-top: 4px; font-size: 10px; padding: 1px 6px; }
 .loadout .ls .btn.hold.on { background: #4a3a8a; border-color: #9a8aff; color: #fff; }
+
+/* 排行榜 */
+.rank-join { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 12px; margin-bottom: 12px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line2); }
+.rank-boss { display: grid; gap: 6px; margin-bottom: 4px; }
+.rank-bosses { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+.rank-bosses .rb { position: relative; padding: 2px; border-radius: 8px; border: 1px solid var(--line2); background: var(--panel2); cursor: pointer; }
+.rank-bosses .rb.on { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(240,194,90,.3); }
+.rank-bosses .rb img { width: 100%; aspect-ratio: 1; object-fit: contain; display: block; }
+.rank-bosses .rb span { position: absolute; left: 4px; top: 1px; font-size: 10px; font-weight: 900; color: #fff; text-shadow: 0 1px 2px #000; }
+.rank-list { display: grid; gap: 3px; }
+.rank-row { display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; background: var(--panel2); }
+.rank-row.top { background: linear-gradient(90deg, rgba(240,194,90,.16), var(--panel2)); }
+.rank-row.me { outline: 2px solid var(--gold); }
+.rank-row .rk { text-align: center; font-weight: 900; }
+.rank-row .nm { display: flex; flex-direction: column; min-width: 0; }
+.rank-row .nm b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank-row .sc { font-weight: 800; color: var(--gold2); white-space: nowrap; }
+.rank-gap { text-align: center; color: var(--dim); }
+.panel-note { padding: 14px; border-radius: 10px; background: var(--panel2); }

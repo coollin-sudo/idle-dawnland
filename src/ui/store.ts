@@ -7,11 +7,12 @@ import { setNumberStyle } from '@/core/format';
 import { setArtEnabled } from '@/render/images';
 import { applyOffline, type OfflineReport } from '@/systems/offline';
 import { saveState } from '@/save/storage';
+import { leaderboardEnabled, submitScores, SUBMIT_EVERY_MS } from '@/online/leaderboard';
 import { audio } from '@/audio/audio';
 import { bindAudio } from '@/audio/bindings';
 import type { BattleScene } from '@/render/scene';
 
-export type TabId = 'hero' | 'bag' | 'skills' | 'talents' | 'forge' | 'pets' | 'map' | 'challenge' | 'shop' | 'quests' | 'collection' | 'rebirth' | 'settings';
+export type TabId = 'hero' | 'bag' | 'skills' | 'talents' | 'forge' | 'pets' | 'map' | 'challenge' | 'shop' | 'quests' | 'collection' | 'rank' | 'rebirth' | 'settings';
 
 export const game = signal<Game | null>(null);
 export const uiTick = signal(0);
@@ -67,6 +68,8 @@ export function startGame(state: GameState, opts: { offline?: boolean } = {}) {
   unbinds.push(gm.ev.on('story', e => { storyQueue.value = [...storyQueue.value, e.id]; }));
   unbinds.push(gm.ev.on('quest:complete', () => refresh()));
   unbinds.push(bindAudio(gm));
+  unbinds.push(gm.ev.on('record:boss', () => { submitWanted = true; }));
+  unbinds.push(gm.ev.on('stage:clear', e => { if (e.first && e.stage % 10 === 9) submitWanted = true; }));
   if (scene) scene.bind(gm);
   if (opts.offline) {
     const away = Date.now() - state.lastSeen;
@@ -105,6 +108,24 @@ function loop(now: number) {
     lastSave = now;
     saveState(gm.state);
   }
+  autoSubmit(gm);
+}
+
+// ---------------------------------------------------------------------
+// 排行榜自動上傳：每 10 分鐘，或打破紀錄、打倒區域首領後（至少間隔 45 秒）
+// ---------------------------------------------------------------------
+let submitWanted = false;
+let lastAttempt = 0;
+export const requestSubmit = () => { submitWanted = true; };
+function autoSubmit(gm: Game) {
+  const o = gm.state.online;
+  if (!o.joined || !leaderboardEnabled()) return;
+  const t = Date.now();
+  if (t - lastAttempt < 45_000) return;
+  if (!submitWanted && t - o.lastSubmit < SUBMIT_EVERY_MS) return;
+  lastAttempt = t;
+  submitWanted = false;
+  submitScores(gm.state, t).catch(() => { /* 網路問題：下次再試 */ });
 }
 
 export function saveNow() {
