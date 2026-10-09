@@ -1,9 +1,13 @@
 import { newGameState, SAVE_VERSION, defaultSettings } from '@/core/state';
+import { signText } from './sign';
 import { EXCLUSIVE_TIERS, TALENT_TREES } from '@/data/talents';
 import { STAR_NODES, starCost } from '@/data/meta';
 import type { GameState } from '@/core/types';
 
 export const SAVE_KEY = 'dawnland-v2';
+const SIG_KEY = SAVE_KEY + ':sig';
+/** 這個瀏覽器已經開始使用簽章（之後缺少簽章就視為被修改） */
+const SIGNED_KEY = SAVE_KEY + ':signed';
 
 function isObj(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -55,7 +59,11 @@ export function loadState(): GameState | null {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
-    return migrate(JSON.parse(raw));
+    const s = migrate(JSON.parse(raw));
+    if (!s) return null;
+    const sig = localStorage.getItem(SIG_KEY);
+    if (sig ? sig !== signText(raw) : !!localStorage.getItem(SIGNED_KEY)) s.online.tainted = true;
+    return s;
   } catch {
     return null;
   }
@@ -64,7 +72,10 @@ export function loadState(): GameState | null {
 export function saveState(s: GameState): boolean {
   try {
     s.lastSeen = Date.now();
-    localStorage.setItem(SAVE_KEY, JSON.stringify(s));
+    const json = JSON.stringify(s);
+    localStorage.setItem(SAVE_KEY, json);
+    localStorage.setItem(SIG_KEY, signText(json));
+    localStorage.setItem(SIGNED_KEY, '1');
     return true;
   } catch {
     return false;
@@ -109,17 +120,27 @@ export function exportJson(s: GameState, now = new Date()): { filename: string; 
   const date = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
   const safeName = s.hero.name.replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 20) || 'hero';
   const filename = `晨曦大陸_${safeName}_Lv${s.hero.level}_${date}.json`;
-  const blob = new Blob([JSON.stringify({ game: 'idle-dawnland', exportedAt: now.toISOString(), save: s })], { type: 'application/json' });
+  const save = JSON.stringify(s);
+  const text = `{"game":"idle-dawnland","exportedAt":${JSON.stringify(now.toISOString())},"sig":"${signText(save)}","save":${save}}`;
+  const blob = new Blob([text], { type: 'application/json' });
   return { filename, blob };
 }
 
 /** 匯入：支援 JSON 檔內容，也相容舊的存檔碼（DZ1:/DJ1:） */
 export async function importText(text: string): Promise<GameState | null> {
   const t = text.trim().replace(/^\uFEFF/, '');
-  if (!t.startsWith('{')) return importCode(t);
+  if (!t.startsWith('{')) {
+    // 舊版存檔碼沒有簽章：可以玩，但不能參加排行榜
+    const s = await importCode(t);
+    if (s) s.online.tainted = true;
+    return s;
+  }
   try {
-    const data = JSON.parse(t) as { save?: unknown };
-    return migrate(data && typeof data === 'object' && 'save' in data ? data.save : data);
+    const data = JSON.parse(t) as { save?: unknown; sig?: string };
+    const wrapped = data && typeof data === 'object' && 'save' in data;
+    const s = migrate(wrapped ? data.save : data);
+    if (s && (!wrapped || !data.sig || data.sig !== signText(JSON.stringify(data.save)))) s.online.tainted = true;
+    return s;
   } catch {
     return null;
   }

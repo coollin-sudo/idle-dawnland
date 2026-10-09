@@ -19,6 +19,7 @@ export interface BoardRow {
   score: number;
   achieved_at: string;
   is_me: boolean;
+  under_review?: boolean;
 }
 
 export const leaderboardEnabled = () => !!(LB_URL && LB_ANON_KEY);
@@ -49,18 +50,23 @@ export function scoresOf(s: GameState, now: number) {
   const scores: Record<string, unknown> = { power: combatPower(s, heroStats(s)) };
   if (progress >= 0) scores.progress = progress;
   if (s.tower.week === weekKey(now) && s.tower.weekBest > 0) scores.tower = s.tower.weekBest;
-  if (Object.keys(s.records.boss).length) scores.boss = s.records.boss;
+  const boss: Record<string, unknown> = {};
+  for (const [k, ms] of Object.entries(s.records.boss)) boss[k] = s.records.bossLv?.[k] !== undefined ? { ms, lv: s.records.bossLv[k] } : ms;
+  if (Object.keys(boss).length) scores.boss = boss;
   return scores;
 }
 
-export async function submitScores(s: GameState, now = Date.now()): Promise<boolean> {
-  if (!leaderboardEnabled() || !s.online.joined) return false;
-  const r = await rpc<{ ok: boolean }>('lb_submit', {
+export type SubmitResult = 'ok' | 'review' | 'too_fast' | 'skip';
+
+export async function submitScores(s: GameState, now = Date.now()): Promise<SubmitResult> {
+  if (!leaderboardEnabled() || !s.online.joined || s.online.tainted) return 'skip';
+  const r = await rpc<{ ok: boolean; review?: boolean; reason?: string }>('lb_submit', {
     p_token: ensureToken(s), p_name: s.hero.name, p_class: s.hero.classId, p_adv: s.hero.advId,
-    p_level: s.hero.level, p_rebirths: s.rebirth.count, p_scores: scoresOf(s, now),
+    p_level: s.hero.level, p_rebirths: s.rebirth.count, p_scores: scoresOf(s, now), p_max_level: Math.max(s.hero.maxLevel ?? 1, s.hero.level),
   });
-  if (r?.ok) s.online.lastSubmit = now;
-  return !!r?.ok;
+  if (!r?.ok) return 'too_fast';
+  s.online.lastSubmit = now;
+  return r.review ? 'review' : 'ok';
 }
 
 export function fetchBoard(s: GameState, board: BoardId, key: string | null, classId: string | null, limit = 50) {

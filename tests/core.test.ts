@@ -487,3 +487,17 @@ describe('排行榜', () => {
     expect(scoresOf(g.state, now).tower).toBeUndefined();
   });
 });
+
+describe('存檔簽章', () => {
+  it('匯出的 JSON 被改過就不能上榜，沒改過可以', async () => {
+    const { exportJson, importText } = await import('@/save/storage');
+    const { g } = makeGame();
+    const text = await exportJson(g.state).blob.text();
+    expect((await importText(text))?.online.tainted).toBe(false);
+    const edited = text.replace(/"gold":\d+(\.\d+)?/, '"gold":999999999');
+    expect(edited).not.toBe(text);
+    expect((await importText(edited))?.online.tainted).toBe(true);
+    const noSig = JSON.stringify({ game: 'idle-dawnland', save: JSON.parse(text).save });
+    expect((await importText(noSig))?.online.tainted).toBe(true);
+  });
+});

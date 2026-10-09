@@ -72,8 +72,10 @@ export function RankPanel() {
   const upload = async () => {
     setBusy(true);
     try {
-      const ok = await submitScores(s);
-      gm.toast(ok ? '已上傳最新成績' : '上傳太頻繁，請稍後再試', ok ? 'good' : 'warn', '🏆');
+      const r = await submitScores(s);
+      if (r === 'ok') gm.toast('已上傳最新成績', 'good', '🏆');
+      else if (r === 'review') gm.toast('成績成長得異常快，已暫時隱藏等待審核', 'warn', '🔍');
+      else gm.toast('上傳太頻繁，請稍後再試', 'warn', '🏆');
       setReload(x => x + 1);
     } catch (e) { setErr(String((e as Error).message)); }
     setBusy(false);
@@ -90,7 +92,9 @@ export function RankPanel() {
   return (
     <div class="rank">
       <div class="rank-join">
-        {s.online.joined ? (
+        {s.online.tainted ? (
+          <div class="small bad">{rich('⚠')} 這份存檔被手動修改過（或來自沒有簽章的舊版存檔碼），可以繼續玩，但不能參加排行榜。</div>
+        ) : s.online.joined ? (
           <>
             <div class="small">以「<b>{s.hero.name}</b>」參加排行榜{mins !== null && `・${mins < 1 ? '剛剛' : `${mins} 分鐘前`}上傳`}（每 10 分鐘自動上傳）</div>
             <div class="row" style={{ gap: '6px' }}>
@@ -160,7 +164,7 @@ function Row({ r, board }: { r: BoardRow; board: BoardId }) {
     <div class={'rank-row' + (r.is_me ? ' me' : '') + (r.pos <= 3 ? ' top' : '')}>
       <span class="rk">{rich(medal(r.pos))}</span>
       <span class="nm">
-        <b>{r.name}</b>
+        <b>{r.name}{r.under_review && <span class="tiny bad">（審核中，只有你看得到）</span>}</b>
         <span class="tiny muted">{job ?? ''}・Lv.{r.level}{r.rebirths ? `・轉生 ${r.rebirths}` : ''}</span>
       </span>
       <span class="sc">{scoreText(board, r.score)}</span>

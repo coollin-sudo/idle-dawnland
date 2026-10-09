@@ -116,6 +116,7 @@ function loop(now: number) {
 // ---------------------------------------------------------------------
 let submitWanted = false;
 let lastAttempt = 0;
+let reviewWarned = false;
 export const requestSubmit = () => { submitWanted = true; };
 function autoSubmit(gm: Game) {
   const o = gm.state.online;
@@ -125,7 +126,9 @@ function autoSubmit(gm: Game) {
   if (!submitWanted && t - o.lastSubmit < SUBMIT_EVERY_MS) return;
   lastAttempt = t;
   submitWanted = false;
-  submitScores(gm.state, t).catch(() => { /* 網路問題：下次再試 */ });
+  submitScores(gm.state, t).then(r => {
+    if (r === 'review' && !reviewWarned) { reviewWarned = true; gm.toast('排行榜成績成長得異常快，已暫時隱藏等待審核', 'warn', '🔍'); }
+  }).catch(() => { /* 網路問題：下次再試 */ });
 }
 
 export function saveNow() {

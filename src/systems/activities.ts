@@ -297,6 +297,7 @@ export class StageActivity implements Activity {
     if (rec[key] !== undefined && rec[key] <= ms) return;
     const first = rec[key] === undefined;
     rec[key] = ms;
+    g.state.records.bossLv[key] = g.state.hero.level;
     if (!first) g.toast(`首領速通新紀錄：${u.name} ${(ms / 1000).toFixed(1)} 秒`, 'epic', '⏱️');
     g.ev.emit('record:boss', { key, ms });
   }

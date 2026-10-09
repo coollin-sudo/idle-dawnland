@@ -403,11 +403,13 @@ export interface GameState {
   records: {
     /** 首領速通：'難度:首領 id' → 毫秒（英雄等級不高於首領時才算） */
     boss: Record<string, number>;
+    /** 打出速通紀錄時的英雄等級 */
+    bossLv: Record<string, number>;
     /** 曾經推到的最遠進度：難度 × 80 + 關卡 */
     bestEff: number;
   };
   /** 線上排行榜 */
-  online: { token: string; joined: boolean; lastSubmit: number };
+  online: { token: string; joined: boolean; lastSubmit: number; /** 存檔被手動修改過：不能參加排行榜 */ tainted: boolean };
   pets: { owned: Record<string, PetState>; active: string | null; eggs: Egg[]; slots: number };
   quests: { main: number; mainProgress: number; daily: MissionState[]; dailyDate: string; dailyChest: boolean };
   achievements: Record<string, number>;
