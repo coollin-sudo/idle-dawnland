@@ -388,7 +388,9 @@ export class Battle {
     if ((tgt.mem.barrier ?? 0) > 0) { this.barrierHit(tgt, src); return 0; }
 
     // 迴避：只有物理攻擊會被迴避
-    if (o.dmgType === 'phys' && !o.proc && this.rng.chance(evadeChance(tgt.stats.eva, src.level))) {
+    // 保留技能在首領詠唱瞬間的反應施放必定命中（說好的「必定打斷」）
+    const reacting = !!src.mem.sure && tgt === this.reactTarget;
+    if (o.dmgType === 'phys' && !o.proc && !reacting && this.rng.chance(evadeChance(tgt.stats.eva, src.level))) {
       this.ev.emit('unit:miss', { src, tgt });
       if (tgt.powers.evadeCrit) tgt.mem.evadeCrit = 1;
       if (tgt.powers.swift) {

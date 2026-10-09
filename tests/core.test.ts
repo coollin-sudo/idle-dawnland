@@ -523,3 +523,23 @@ describe('兩套配裝', () => {
     expect(applyGearSwap(g)).toBe(false);
   });
 });
+
+describe('自動裝備只作用在配裝 A', () => {
+  it('使用配裝 B 時撿到更好的裝備不會自動穿上', async () => {
+    const { receiveItem } = await import('@/systems/loot');
+    const { g } = makeGame();
+    const s = g.state;
+    s.settings.autoEquip = true;
+    s.hero.level = 20;
+    const mk = (ilvl: number) => generateItem({ classId: 'warrior', rng: new Rng(ilvl), nextUid: () => s.nextUid++, heroLevel: 1 } as never, { ilvl, rarity: 2, slot: 'boots' } as never);
+    // 切到 B（B 是空的）
+    s.gear.alt.boots = null;
+    const a = s.equipment; s.equipment = s.gear.alt; s.gear.alt = a; s.gear.active = 1; s.gear.want = 1;
+    expect(receiveItem(g, mk(5))).not.toBe('equipped');
+    expect(s.equipment.boots).toBeNull();
+    // 回到 A 就會自動換
+    const b = s.equipment; s.equipment = s.gear.alt; s.gear.alt = b; s.gear.active = 0; s.gear.want = 0;
+    s.equipment.boots = null;
+    expect(receiveItem(g, mk(6))).toBe('equipped');
+  });
+});

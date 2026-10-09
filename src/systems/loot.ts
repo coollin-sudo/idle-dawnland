@@ -134,12 +134,15 @@ export function receiveItem(g: Game, item: Item): 'kept' | 'salvaged' | 'equippe
   }
 
   const equipable = canEquip(item, s.hero.classId, s.hero.level);
+  // 配裝 B 是玩家特地為首領準備的，不自動換；用 B 時，「是否比較好」以配裝 A 為準
+  const onA = s.gear.active === 0;
+  const mainSet = onA ? s : { ...s, equipment: s.gear.alt };
   let delta = 0;
-  if (equipable && (s.settings.autoEquip || s.settings.keepUpgrades)) delta = upgradeDelta(s, item).delta;
+  if (equipable && (s.settings.autoEquip || s.settings.keepUpgrades)) delta = upgradeDelta(mainSet, item).delta;
 
   const special = (it: Item) => it.rarity >= 4 || !!it.set;
   const allowSpecial = s.settings.autoEquipSpecial;
-  const target = equipable && s.settings.autoEquip && delta > 0 ? upgradeDelta(s, item).slot : null;
+  const target = onA && equipable && s.settings.autoEquip && delta > 0 ? upgradeDelta(s, item).slot : null;
   const current = target ? s.equipment[target] : null;
   if (target && (allowSpecial || (!special(item) && !(current && special(current))))) {
     const slot = target;
