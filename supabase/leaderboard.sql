@@ -6,13 +6,12 @@
 -- - 兩張表都開啟 RLS 且不給任何直接讀寫權限，瀏覽器只能呼叫下面兩個函式。
 -- - 玩家身分是存檔裡的一組隨機 token，伺服器只存它的 SHA-256。
 -- - 伺服器檢查數值範圍、名稱長度、送出頻率；本週塔層的週次由伺服器決定。
--- - 防作弊（網頁遊戲無法百分之百防止，目標是讓作弊比正常玩更麻煩）：
---   1. 合理性：關卡等級不能超過曾達到的最高等級太多；戰力有依等級與轉生次數的上限；
---      首領速通紀錄必須是在不高於首領等級時打出來的。
---   2. 成長速度：用「伺服器時間」比對兩次上傳之間的等級、進度、戰力、塔層漲幅，
---      超過正常玩家可能的速度就自動隱藏並標記原因（lb_players.flag），等你審核。
---   3. 每次上傳都記錄在 lb_history，可以回頭查。
---   審核：select * from lb_review;  確認沒問題：update lb_players set hidden = false, flag = null where name = '…';
+-- - 防作弊（全自動，不需要人工審核；網頁遊戲無法百分之百防止，目標是讓作弊比正常玩更麻煩）：
+--   1. 成長速度：用「伺服器時間」比對兩次上傳之間的等級、進度、戰力、本週塔層，
+--      漲得比正常玩家快的部分自動壓回上限（被誤判的正常玩家之後會自然補上）。
+--   2. 合理性：關卡比曾達到的最高等級高太多、戰力超過依等級與轉生次數的上限 → 這筆不採計，記一次違規；
+--      首領速通必須是在不高於首領等級時打出來的。
+--   3. 違規累積 3 次自動隱藏。每次上傳都記在 lb_history（想看可以 select * from lb_review;）。
 -- =====================================================================
 
 create extension if not exists pgcrypto;
@@ -48,6 +47,9 @@ alter table lb_players add column if not exists tower_week text;
 alter table lb_players add column if not exists tower_best int not null default 0;
 alter table lb_players add column if not exists flag text;
 alter table lb_players add column if not exists flagged_at timestamptz;
+alter table lb_players add column if not exists strikes int not null default 0;
+-- 舊版規則（標記就隱藏、等人工審核）改成自動處理：把舊規則隱藏的玩家放回來
+update lb_players set hidden = false where hidden and flag is not null and strikes < 3;
 
 -- 每次上傳的紀錄（稽核用）
 create table if not exists lb_history (
@@ -88,7 +90,7 @@ $$;
 -- ---------------------------------------------------------------------
 -- 送出成績
 -- p_scores 例如：{"progress": 57, "power": 52310, "tower": 34, "boss": {"0:troll": {"ms": 30500, "lv": 28}}}
--- 回傳 {"ok": true}，若被系統標記會多一個 "review": true（成績先隱藏，等待審核）
+-- 回傳 {"ok": true}；有成績被自動調整時多一個 "adjusted": true；因多次違規被隱藏時 "hidden": true
 -- ---------------------------------------------------------------------
 drop function if exists lb_submit(text, text, text, text, int, int, jsonb);
 create or replace function lb_submit(
@@ -111,6 +113,7 @@ declare
   v_power double precision := (p_scores->>'power')::double precision;
   v_tower double precision := (p_scores->>'tower')::double precision;
   v_week text := lb_week();
+  v_strike boolean := false;
 begin
   if p_token is null or length(p_token) < 24 or length(p_token) > 128 then raise exception 'bad token'; end if;
   if v_name = '' then v_name := '無名的守護者'; end if;
@@ -129,16 +132,28 @@ begin
     v_new := true;
   end if;
 
-  -- 1. 合理性（每次都檢查）
-  if v_progress is not null and lb_stage_level(v_progress) > v_max + 6 then v_flags := array_append(v_flags, 'progress_vs_level'); end if;
-  if v_power is not null and v_power > (10000 + 3000 * v_max) * (1 + sqrt(p_rebirths)) then v_flags := array_append(v_flags, 'power_cap'); end if;
-
-  -- 2. 成長速度（跟上一次上傳比，用伺服器時間）
+  -- 1. 成長速度：跟上一次上傳比（伺服器時間），超過正常玩家可能的漲幅就「壓回上限」，不採計多出來的部分
   if not v_new then
-    if v_max > v_player.max_level + 30 * v_hours + 5 then v_flags := array_append(v_flags, 'level_speed'); end if;
-    if v_progress is not null and v_progress > v_player.best_progress + 30 * v_hours + 5 then v_flags := array_append(v_flags, 'progress_speed'); end if;
-    if v_power is not null and v_player.best_power > 0 and v_power > v_player.best_power * (2 + 3 * v_hours) + 2000 then v_flags := array_append(v_flags, 'power_speed'); end if;
-    if v_tower is not null and v_player.tower_week = v_week and v_tower > v_player.tower_best + 120 * v_hours + 10 then v_flags := array_append(v_flags, 'tower_speed'); end if;
+    if v_max > v_player.max_level + 30 * v_hours + 5 then
+      v_max := greatest(p_level, floor(v_player.max_level + 30 * v_hours + 5)::int); v_flags := array_append(v_flags, 'level_speed');
+    end if;
+    if v_progress is not null and v_progress > v_player.best_progress + 30 * v_hours + 5 then
+      v_progress := floor(v_player.best_progress + 30 * v_hours + 5); v_flags := array_append(v_flags, 'progress_speed');
+    end if;
+    if v_power is not null and v_player.best_power > 0 and v_power > v_player.best_power * (2 + 3 * v_hours) + 2000 then
+      v_power := floor(v_player.best_power * (2 + 3 * v_hours) + 2000); v_flags := array_append(v_flags, 'power_speed');
+    end if;
+    if v_tower is not null and v_tower > (case when v_player.tower_week = v_week then v_player.tower_best else 0 end) + 120 * v_hours + 10 then
+      v_tower := floor((case when v_player.tower_week = v_week then v_player.tower_best else 0 end) + 120 * v_hours + 10); v_flags := array_append(v_flags, 'tower_speed');
+    end if;
+  end if;
+
+  -- 2. 合理性：不可能的數值直接不採計，並記一次違規
+  if v_progress is not null and lb_stage_level(v_progress) > v_max + 6 then
+    v_progress := null; v_strike := true; v_flags := array_append(v_flags, 'progress_vs_level');
+  end if;
+  if v_power is not null and v_power > (10000 + 3000 * v_max) * (1 + sqrt(p_rebirths)) then
+    v_power := null; v_strike := true; v_flags := array_append(v_flags, 'power_cap');
   end if;
 
   insert into lb_players (token_hash, name, class_id, adv_id, level, rebirths, last_submit)
@@ -148,16 +163,19 @@ begin
     level = excluded.level, rebirths = excluded.rebirths, last_submit = now()
   returning * into v_player;
 
+  -- 3. 連續 3 次送出不可能的數值：明顯在改存檔，自動隱藏
   update lb_players set
     max_level = greatest(max_level, v_max),
     best_progress = greatest(best_progress, coalesce(v_progress, -1)),
     best_power = greatest(best_power, coalesce(v_power, 0)),
     tower_best = case when tower_week = v_week then greatest(tower_best, coalesce(v_tower, 0)::int) else coalesce(v_tower, 0)::int end,
     tower_week = v_week,
-    hidden = hidden or cardinality(v_flags) > 0,
+    strikes = case when v_strike then strikes + 1 else strikes end,
+    hidden = hidden or (v_strike and strikes + 1 >= 3),
     flag = case when cardinality(v_flags) > 0 then array_to_string(v_flags, ',') else flag end,
     flagged_at = case when cardinality(v_flags) > 0 then now() else flagged_at end
-  where id = v_player.id;
+  where id = v_player.id
+  returning * into v_player;
 
   insert into lb_history (player_id, level, max_level, rebirths, scores, verdict)
   values (v_player.id, p_level, v_max, p_rebirths, p_scores, nullif(array_to_string(v_flags, ','), ''));
@@ -201,7 +219,8 @@ begin
     end loop;
   end if;
 
-  if cardinality(v_flags) > 0 then return jsonb_build_object('ok', true, 'review', true); end if;
+  if v_player.hidden then return jsonb_build_object('ok', true, 'hidden', true); end if;
+  if cardinality(v_flags) > 0 then return jsonb_build_object('ok', true, 'adjusted', true); end if;
   return jsonb_build_object('ok', true);
 end $$;
 
@@ -247,12 +266,13 @@ language sql security definer set search_path = public, extensions as $$
 $$;
 
 -- 審核用（只有你在 Supabase 後台看得到，瀏覽器讀不到）
-create or replace view lb_review as
-  select p.name, p.class_id, p.level, p.max_level, p.rebirths, p.flag, p.flagged_at, p.hidden,
+drop view if exists lb_review;
+create view lb_review as
+  select p.name, p.class_id, p.level, p.max_level, p.rebirths, p.strikes, p.flag, p.flagged_at, p.hidden,
          (select jsonb_agg(h order by h.at desc) from (select at, level, max_level, scores, verdict from lb_history where player_id = p.id order by at desc limit 10) h) as recent
   from lb_players p
-  where p.flag is not null
-  order by p.flagged_at desc;
+  where p.flag is not null or p.hidden
+  order by p.flagged_at desc nulls last;
 revoke all on lb_review from anon, authenticated;
 
 revoke all on function lb_submit, lb_board, lb_leave, lb_week, lb_stage_level, lb_boss_level from public;

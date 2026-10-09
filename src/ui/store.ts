@@ -127,7 +127,7 @@ function autoSubmit(gm: Game) {
   lastAttempt = t;
   submitWanted = false;
   submitScores(gm.state, t).then(r => {
-    if (r === 'review' && !reviewWarned) { reviewWarned = true; gm.toast('排行榜成績成長得異常快，已暫時隱藏等待審核', 'warn', '🔍'); }
+    if (r === 'hidden' && !reviewWarned) { reviewWarned = true; gm.toast('多次送出不合理的成績，已從排行榜隱藏', 'bad', '⚠️'); }
   }).catch(() => { /* 網路問題：下次再試 */ });
 }
 

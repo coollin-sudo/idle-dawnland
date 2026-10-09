@@ -56,17 +56,17 @@ export function scoresOf(s: GameState, now: number) {
   return scores;
 }
 
-export type SubmitResult = 'ok' | 'review' | 'too_fast' | 'skip';
+export type SubmitResult = 'ok' | 'adjusted' | 'hidden' | 'too_fast' | 'skip';
 
 export async function submitScores(s: GameState, now = Date.now()): Promise<SubmitResult> {
   if (!leaderboardEnabled() || !s.online.joined || s.online.tainted) return 'skip';
-  const r = await rpc<{ ok: boolean; review?: boolean; reason?: string }>('lb_submit', {
+  const r = await rpc<{ ok: boolean; adjusted?: boolean; hidden?: boolean; reason?: string }>('lb_submit', {
     p_token: ensureToken(s), p_name: s.hero.name, p_class: s.hero.classId, p_adv: s.hero.advId,
     p_level: s.hero.level, p_rebirths: s.rebirth.count, p_scores: scoresOf(s, now), p_max_level: Math.max(s.hero.maxLevel ?? 1, s.hero.level),
   });
   if (!r?.ok) return 'too_fast';
   s.online.lastSubmit = now;
-  return r.review ? 'review' : 'ok';
+  return r.hidden ? 'hidden' : r.adjusted ? 'adjusted' : 'ok';
 }
 
 export function fetchBoard(s: GameState, board: BoardId, key: string | null, classId: string | null, limit = 50) {

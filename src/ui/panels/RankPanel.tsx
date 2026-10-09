@@ -74,7 +74,8 @@ export function RankPanel() {
     try {
       const r = await submitScores(s);
       if (r === 'ok') gm.toast('已上傳最新成績', 'good', '🏆');
-      else if (r === 'review') gm.toast('成績成長得異常快，已暫時隱藏等待審核', 'warn', '🔍');
+      else if (r === 'adjusted') gm.toast('部分成績超出合理範圍，已自動調整（正常遊玩之後會補上）', 'warn', '🔍');
+      else if (r === 'hidden') gm.toast('多次送出不合理的成績，已從排行榜隱藏', 'bad', '⚠️');
       else gm.toast('上傳太頻繁，請稍後再試', 'warn', '🏆');
       setReload(x => x + 1);
     } catch (e) { setErr(String((e as Error).message)); }
@@ -164,7 +165,7 @@ function Row({ r, board }: { r: BoardRow; board: BoardId }) {
     <div class={'rank-row' + (r.is_me ? ' me' : '') + (r.pos <= 3 ? ' top' : '')}>
       <span class="rk">{rich(medal(r.pos))}</span>
       <span class="nm">
-        <b>{r.name}{r.under_review && <span class="tiny bad">（審核中，只有你看得到）</span>}</b>
+        <b>{r.name}{r.under_review && <span class="tiny bad">（因多次異常已隱藏，只有你看得到）</span>}</b>
         <span class="tiny muted">{job ?? ''}・Lv.{r.level}{r.rebirths ? `・轉生 ${r.rebirths}` : ''}</span>
       </span>
       <span class="sc">{scoreText(board, r.score)}</span>
