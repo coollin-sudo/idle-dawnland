@@ -4,7 +4,7 @@ import { ADVANCE_LEVEL, armorDR, evadeChance } from '@/core/formulas';
 import { describeMod, PRIMARY, statLabel, type Primary, type StatBlock, type StatKey } from '@/core/stats';
 import type { AdvId, SlotId } from '@/core/types';
 import { ADVANCES, CLASSES, advancesOf } from '@/data/classes';
-import { SET_MAP, SLOT_LABEL, slotKind } from '@/data/items';
+import { RARITIES, SET_MAP, SLOT_LABEL, slotKind } from '@/data/items';
 import { describePower } from '@/data/powers';
 import { classSkills } from '@/data/skills';
 import { combatPower, heroPowers, heroStats, setCounts } from '@/systems/hero';
@@ -15,7 +15,8 @@ import { ShareCardButton } from '../ShareCard';
 import { heroLookOf } from '../GameScreen';
 import { openItem } from '../ItemModal';
 import { closeModal, g, gearView, openModal, refresh, uiTick } from '../store';
-import { GEAR_NAMES, gearOf, requestGear } from '@/systems/gearsets';
+import { equipToGear, GEAR_NAMES, gearOf, requestGear } from '@/systems/gearsets';
+import { canEquip, itemDisplayName, reqLevel } from '@/systems/items';
 
 const LEFT: SlotId[] = ['weapon', 'helmet', 'armor', 'gloves', 'belt'];
 const RIGHT: SlotId[] = ['offhand', 'amulet', 'ring1', 'ring2', 'boots'];
@@ -41,7 +42,7 @@ export function HeroPanel() {
   const eq = gearOf(s, view);
   const viewPower = view === s.gear.active ? combatPower(s, st) : (() => { const t = { ...s, equipment: s.gear.alt }; return combatPower(t, heroStats(t)); })();
   const slotEl = (sl: SlotId) => (
-    <ItemSlot item={eq[sl]} label={SLOT_LABEL[slotKind(sl)]} onClick={() => eq[sl] && openItem(eq[sl]!.uid)} />
+    <ItemSlot item={eq[sl]} label={SLOT_LABEL[slotKind(sl)]} onClick={() => (eq[sl] ? openItem(eq[sl]!.uid) : openPicker(view, sl))} />
   );
   return (
     <div>
@@ -205,5 +206,50 @@ function AdvanceBox() {
         ))}
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------
+// 點空的裝備欄：列出背包裡可以放進這一格的裝備，點一下就穿上
+// ---------------------------------------------------------------------
+function openPicker(set: 0 | 1, slot: SlotId) {
+  openModal(() => <EquipPicker set={set} slot={slot} />);
+}
+
+function EquipPicker({ set, slot }: { set: 0 | 1; slot: SlotId }) {
+  void uiTick.value;
+  const gm = g();
+  const s = gm.state;
+  const kind = slotKind(slot);
+  const eq = gearOf(s, set);
+  const asSet = (equipment: typeof eq) => ({ ...s, equipment });
+  const base = combatPower(asSet(eq), heroStats(asSet(eq)));
+  const rows = s.inventory
+    .filter(it => it.slot === kind && (kind !== 'weapon' && kind !== 'offhand' ? true : it.classId === s.hero.classId))
+    .map(it => {
+      const ok = canEquip(it, s.hero.classId, s.hero.level);
+      const t = asSet({ ...eq, [slot]: it });
+      return { it, ok, gain: ok ? combatPower(t, heroStats(t)) - base : 0 };
+    })
+    .sort((a, b) => Number(b.ok) - Number(a.ok) || b.gain - a.gain);
+  const pick = (uid: number) => { equipToGear(gm, uid, set, slot); closeModal(); refresh(); };
+  return (
+    <Modal title={`選擇${SLOT_LABEL[kind]}${set !== s.gear.active ? `（配裝 ${GEAR_NAMES[set]}）` : ''}`} actions={<button class="btn" onClick={closeModal}>取消</button>}>
+      {rows.length === 0 ? <p class="muted">背包裡沒有可以放進這一格的裝備。</p> : (
+        <div class="picker">
+          {rows.map(({ it, ok, gain }) => (
+            <button class={'pick-row' + (ok ? '' : ' off')} disabled={!ok} onClick={() => pick(it.uid)}>
+              <ItemSlot item={it} small />
+              <span class="pk-name">
+                <b style={{ color: RARITIES[it.rarity].color }}>{itemDisplayName(it)}</b>
+                <span class="tiny muted">{RARITIES[it.rarity].name}・物品等級 {it.ilvl}{ok ? '' : `・需要 Lv.${reqLevel(it)}`}</span>
+              </span>
+              <span class={'pk-gain' + (gain > 0 ? ' up' : gain < 0 ? ' down' : '')}>{ok ? `${gain >= 0 ? '+' : ''}${fmt(gain)}` : ''}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <div class="tiny muted" style={{ marginTop: '6px' }}>右邊數字是穿上後的戰力變化。</div>
+    </Modal>
   );
 }

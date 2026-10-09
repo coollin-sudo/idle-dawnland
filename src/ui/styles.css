@@ -601,3 +601,15 @@ select.input { padding: 6px 10px; }
 .gearsets .gs-tag { margin-left: 6px; font-size: 10px; padding: 1px 6px; border-radius: 8px; font-weight: 800; }
 .gearsets .gs-tag.on { background: #2f6a3f; color: #c8ffd8; }
 .gearsets .gs-tag.next { background: #6a4a1f; color: #ffe0a8; }
+
+/* 空裝備欄的選擇清單 */
+.picker { display: grid; gap: 4px; max-height: 55vh; overflow-y: auto; }
+.pick-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line2); background: var(--panel2); color: inherit; text-align: left; cursor: pointer; font: inherit; }
+.pick-row:hover:not(:disabled) { border-color: var(--gold); }
+.pick-row.off { opacity: .45; cursor: not-allowed; }
+.pick-row .islot { pointer-events: none; }
+.pick-row .pk-name { display: flex; flex-direction: column; min-width: 0; }
+.pick-row .pk-name b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick-row .pk-gain { font-weight: 800; white-space: nowrap; }
+.pick-row .pk-gain.up { color: #7dff9a; }
+.pick-row .pk-gain.down { color: #ff8a8a; }
