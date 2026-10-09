@@ -136,11 +136,21 @@ export function saveNow() {
   if (gm) saveState(gm.state);
 }
 
+/**
+ * 裝備小卡（滑鼠移到裝備上顯示）：
+ * - 只給滑鼠用；觸控沒有「移開」事件，小卡會一直卡在畫面上（點裝備本來就會開完整視窗）。
+ * - 關閉視窗後（裝備、分解、賣出…），游標底下常常剛好換成另一件裝備；要等滑鼠真的移動才再顯示。
+ */
+export const tipGuard = { locked: false };
+
 export function openModal(render: () => ComponentChildren) {
+  tip.value = null;
   modal.value = render;
 }
 export function closeModal() {
   modal.value = null;
+  tip.value = null;
+  tipGuard.locked = true;
 }
 
 if (typeof window !== 'undefined') {
@@ -148,6 +158,9 @@ if (typeof window !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) saveNow();
   });
+  window.addEventListener('pointermove', e => {
+    if (tipGuard.locked && e.pointerType === 'mouse' && (Math.abs(e.movementX) + Math.abs(e.movementY) > 2)) tipGuard.locked = false;
+  }, { passive: true });
   const unlock = () => audio.unlock();
   window.addEventListener('pointerdown', unlock, { passive: true });
   window.addEventListener('keydown', unlock);

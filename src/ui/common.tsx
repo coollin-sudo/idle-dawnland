@@ -15,7 +15,7 @@ import { itemColor, itemMods, reqLevel, canEquip, affixRange, UTILITY_STATS } fr
 import { setCounts, upgradeDelta } from '@/systems/hero';
 import { salvageValue } from '@/systems/loot';
 import { sellPrice, enhanceMult } from '@/core/formulas';
-import { closeModal, g, modal, offlineReport, storyQueue, tip, toasts, uiTick } from './store';
+import { closeModal, g, modal, offlineReport, storyQueue, tip, tipGuard, toasts, uiTick } from './store';
 
 /** 魔晶圖示：有美術圖用圖，沒有就畫一顆對應顏色的寶石；右下角標示等級 */
 export function JewelIcon({ jkey, size = 28 }: { jkey: string; size?: number }) {
@@ -97,9 +97,9 @@ export function ItemSlot({ item, onClick, selected, label, showUp, small }: {
       class={'islot' + (selected ? ' sel' : '') + (small ? ' sm' : '')}
       style={itemStyle(item)}
       onClick={onClick}
-      onMouseEnter={e => { tip.value = { item, x: e.clientX, y: e.clientY }; }}
-      onMouseMove={e => { if (tip.value?.item === item) tip.value = { item, x: e.clientX, y: e.clientY }; }}
-      onMouseLeave={() => { tip.value = null; }}
+      onPointerEnter={e => { if (e.pointerType === 'mouse' && !tipGuard.locked) tip.value = { item, x: e.clientX, y: e.clientY }; }}
+      onPointerMove={e => { if (e.pointerType === 'mouse' && !tipGuard.locked) tip.value = { item, x: e.clientX, y: e.clientY }; }}
+      onPointerLeave={() => { if (tip.value?.item === item) tip.value = null; }}
     >
       <img src={itemIcon(item.slot, item.classId, tierOf(item.ilvl), item.unique)} alt="" draggable={false} />
       {item.enh > 0 && <span class="enh">+{item.enh}</span>}
