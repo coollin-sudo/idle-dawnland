@@ -17,8 +17,8 @@ import numpy as np
 from PIL import Image
 
 DST = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'public', 'art', 'anim')
-CANVAS_W, CANVAS_H = 512, 420
-ANCHOR_X, ANCHOR_Y = 256, 404
+CANVAS_W, CANVAS_H = 640, 420
+ANCHOR_X, ANCHOR_Y = 320, 404
 IDLE_HEIGHT = 270  # 待機動作的角色身高（像素）
 ACTS = ['idle', 'atk1', 'atk2', 'atk3', 'skill']
 

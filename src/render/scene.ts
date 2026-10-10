@@ -987,7 +987,8 @@ export class BattleScene {
       const advId = (u.look as { advId?: string | null }).advId;
       const img = (advId ? classImage(advId) : null) ?? classImage(u.defId);
       const look = u.look as HeroLook;
-      const animChar = advId && hasAnim(advId) ? advId : hasAnim(u.defId) ? u.defId : null;
+      // 轉職後只用轉職角色自己的動畫（外觀不同，不能借用基本職業的圖）
+      const animChar = advId ? (hasAnim(advId) ? advId : null) : hasAnim(u.defId) ? u.defId : null;
       if (animChar && this.drawAnimHero(ctx, a, animChar)) { /* 逐格動畫 */ }
       else if (img) this.drawImageUnit(ctx, img, 110, 1, attackK, a);
       else {

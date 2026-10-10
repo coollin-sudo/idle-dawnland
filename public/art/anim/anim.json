@@ -1,0 +1,20 @@
+{
+ "canvas": [
+  640,
+  420
+ ],
+ "anchor": [
+  320,
+  404
+ ],
+ "idleHeight": 270,
+ "chars": {
+  "warrior": {
+   "atk1": 4,
+   "atk2": 4,
+   "atk3": 4,
+   "idle": 4,
+   "skill": 4
+  }
+ }
+}
