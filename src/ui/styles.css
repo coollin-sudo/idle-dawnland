@@ -616,3 +616,16 @@ select.input { padding: 6px 10px; }
 .pick-cur { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 6px 8px; margin-bottom: 8px; border-radius: 8px; background: rgba(240,194,90,.08); border: 1px solid var(--gold3); }
 .pick-cur .islot { pointer-events: none; }
 .pick-cur .pk-name { display: flex; flex-direction: column; min-width: 0; }
+
+/* 人形裝備欄（鍛造頁） */
+.bodydoll { position: relative; width: 100%; max-width: 400px; aspect-ratio: 1 / 1.08; margin: 0 auto 12px; border-radius: 14px; border: 1px solid var(--line); background: radial-gradient(ellipse at 50% 60%, #2a3150 0%, #141828 72%); overflow: hidden; }
+.bodydoll .bd-figure { position: absolute; left: 50%; top: 46%; width: 78%; transform: translate(-50%, -50%); opacity: .55; pointer-events: none; }
+.bodydoll .bd-figure.dim { opacity: .28; filter: grayscale(.6); }
+.bodydoll .bd-figure canvas { width: 100% !important; height: auto !important; aspect-ratio: 1; display: block; }
+.bodydoll .bd-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.bodydoll .bd-lines line { stroke: rgba(160,180,230,.18); stroke-width: .35; stroke-dasharray: 1 1; vector-effect: non-scaling-stroke; }
+.bodydoll .bd-lines circle { fill: rgba(160,180,230,.25); }
+.bodydoll .bd-lines g.on line { stroke: rgba(240,194,90,.4); }
+.bodydoll .bd-lines g.on circle { fill: rgba(240,194,90,.7); }
+.bodydoll .bd-slot { position: absolute; transform: translate(-50%, -50%); width: clamp(44px, 15%, 60px); }
+.bodydoll .bd-slot .islot { width: 100%; }

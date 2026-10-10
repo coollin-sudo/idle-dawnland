@@ -1,3 +1,5 @@
+import { BodyDoll } from '../BodyDoll';
+import { GEAR_NAMES, gearOf } from '@/systems/gearsets';
 import { useState } from 'preact/hooks';
 import { fineCraftPrice } from '@/core/formulas';
 import { Emo, rich } from '../emoji';
@@ -22,6 +24,7 @@ export function ForgePanel() {
   const gm = g();
   const s = gm.state;
   const [sub, setSub] = useState<Sub>('enhance');
+  const [dollSet, setDollSet] = useState<0 | 1>(s.gear.active);
   const equipped = [...SLOTS.map(sl => s.equipment[sl]), ...SLOTS.map(sl => s.gear.alt[sl])].filter((x): x is Item => !!x);
   if (!forgeItem.value || !findItem(gm, forgeItem.value)) forgeItem.value = equipped[0]?.uid ?? s.inventory[0]?.uid ?? null;
   const sel = forgeItem.value ? findItem(gm, forgeItem.value)?.item ?? null : null;
@@ -41,8 +44,20 @@ export function ForgePanel() {
         <>
           {sub === 'jewel' ? <Jewels item={sel} /> : sel ? (sub === 'enhance' ? <Enhance item={sel} /> : <Reforge item={sel} />) : <div class="muted">先選一件裝備</div>}
           <h3>選擇裝備</h3>
-          <div class="small muted" style={{ marginBottom: '6px' }}>身上裝備</div>
-          <div class="items" style={{ marginBottom: '10px' }}>{equipped.map(it => <ItemSlot item={it} selected={it.uid === forgeItem.value} onClick={() => { forgeItem.value = it.uid; refresh(); }} />)}</div>
+          <div class="row between" style={{ marginBottom: '6px' }}>
+            <span class="small muted">身上裝備</span>
+            {SLOTS.some(sl => s.gear.alt[sl]) && (
+              <span class="row" style={{ gap: '4px' }}>
+                {([0, 1] as const).map(n => (
+                  <button class={'btn xs' + (dollSet === n ? ' primary' : '')} onClick={() => setDollSet(n)}>
+                    配裝 {GEAR_NAMES[n]}{s.gear.active === n ? '（使用中）' : ''}
+                  </button>
+                ))}
+              </span>
+            )}
+          </div>
+          <BodyDoll eq={gearOf(s, dollSet)} dim={dollSet !== s.gear.active} selectedUid={forgeItem.value}
+            onPick={(_sl, it) => { if (it) { forgeItem.value = it.uid; refresh(); } }} />
           <div class="small muted" style={{ marginBottom: '6px' }}>背包</div>
           <div class="items">{[...s.inventory].sort((a, b) => b.rarity - a.rarity || b.ilvl - a.ilvl).map(it => <ItemSlot item={it} selected={it.uid === forgeItem.value} onClick={() => { forgeItem.value = it.uid; refresh(); }} />)}</div>
         </>
