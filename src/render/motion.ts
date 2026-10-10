@@ -19,6 +19,8 @@ export interface Motion {
   dur: number;
   /** 衝刺距離（像素，正值＝朝面向方向） */
   dist: number;
+  /** 終極技（逐格動畫用「技能」那組圖） */
+  ult?: boolean;
 }
 
 export interface MotionPose {
@@ -109,4 +111,26 @@ export function poseAt(m: Motion, k: number): MotionPose {
       return { dx: d * e * 0.6, dy: -14 * e, rot: -0.1 * e, sx: 1 - 0.05 * e, sy: 1 + 0.05 * e, blur: 0 };
     }
   }
+}
+
+/** 逐格動畫：動作 → 用哪一組圖 */
+export function animActOf(m: Motion | null): 'idle' | 'atk1' | 'atk2' | 'atk3' | 'skill' {
+  if (!m) return 'idle';
+  switch (m.kind) {
+    case 'combo1': case 'shoot': return 'atk1';
+    case 'combo2': case 'shoot2': return 'atk2';
+    case 'combo3': return 'atk3';
+    case 'skill': case 'cast': return m.ult ? 'skill' : 'atk3';
+    case 'hop': return 'idle';
+  }
+}
+
+/** 逐格動畫：四格對應「預備、出手前、命中、收招」，命中那一格對齊出招時間 */
+export function animFrameOf(m: Motion): number {
+  const k = m.t / m.dur;
+  const s = STRIKE_AT[m.kind];
+  if (k < s * 0.55) return 0;
+  if (k < s) return 1;
+  if (k < s + (1 - s) * 0.45) return 2;
+  return 3;
 }

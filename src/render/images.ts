@@ -96,3 +96,14 @@ export const particleImage = (name: string) => getImage(`art/particles/${name}`)
 export const statusImage = (id: string) => getImage(`art/status/${id}`);
 export const monsterArt = (id: string) => artUrl(`art/monsters/${id}`);
 export const petArt = (id: string) => artUrl(`art/pets/${id}`);
+
+/**
+ * 角色逐格動畫（public/art/anim/{角色}/{動作}_{0..3}.webp，由 scripts/anim-frames.py 產生）。
+ * 每張是固定大小的畫布，腳底中心對齊在錨點。
+ */
+export const ANIM = { w: 512, h: 420, ax: 256, ay: 404, idleH: 270, frames: 4 } as const;
+export type AnimAct = 'idle' | 'atk1' | 'atk2' | 'atk3' | 'skill';
+export const ANIM_ACTS: AnimAct[] = ['idle', 'atk1', 'atk2', 'atk3', 'skill'];
+export const hasAnim = (char: string) => !!enabled && !!resolve(`art/anim/${char}/idle_0`);
+export const animFrame = (char: string, act: AnimAct, i: number) => getImage(`art/anim/${char}/${act}_${i}`);
+export const preloadAnim = (char: string) => preloadArt(ANIM_ACTS.flatMap(a => Array.from({ length: ANIM.frames }, (_, i) => `art/anim/${char}/${a}_${i}`)));

@@ -15,9 +15,9 @@ import { alpha, clamp01, easeOut, glow, lerp, rrect, type Ctx } from './draw';
 const easeIn2 = (k: number) => k * k;
 import { Beam, Bubble, Burst, Falling, Lightning, Particles, Pillar, Projectile, Ring, Slash, SpriteFx, Texts, Vortex, type Fx, type SpriteOpts } from './effects';
 import { paintHero, type Pose } from './heroPainter';
-import { artPending, classImage, monsterImage, petImage, preloadArt, skillImage, statusImage, vfxImage } from './images';
+import { ANIM, animFrame, artPending, classImage, hasAnim, monsterImage, petImage, preloadAnim, preloadArt, skillImage, statusImage, vfxImage } from './images';
 import { ARCH_HEIGHT, paintMonster } from './monsterPainter';
-import { IDLE, MOTION_DUR, poseAt, STRIKE_AT, type Motion, type MotionKind, type MotionPose } from './motion';
+import { animActOf, animFrameOf, IDLE, MOTION_DUR, poseAt, STRIKE_AT, type Motion, type MotionKind, type MotionPose } from './motion';
 
 interface Actor {
   unit: Unit;
@@ -286,7 +286,11 @@ export class BattleScene {
           height: height * scale, scale, mdef, arch, seed: Math.random() * 100, delayUntil: 0, pending: [], statusShown: {},
           blinkAt: this.time + 2 + Math.random() * 3, artWait: 0, motion: null, combo: 0, lastAtk: -9, knock: 0,
         };
-        if (u.kind === 'hero') { a.x = hx; a.spawn = 1; }
+        if (u.kind === 'hero') {
+          a.x = hx; a.spawn = 1;
+          const adv = (u.look as { advId?: string | null }).advId;
+          preloadAnim(adv ?? u.defId);
+        }
         this.actors.set(u.uid, a);
       }
       if (u.kind === 'monster' || u.kind === 'summon') {
@@ -347,7 +351,7 @@ export class BattleScene {
     const dir = u.side === 'hero' ? 1 : -1;
     const gap = first ? Math.max(0, (first.x - src.x) * dir) : 0;
     const reach = (k: number, cap: number) => Math.max(0, Math.min(cap, (gap - 50) * k));
-    const make = (kind: MotionKind, dist: number): Motion => ({ kind, t: 0, dur: MOTION_DUR[kind], dist });
+    const make = (kind: MotionKind, dist: number): Motion => ({ kind, t: 0, dur: MOTION_DUR[kind], dist, ult: !!skill?.ultimate });
     if (u.kind === 'pet' || u.kind === 'summon') return make('hop', reach(0.3, 40));
     const meleeFx = fx === 'slash' || fx === 'bite' || fx === 'claw' || fx === 'heavy' || fx === 'sweep' || fx === 'whirl' || fx === 'bash';
     const melee = !u.ranged && meleeFx;
@@ -983,7 +987,9 @@ export class BattleScene {
       const advId = (u.look as { advId?: string | null }).advId;
       const img = (advId ? classImage(advId) : null) ?? classImage(u.defId);
       const look = u.look as HeroLook;
-      if (img) this.drawImageUnit(ctx, img, 110, 1, attackK, a);
+      const animChar = advId && hasAnim(advId) ? advId : hasAnim(u.defId) ? u.defId : null;
+      if (animChar && this.drawAnimHero(ctx, a, animChar)) { /* 逐格動畫 */ }
+      else if (img) this.drawImageUnit(ctx, img, 110, 1, attackK, a);
       else {
         const mp = this.motionPose(a);
         ctx.translate(mp.dx + a.knock, mp.dy);
@@ -1013,6 +1019,37 @@ export class BattleScene {
     const m = a.motion;
     if (!m) return IDLE;
     return poseAt(m, clamp01(m.t / m.dur - back));
+  }
+
+  /** 逐格動畫的主角：依動作挑格，再疊上衝刺位移與殘影；缺圖時回傳 false 改用單張圖 */
+  private drawAnimHero(ctx: Ctx, a: Actor, char: string): boolean {
+    const act = animActOf(a.motion);
+    const i = a.motion ? animFrameOf(a.motion) : Math.floor(this.time * 5 + a.seed) % ANIM.frames;
+    const img = animFrame(char, act, i) ?? animFrame(char, 'idle', 0);
+    if (!img) return false;
+    const H = 110 * ANIM.h / ANIM.idleH;
+    const W = H * ANIM.w / ANIM.h;
+    const p = this.motionPose(a);
+    const drawAt = (q: MotionPose, im: HTMLImageElement, ghostA: number) => {
+      ctx.save();
+      ctx.translate(q.dx + a.knock, q.dy);
+      // 圖本身已經畫出動作，只保留一點點旋轉與擠壓，讓衝刺更有力
+      ctx.translate(0, -55);
+      ctx.rotate(q.rot * 0.3);
+      ctx.translate(0, 55);
+      ctx.scale(1 + (q.sx - 1) * 0.4, 1 + (q.sy - 1) * 0.4);
+      if (ghostA) { ctx.globalAlpha *= ghostA; ctx.globalCompositeOperation = 'lighter'; }
+      ctx.drawImage(im, -W * ANIM.ax / ANIM.w, -H * ANIM.ay / ANIM.h, W, H);
+      ctx.restore();
+    };
+    const shadowK = 1 - Math.min(0.5, Math.abs(p.dy) / 60);
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.beginPath();
+    ctx.ellipse(p.dx + a.knock, 0, 34 * shadowK, 8 * shadowK, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (p.blur > 0.05) for (let g = 3; g >= 1; g--) drawAt(this.motionPose(a, g * 0.035), img, 0.22 * p.blur * (1 - g / 4));
+    drawAt(p, img, 0);
+    return true;
   }
 
   private drawImageUnit(ctx: Ctx, img: HTMLImageElement, h: number, dir: 1 | -1, attackK: number, a: Actor) {
