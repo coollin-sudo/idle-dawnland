@@ -11,10 +11,13 @@ import { STATUSES } from '@/data/statuses';
 import { RARITIES } from '@/data/items';
 import { Background, GROUND_Y, VIEW_H, VIEW_W } from './background';
 import { alpha, clamp01, easeOut, glow, lerp, rrect, type Ctx } from './draw';
+
+const easeIn2 = (k: number) => k * k;
 import { Beam, Bubble, Burst, Falling, Lightning, Particles, Pillar, Projectile, Ring, Slash, SpriteFx, Texts, Vortex, type Fx, type SpriteOpts } from './effects';
 import { paintHero, type Pose } from './heroPainter';
 import { artPending, classImage, monsterImage, petImage, preloadArt, skillImage, statusImage, vfxImage } from './images';
 import { ARCH_HEIGHT, paintMonster } from './monsterPainter';
+import { IDLE, MOTION_DUR, poseAt, STRIKE_AT, type Motion, type MotionKind, type MotionPose } from './motion';
 
 interface Actor {
   unit: Unit;
@@ -38,6 +41,13 @@ interface Actor {
   blinkAt: number;
   /** 等待美術圖載入的時間（秒） */
   artWait: number;
+  /** 正在做的動作（衝刺、出招…） */
+  motion: Motion | null;
+  /** 近戰連段計數（1→2→3） */
+  combo: number;
+  lastAtk: number;
+  /** 被打中時的擊退位移（像素，會回彈） */
+  knock: number;
 }
 
 /** 戰鬥特效貼圖（public/art/vfx/） */
@@ -56,6 +66,8 @@ export class BattleScene {
   dpr = 1;
   scale = 1;
   actors = new Map<number, Actor>();
+  /** 延後執行（出招那一刻才產生特效） */
+  private timers: { at: number; fn: () => void }[] = [];
   parts = new Particles();
   texts = new Texts();
   /** 技能施放提示（圖示＋名稱） */
@@ -272,7 +284,7 @@ export class BattleScene {
           unit: u, kind: u.kind, x: u.side === 'enemy' ? hx + 260 : hx - 80, y: hy, homeX: hx, homeY: hy,
           spawn: 0, dying: -1, attack: -1, attackDur: 0.45, hurt: 0, cast: 0,
           height: height * scale, scale, mdef, arch, seed: Math.random() * 100, delayUntil: 0, pending: [], statusShown: {},
-          blinkAt: this.time + 2 + Math.random() * 3, artWait: 0,
+          blinkAt: this.time + 2 + Math.random() * 3, artWait: 0, motion: null, combo: 0, lastAtk: -9, knock: 0,
         };
         if (u.kind === 'hero') { a.x = hx; a.spawn = 1; }
         this.actors.set(u.uid, a);
@@ -308,11 +320,122 @@ export class BattleScene {
     }
     const color = ELEMENT_COLOR[e.element] ?? '#ffffff';
     const targets = e.targets.map(t => this.actors.get(t.uid)).filter((x): x is Actor => !!x);
+    const delay = (t: Actor, d: number) => { t.delayUntil = Math.max(t.delayUntil, this.time + d); };
+    const fx = e.fx as FxKey;
+
+    // ---- 動作：決定這一擊的連續動作，特效與傷害數字延後到「出招」那一刻 ----
+    const motion = this.pickMotion(src, e.skill, fx, targets);
+    let strike = 0;
+    if (motion) {
+      src.motion = motion;
+      src.lastAtk = this.time;
+      strike = STRIKE_AT[motion.kind] * motion.dur;
+      if (motion.kind !== 'shoot' && motion.kind !== 'shoot2') for (const t of targets) delay(t, strike);
+    }
+    if (e.skill?.ultimate && src.unit.side === 'hero') this.startCutin(src, e.skill);
+    if (strike > 0.02 && motion && motion.kind !== 'shoot' && motion.kind !== 'shoot2') {
+      this.timers.push({ at: this.time + strike, fn: () => this.spawnActFx(e, src, targets, color, fx) });
+      return;
+    }
+    this.spawnActFx(e, src, targets, color, fx);
+  }
+
+  /** 依攻擊者與招式挑選動作 */
+  private pickMotion(src: Actor, skill: SkillDef | undefined, fx: FxKey, targets: Actor[]): Motion | null {
+    const u = src.unit;
+    const first = targets.find(t => t !== src);
+    const dir = u.side === 'hero' ? 1 : -1;
+    const gap = first ? Math.max(0, (first.x - src.x) * dir) : 0;
+    const reach = (k: number, cap: number) => Math.max(0, Math.min(cap, (gap - 50) * k));
+    const make = (kind: MotionKind, dist: number): Motion => ({ kind, t: 0, dur: MOTION_DUR[kind], dist });
+    if (u.kind === 'pet' || u.kind === 'summon') return make('hop', reach(0.3, 40));
+    const meleeFx = fx === 'slash' || fx === 'bite' || fx === 'claw' || fx === 'heavy' || fx === 'sweep' || fx === 'whirl' || fx === 'bash';
+    const melee = !u.ranged && meleeFx;
+    if (melee) {
+      if (skill) return make('skill', reach(0.75, 190));
+      src.combo = this.time - src.lastAtk < 1.9 ? (src.combo % 3) + 1 : 1;
+      const kind: MotionKind = u.kind === 'monster' ? (src.combo === 3 ? 'combo3' : 'combo1') : (`combo${src.combo}` as MotionKind);
+      return make(kind, reach(kind === 'combo3' ? 0.75 : 0.62, kind === 'combo3' ? 190 : 150));
+    }
+    if (skill && skill.effects.some(ef => ef.type !== 'damage' || ef.dmgType === 'magic')) return make('cast', 0);
+    src.combo = this.time - src.lastAtk < 1.9 ? (src.combo % 2) + 1 : 1;
+    return make(src.combo === 2 ? 'shoot2' : 'shoot', 0);
+  }
+
+  // ---------------------------------------------------------------------
+  // 必殺技特寫（參考公主連結的必殺技演出）：角色大圖橫切過畫面
+  // ---------------------------------------------------------------------
+  private cutin: { t: number; img: HTMLImageElement | null; name: string; color: string } | null = null;
+  private startCutin(src: Actor, skill: SkillDef) {
+    const look = src.unit.look as { advId?: string | null };
+    const img = (look.advId ? classImage(look.advId) : null) ?? classImage(src.unit.defId);
+    this.cutin = { t: 0, img, name: skill.name, color: '#ffd8ff' };
+  }
+
+  private drawCutin(ctx: Ctx) {
+    const c = this.cutin;
+    if (!c) return;
+    const D = 1.15;
+    const k = c.t / D;
+    if (k >= 1) { this.cutin = null; return; }
+    const a = k < 0.12 ? k / 0.12 : k > 0.82 ? (1 - k) / 0.18 : 1;
+    const visW = this.visibleW();
+    const x0 = this.offsetX;
+    const bandY = VIEW_H * 0.22, bandH = VIEW_H * 0.46;
+    ctx.save();
+    ctx.globalAlpha = a;
+    // 斜切的深色帶
+    ctx.fillStyle = 'rgba(12,6,24,0.82)';
+    ctx.beginPath();
+    ctx.moveTo(x0, bandY + 30);
+    ctx.lineTo(x0 + visW, bandY);
+    ctx.lineTo(x0 + visW, bandY + bandH - 30);
+    ctx.lineTo(x0, bandY + bandH);
+    ctx.closePath();
+    ctx.fill();
+    ctx.clip();
+    // 速度線
+    ctx.strokeStyle = 'rgba(255,220,255,0.18)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 14; i++) {
+      const y = bandY + ((i * 37 + c.t * 900) % bandH);
+      const len = 120 + ((i * 53) % 160);
+      const x = x0 + visW - ((c.t * 1800 + i * 140) % (visW + len));
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + len, y - 6); ctx.stroke();
+    }
+    // 角色大圖：快速滑入，中段慢慢漂移，最後滑出
+    if (c.img) {
+      const h = bandH * 1.5;
+      const w = (c.img.width / c.img.height) * h;
+      const slide = k < 0.18 ? easeOut(k / 0.18) : k > 0.8 ? 1 + easeIn2((k - 0.8) / 0.2) * 0.6 : 1;
+      const drift = (k - 0.18) * 40;
+      const cx = x0 + visW * (-0.25 + 0.55 * slide) + drift;
+      ctx.drawImage(c.img, cx - w / 2, bandY + bandH * 0.1 - h * 0.12, w, h);
+    }
+    ctx.restore();
+    // 招式名稱
+    ctx.save();
+    ctx.globalAlpha = a;
+    const tx = x0 + visW * 0.72 - (1 - Math.min(1, k / 0.2)) * 80;
+    ctx.font = '900 40px "Noto Sans TC", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#2a0a3a';
+    ctx.strokeText(c.name, tx, bandY + bandH * 0.58);
+    const g = ctx.createLinearGradient(0, bandY + bandH * 0.45, 0, bandY + bandH * 0.62);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(1, '#ffb8ff');
+    ctx.fillStyle = g;
+    ctx.fillText(c.name, tx, bandY + bandH * 0.58);
+    ctx.restore();
+  }
+
+  /** 攻擊特效（依招式種類） */
+  private spawnActFx(e: GameEvents['unit:act'], src: Actor, targets: Actor[], color: string, fx: FxKey) {
     const [sx, sy] = this.center(src);
     const dirX = src.unit.side === 'hero' ? 1 : -1;
     const travel = (dist: number, speed = 1400) => Math.min(0.35, Math.max(0.08, dist / speed));
     const delay = (t: Actor, d: number) => { t.delayUntil = Math.max(t.delayUntil, this.time + d); };
-    const fx = e.fx as FxKey;
 
     const projectile = (kind: 'arrow' | 'orb' | 'blade' | 'spit', size: number, c = color, arc = 0, onHit?: (t: Actor) => void, sprite?: string, spriteSize = 40) => {
       for (const t of targets) {
@@ -574,6 +697,7 @@ export class BattleScene {
     const settings = this.game.state.settings;
     const run = () => {
       t.hurt = 1;
+      if (!e.dot && e.amount > 0) t.knock = (e.tgt.side === 'hero' ? -1 : 1) * (e.crit ? 14 : 7);
       if (!settings.dmgNumbers) return;
       const toHero = e.tgt.side === 'hero';
       let color = toHero ? '#ff7070' : '#ffffff';
@@ -654,6 +778,12 @@ export class BattleScene {
       this.scroll += 240 * dt;
     }
     this.updateActors(dt);
+    if (this.timers.length) {
+      const due = this.timers.filter(t => t.at <= this.time);
+      this.timers = this.timers.filter(t => t.at > this.time);
+      for (const t of due) t.fn();
+    }
+    if (this.cutin) this.cutin.t += dt;
     for (const f of this.fxs) {
       f.t += dt;
       f.update?.(dt);
@@ -721,11 +851,17 @@ export class BattleScene {
       a.hurt = Math.max(0, a.hurt - dt * 5);
       a.cast = u.casting ? 1 - u.casting.remaining / u.casting.total : Math.max(0, a.cast - dt * 3);
       if (a.dying >= 0) a.dying += dt;
-      if (a.pending.length) {
-        const due = a.pending.filter(p => p.at <= this.time);
-        a.pending = a.pending.filter(p => p.at > this.time);
+      // 傷害數字等「出招／命中那一刻」才顯示；延遲時間可能在排隊後被拉長，所以每格重新判斷
+      if (a.pending.length && this.time >= a.delayUntil) {
+        const due = a.pending;
+        a.pending = [];
         for (const p of due) p.fn();
       }
+      if (a.motion) {
+        a.motion.t += dt;
+        if (a.motion.t >= a.motion.dur) a.motion = null;
+      }
+      if (a.knock) a.knock = Math.abs(a.knock) < 0.3 ? 0 : a.knock * Math.exp(-dt * 12);
       if (this.time > a.blinkAt + 0.12) a.blinkAt = this.time + 2 + Math.random() * 3;
     }
   }
@@ -799,6 +935,7 @@ export class BattleScene {
     this.texts.draw(ctx);
     this.drawPops(ctx);
     this.drawBossHud(ctx);
+    this.drawCutin(ctx);
     this.drawBanner(ctx);
 
     // 英雄倒下
@@ -846,8 +983,10 @@ export class BattleScene {
       const advId = (u.look as { advId?: string | null }).advId;
       const img = (advId ? classImage(advId) : null) ?? classImage(u.defId);
       const look = u.look as HeroLook;
-      if (img) this.drawImageUnit(ctx, img, 110, 1, attackK);
+      if (img) this.drawImageUnit(ctx, img, 110, 1, attackK, a);
       else {
+        const mp = this.motionPose(a);
+        ctx.translate(mp.dx + a.knock, mp.dy);
         const pose: Pose = { t: this.time, attack: attackK, walk: this.walk > 0 ? this.time * 5 : 0, cast: a.cast, blink: this.time > a.blinkAt, hurt: a.hurt };
         paintHero(ctx, look, pose);
       }
@@ -855,8 +994,10 @@ export class BattleScene {
       const flip = u.side === 'enemy';
       const imgPath = u.kind === 'monster' ? monsterImage(a.mdef.id) : u.kind === 'pet' ? petImage(a.mdef.id) : null;
       // 美術圖本身已朝向正確方向（怪物面左、寵物面右），不鏡像，只決定突進方向
-      if (imgPath) this.drawImageUnit(ctx, imgPath, a.height * 1.1, flip ? -1 : 1, attackK);
+      if (imgPath) this.drawImageUnit(ctx, imgPath, a.height * 1.1, flip ? -1 : 1, attackK, a);
       else {
+        const mp = this.motionPose(a);
+        ctx.translate(mp.dx * (flip ? -1 : 1) + a.knock, mp.dy);
         ctx.scale(flip ? -a.scale : a.scale, a.scale);
         const walkBob = u.kind === 'pet' && this.walk > 0 ? Math.abs(Math.sin(this.time * 10)) * -4 : 0;
         ctx.translate(0, walkBob);
@@ -867,21 +1008,48 @@ export class BattleScene {
     ctx.filter = 'none';
   }
 
-  private drawImageUnit(ctx: Ctx, img: HTMLImageElement, h: number, dir: 1 | -1, attackK: number) {
+  /** 目前的動作姿勢（沒有動作時是待機） */
+  private motionPose(a: Actor, back = 0): MotionPose {
+    const m = a.motion;
+    if (!m) return IDLE;
+    return poseAt(m, clamp01(m.t / m.dur - back));
+  }
+
+  private drawImageUnit(ctx: Ctx, img: HTMLImageElement, h: number, dir: 1 | -1, attackK: number, a: Actor) {
     const w = (img.width / img.height) * h;
-    const lunge = attackK >= 0 ? Math.sin(attackK * Math.PI) * 12 * dir : 0;
-    // 呼吸感：上下輕晃＋些微伸縮
-    const breath = Math.sin(this.time * 2.4);
+    // 沒有動作資料時（理論上不會）退回舊的小幅突進
+    const p = a.motion ? this.motionPose(a) : attackK >= 0 ? { ...IDLE, dx: Math.sin(attackK * Math.PI) * 12 } : IDLE;
+    // 呼吸感：上下輕晃＋些微伸縮（動作中減弱）
+    const breath = Math.sin(this.time * 2.4) * (a.motion ? 0.3 : 1);
     const bob = breath * 2;
+    const drawAt = (q: MotionPose, alphaMul: number, ghost: boolean) => {
+      ctx.save();
+      ctx.translate(q.dx * dir + a.knock, q.dy);
+      // 以身體中心為軸旋轉、以腳底為基準伸縮
+      ctx.translate(0, -h * 0.45);
+      ctx.rotate(q.rot * dir);
+      ctx.translate(0, h * 0.45);
+      const sy = q.sy * (1 + breath * 0.012);
+      ctx.scale(q.sx / (1 + breath * 0.012), sy);
+      if (ghost) {
+        ctx.globalAlpha *= alphaMul;
+        ctx.globalCompositeOperation = 'lighter';
+      }
+      ctx.drawImage(img, -w / 2, -h + bob, w, h);
+      ctx.restore();
+    };
     ctx.save();
+    // 影子跟著位移，跳起時變小
+    const shadowK = 1 - Math.min(0.5, Math.abs(p.dy) / 60);
     ctx.fillStyle = 'rgba(0,0,0,0.28)';
     ctx.beginPath();
-    ctx.ellipse(0, 0, w * 0.35, w * 0.08, 0, 0, Math.PI * 2);
+    ctx.ellipse(p.dx * dir + a.knock, 0, w * 0.35 * shadowK, w * 0.08 * shadowK, 0, 0, Math.PI * 2);
     ctx.fill();
-    const sy = 1 + breath * 0.012;
-    ctx.translate(lunge, 0);
-    ctx.scale(1 / sy, sy);
-    ctx.drawImage(img, -w / 2, -h + bob, w, h);
+    // 殘影：往回推幾格的姿勢，加亮疊上
+    if (p.blur > 0.05) {
+      for (let i = 3; i >= 1; i--) drawAt(this.motionPose(a, i * 0.035), 0.22 * p.blur * (1 - i / 4), true);
+    }
+    drawAt(p, 1, false);
     ctx.restore();
   }
 
