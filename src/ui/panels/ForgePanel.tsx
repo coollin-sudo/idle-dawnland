@@ -13,7 +13,7 @@ import {
 } from '@/systems/forge';
 import { itemColor } from '@/systems/items';
 import { Cost, ItemCard, ItemSlot, JewelIcon, NpcHeader, Sockets, Switch } from '../common';
-import { JEWEL_MAX_TIER, JEWELS, MAX_SOCKETS, combineCost, jewelKey, jewelMods, jewelName, parseJewel, punchCost, unsocketCost } from '@/data/jewels';
+import { JEWEL_MAX_TIER, JEWELS, combineCost, jewelKey, jewelMods, jewelName, jewelSlotMult, maxSockets, parseJewel, punchCost, unsocketCost } from '@/data/jewels';
 import { canPunch, combineJewel, punchSocket, socketJewel, unsocketJewel } from '@/systems/jewels';
 import { forgeItem, g, refresh, uiTick } from '../store';
 
@@ -190,8 +190,9 @@ function Jewels({ item }: { item: Item | null }) {
   const hasEmpty = !!item?.sockets?.includes(null);
   const act = (fn: () => unknown) => { fn(); refresh(); };
   const effect = (k: string) => {
-    const m = jewelMods(k);
-    return m.length > 1 ? `全元素抗性 +${m[0].value}%` : describeMod(m[0], 1);
+    const m = jewelMods(k, item?.slot);
+    const bonus = jewelSlotMult(k, item?.slot) > 1 ? '（部位加成 ×1.5）' : '';
+    return (m.length > 1 ? `全元素抗性 +${m[0].value}%` : describeMod(m[0], 1)) + bonus;
   };
   return (
     <div class="card" style={{ marginBottom: '6px' }}>
@@ -200,7 +201,8 @@ function Jewels({ item }: { item: Item | null }) {
           <div class="forge-item"><ItemSlot item={item} /></div>
           <div class="grow">
             <div style={{ fontWeight: 800, color: itemColor(item) }}>{item.name}</div>
-            <div class="small muted" style={{ margin: '2px 0 8px' }}>鑲嵌孔 {item.sockets?.length ?? 0} / {MAX_SOCKETS[item.rarity]}（上限依稀有度）</div>
+            <div class="small muted" style={{ margin: '2px 0 8px' }}>鑲嵌孔 {item.sockets?.length ?? 0} / {maxSockets(item.slot, item.rarity)}（上限依稀有度與部位：護甲 3、武器 2、其他 1）</div>
+            <div class="tiny muted" style={{ margin: '-4px 0 8px' }}>部位加成：攻擊系魔晶（赤焰、翠風、金雷、紫影）鑲在武器、防禦系魔晶（蒼海、白輝）鑲在頭盔或護甲，效果 ×1.5。</div>
             {(item.sockets ?? []).map((k, i) => (
               <div class="row" style={{ gap: '8px', marginBottom: '4px', alignItems: 'center' }}>
                 {k ? <JewelIcon jkey={k} size={26} /> : <Sockets item={{ ...item, sockets: [null] }} size={26} />}
@@ -211,7 +213,7 @@ function Jewels({ item }: { item: Item | null }) {
             {canPunch(item) ? (() => {
               const c = punchCost(item.sockets?.length ?? 0, item.ilvl);
               return <button class="btn sm" style={{ marginTop: '4px' }} onClick={() => act(() => punchSocket(gm, item.uid))}>🔨 打孔 <Cost k="gold" n={c.gold} have={s.cur.gold} /> <Cost k="stones" n={c.stones} have={s.cur.stones} /></button>;
-            })() : MAX_SOCKETS[item.rarity] === 0 && <div class="small dim">普通裝備無法打孔，稀有度越高可以打越多孔。</div>}
+            })() : maxSockets(item.slot, item.rarity) === 0 && <div class="small dim">普通裝備無法打孔，稀有度越高可以打越多孔。</div>}
           </div>
         </div>
       ) : <div class="muted">先從下方選一件裝備</div>}

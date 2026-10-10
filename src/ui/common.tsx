@@ -1,6 +1,6 @@
 import type { ComponentChildren, CSSProperties } from 'preact';
 import { artUrl } from '@/render/images';
-import { jewelMods, jewelName, parseJewel } from '@/data/jewels';
+import { jewelMods, jewelName, jewelSlotMult, parseJewel } from '@/data/jewels';
 import { Emo, rich } from './emoji';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { fmt, fmtDuration } from '@/core/format';
@@ -153,7 +153,7 @@ export function ItemCard({ item, compare = true }: { item: Item; compare?: boole
         <div style={{ marginTop: '6px' }}>
           {item.sockets.map(k => (
             <div class="aff socket-line">
-              <span>{k ? <><JewelIcon jkey={k} size={16} /> {jewelMods(k).length > 1 ? `全元素抗性 +${jewelMods(k)[0].value}%` : describeMod(jewelMods(k)[0], 1)}</> : <span class="dim">◇ 空的鑲嵌孔</span>}</span>
+              <span>{k ? <><JewelIcon jkey={k} size={16} /> {jewelMods(k, item.slot).length > 1 ? `全元素抗性 +${jewelMods(k, item.slot)[0].value}%` : describeMod(jewelMods(k, item.slot)[0], 1)}{jewelSlotMult(k, item.slot) > 1 ? '（部位 ×1.5）' : ''}</> : <span class="dim">◇ 空的鑲嵌孔</span>}</span>
               {k && <span class="q dim">{jewelName(k)}</span>}
             </div>
           ))}

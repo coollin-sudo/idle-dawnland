@@ -1,5 +1,6 @@
 import { newGameState, SAVE_VERSION, defaultSettings } from '@/core/state';
 import { signText } from './sign';
+import { baseSockets, maxSockets } from '@/data/jewels';
 import { EXCLUSIVE_TIERS, TALENT_TREES } from '@/data/talents';
 import { STAR_NODES, starCost } from '@/data/meta';
 import type { GameState } from '@/core/types';
@@ -51,6 +52,17 @@ export function migrate(raw: unknown): GameState | null {
   // 舊存檔：到過的最高等級（轉生後回到這個等級前用快速升級曲線）
   s.hero.maxLevel = Math.max(s.hero.maxLevel ?? 1, s.hero.level, s.counters?.maxLevel ?? 1);
   if (!Array.isArray(s.hero.loadoutHold)) s.hero.loadoutHold = [false, false, false, false];
+  // 鑲嵌孔改版：依部位與稀有度補足保底孔數；超過新上限的孔先拿掉空孔，仍超過就把魔晶退回魔晶袋
+  const allItems = [...s.inventory, ...Object.values(s.equipment), ...Object.values(s.gear?.alt ?? {})].filter((x): x is NonNullable<typeof x> => !!x);
+  for (const it of allItems) {
+    const max = maxSockets(it.slot, it.rarity);
+    const base = baseSockets(it.slot, it.rarity);
+    let sk = it.sockets ?? [];
+    while (sk.length > max && sk.includes(null)) sk.splice(sk.lastIndexOf(null), 1);
+    while (sk.length > max) { const k = sk.pop(); if (k) s.jewels[k] = (s.jewels[k] ?? 0) + 1; }
+    while (sk.length < base) sk.push(null);
+    it.sockets = sk.length ? sk : undefined;
+  }
   s.version = SAVE_VERSION;
   return s;
 }

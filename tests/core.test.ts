@@ -203,7 +203,7 @@ describe('魔晶與稱號', () => {
     const before = heroStats(s).dmg;
     expect(socketJewel(g, w.uid, 'ruby:1')).toBe(true);
     expect(s.jewels['ruby:1']).toBeUndefined();
-    expect(heroStats(s).dmg).toBeCloseTo(before + 4, 5);
+    expect(heroStats(s).dmg).toBeCloseTo(before + 4 * 1.5, 5); // 攻擊系魔晶鑲在武器：部位加成 ×1.5
     // 卸下後分解，魔晶回到魔晶袋
     unequipItem(g, 'weapon');
     salvageItems(g, [w.uid]);
@@ -541,5 +541,38 @@ describe('自動裝備只作用在配裝 A', () => {
     const b = s.equipment; s.equipment = s.gear.alt; s.gear.alt = b; s.gear.active = 0; s.gear.want = 0;
     s.equipment.boots = null;
     expect(receiveItem(g, mk(6))).toBe('equipped');
+  });
+});
+
+describe('鑲嵌孔改版', () => {
+  it('越稀有孔越多；部位決定上限；傳說護甲至少 2 孔', async () => {
+    const { rollSockets, maxSockets, baseSockets } = await import('@/data/jewels');
+    for (const slot of ['weapon', 'armor', 'helmet', 'ring'] as const) {
+      for (let r = 1; r <= 5; r++) {
+        expect(baseSockets(slot, r as 0)).toBeGreaterThanOrEqual(baseSockets(slot, (r - 1) as 0));
+        expect(maxSockets(slot, r as 0)).toBeGreaterThanOrEqual(maxSockets(slot, (r - 1) as 0));
+      }
+    }
+    expect(rollSockets('armor', 4, 0.99)?.length).toBe(2);
+    expect(rollSockets('armor', 5, 0.99)?.length).toBe(3);
+    expect(rollSockets('ring', 5, 0)?.length).toBe(1);
+    expect(rollSockets('weapon', 0, 0)).toBeUndefined();
+    expect(maxSockets('weapon', 4)).toBe(2);
+  });
+  it('攻擊系魔晶鑲在武器有部位加成', async () => {
+    const { jewelMods } = await import('@/data/jewels');
+    expect(jewelMods('ruby:2', 'weapon')[0].value).toBeCloseTo(jewelMods('ruby:2', 'ring')[0].value * 1.5);
+    expect(jewelMods('sapphire:2', 'armor')[0].value).toBeCloseTo(jewelMods('sapphire:2', 'weapon')[0].value * 1.5);
+  });
+  it('舊存檔：補足保底孔數，超過上限的魔晶退回', async () => {
+    const { g } = makeGame();
+    const s = JSON.parse(JSON.stringify(g.state));
+    const mk = (slot: string, rarity: number, sockets: (string | null)[] | undefined) => ({ ...s.inventory[0] ?? {}, uid: s.nextUid++, slot, base: slot, name: 'x', rarity, ilvl: 10, implicit: [], affixes: [], enh: 0, sockets });
+    s.inventory = [mk('armor', 4, undefined), mk('ring', 3, ['ruby:1', 'emerald:0'])];
+    s.jewels = {};
+    const m = migrate(s)!;
+    expect(m.inventory[0].sockets?.length).toBe(2);
+    expect(m.inventory[1].sockets).toEqual(['ruby:1']);
+    expect(m.jewels['emerald:0']).toBe(1);
   });
 });

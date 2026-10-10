@@ -2,7 +2,7 @@ import type { Game } from '@/core/game';
 import type { Item } from '@/core/types';
 import type { Unit } from '@/core/unit';
 import {
-  JEWEL_MAX_TIER, JEWELS, MAX_SOCKETS, combineCost, jewelKey, jewelName, parseJewel, punchCost, unsocketCost,
+  JEWEL_MAX_TIER, JEWELS, combineCost, jewelKey, jewelName, maxSockets, parseJewel, punchCost, unsocketCost,
 } from '@/data/jewels';
 import { findItem } from './forge';
 
@@ -67,7 +67,7 @@ export function unsocketJewel(g: Game, uid: number, index: number): boolean {
 }
 
 export function canPunch(it: Item) {
-  return (it.sockets?.length ?? 0) < MAX_SOCKETS[it.rarity];
+  return (it.sockets?.length ?? 0) < maxSockets(it.slot, it.rarity);
 }
 
 export function punchSocket(g: Game, uid: number): boolean {
