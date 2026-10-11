@@ -9,6 +9,83 @@
  ],
  "idleHeight": 270,
  "chars": {
+  "archbishop": {
+   "atk1": 4,
+   "atk2": 4,
+   "atk3": 4,
+   "idle": 4,
+   "skill": 4
+  },
+  "assassin": {
+   "atk1": 4,
+   "atk2": 4,
+   "atk3": 4,
+   "idle": 4,
+   "skill": 4
+  },
+  "berserker": {
+   "atk1": 4,
+   "atk2": 4,
+   "atk3": 4,
+   "idle": 4,
+   "skill": 4
+  },
+  "cleric": {
+   "atk1": 4,
+   "atk2": 4,
+   "atk3": 4,
+   "idle": 4,
+   "skill": 4
+  },
+  "elementalist": {
+   "atk1": 4,
+   "atk2": 4,
+   "atk3": 4,
+   "idle": 4,
+   "skill": 4
+  },
+  "inquisitor": {
+   "atk1": 4,
+   "atk2": 4,
+   "atk3": 4,
+   "idle": 4,
+   "skill": 4
+  },
+  "mage": {
+   "atk1": 4,
+   "atk2": 4,
+   "atk3": 4,
+   "idle": 4,
+   "skill": 4
+  },
+  "marksman": {
+   "atk1": 4,
+   "atk2": 4,
+   "atk3": 4,
+   "idle": 4,
+   "skill": 4
+  },
+  "paladin": {
+   "atk1": 4,
+   "atk2": 4,
+   "atk3": 4,
+   "idle": 4,
+   "skill": 4
+  },
+  "ranger": {
+   "atk1": 4,
+   "atk2": 4,
+   "atk3": 4,
+   "idle": 4,
+   "skill": 4
+  },
+  "warlock": {
+   "atk1": 4,
+   "atk2": 4,
+   "atk3": 4,
+   "idle": 4,
+   "skill": 4
+  },
   "warrior": {
    "atk1": 4,
    "atk2": 4,

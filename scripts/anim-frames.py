@@ -21,6 +21,8 @@ CANVAS_W, CANVAS_H = 640, 420
 ANCHOR_X, ANCHOR_Y = 320, 404
 IDLE_HEIGHT = 270  # 待機動作的角色身高（像素）
 ACTS = ['idle', 'atk1', 'atk2', 'atk3', 'skill']
+# 個別角色的大小微調（武器高舉過頭、帽子很高的角色，用外框算身高會被縮太小）
+SIZE = {}
 
 
 def dechecker(im: Image.Image) -> Image.Image:
@@ -67,6 +69,56 @@ def cuts(profile, n):
     return out
 
 
+def components(m):
+    """8 連通的區塊標號（純 numpy＋堆疊，給縮小過的遮罩用）"""
+    h, w = m.shape
+    lab = np.zeros((h, w), np.int32)
+    n = 0
+    for y0, x0 in zip(*np.nonzero(m)):
+        if lab[y0, x0]:
+            continue
+        n += 1
+        st = [(y0, x0)]
+        lab[y0, x0] = n
+        while st:
+            y, x = st.pop()
+            for dy in (-1, 0, 1):
+                for dx in (-1, 0, 1):
+                    yy, xx = y + dy, x + dx
+                    if 0 <= yy < h and 0 <= xx < w and m[yy, xx] and not lab[yy, xx]:
+                        lab[yy, xx] = n
+                        st.append((yy, xx))
+    return lab, n
+
+
+def clean_cell(cell, r, c):
+    """去掉隔壁格溢過來的特效碎片，並讓貼著格線的部分淡出（光束被格線切斷時才不會有一條硬邊）"""
+    a = np.array(cell)
+    al = a[..., 3].astype(np.float64)
+    h, w = al.shape
+    K = 4
+    sh, sw = h // K, w // K
+    small = al[:sh * K, :sw * K].reshape(sh, K, sw, K).max((1, 3)) > 40
+    lab, n = components(small)
+    if n > 1:
+        dark = ((a[..., 3] > 200) & (a[..., :3].max(-1) < 90))[:sh * K, :sw * K].reshape(sh, K, sw, K).any((1, 3))
+        sizes = np.bincount(lab.ravel(), weights=dark.ravel().astype(np.float64), minlength=n + 1)
+        main = int(sizes[1:].argmax()) + 1
+        edges = {'l': lab[:, 0], 'r': lab[:, -1], 't': lab[0, :], 'b': lab[-1, :]}
+        inner = ('r' if c == 0 else 'l') + ('b' if r == 0 else 't')
+        drop = set()
+        for e in inner:
+            drop |= set(np.unique(edges[e])) - {0, main}
+        if drop:
+            kill = np.isin(lab, list(drop)).repeat(K, 0).repeat(K, 1)
+            al[:sh * K, :sw * K][kill] = 0
+    f = 0.06
+    ramp = lambda L: np.clip(np.minimum(np.arange(L), np.arange(L)[::-1]) / (L * f), 0, 1)
+    al *= ramp(h)[:, None] * ramp(w)[None, :]
+    a[..., 3] = al.astype(np.uint8)
+    return Image.fromarray(a, 'RGBA')
+
+
 def frames_of(path):
     im = dechecker(Image.open(path))
     a = np.array(im)[..., 3].astype(np.float64)
@@ -75,15 +127,25 @@ def frames_of(path):
     for i in range(4):
         r, c = divmod(i, 2)
         cell = im.crop((xs[c], ys[r], xs[c + 1], ys[r + 1]))
+        cell = clean_cell(cell, r, c)
         al = np.array(cell)[..., 3]
         yy, xx = np.where(al > 40)
         if len(xx) == 0:
             out.append(None)
             continue
         top, bot, left, right = yy.min(), yy.max(), xx.min(), xx.max()
-        # 腳底中心：最底下 8% 列的不透明像素平均 x
-        band = al[max(top, bot - int((bot - top) * 0.08)):bot + 1]
-        bx = np.where(band > 40)[1]
+        # 腳底：用角色的深色描邊找（招式特效多半是亮色光芒，常畫到腳底下，不能拿來當地面）
+        rgb = np.array(cell)[..., :3].astype(np.int32)
+        dark = (al > 200) & (rgb.max(-1) < 90)
+        rows = np.where(dark.sum(1) >= 3)[0]
+        if len(rows) and rows.max() > top + (bot - top) * 0.6:
+            bot = int(rows.max())
+            mask = dark
+        else:
+            mask = al > 40
+        # 腳底中心：最底下 8% 列的像素平均 x
+        band = mask[max(top, bot - int((bot - top) * 0.08)):bot + 1]
+        bx = np.where(band)[1]
         foot = float(bx.mean()) if len(bx) else (left + right) / 2
         out.append({'img': cell, 'top': int(top), 'bot': int(bot), 'cellH': cell.height, 'foot': foot})
     return out
@@ -100,7 +162,7 @@ def main(src):
         sheets = {act: frames_of(p) for act, p in acts.items() if act in ACTS}
         idle = [fr for fr in sheets.get('idle', []) if fr]
         ref = idle or [fr for fs in sheets.values() for fr in fs if fr]
-        scale = IDLE_HEIGHT / float(np.median([fr['bot'] - fr['top'] for fr in ref]))
+        scale = IDLE_HEIGHT / float(np.median([fr['bot'] - fr['top'] for fr in ref])) * SIZE.get(ch, 1)
         os.makedirs(os.path.join(DST, ch), exist_ok=True)
         manifest[ch] = {}
         for act, frs in sheets.items():
