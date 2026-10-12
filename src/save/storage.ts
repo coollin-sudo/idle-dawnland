@@ -5,10 +5,16 @@ import { EXCLUSIVE_TIERS, TALENT_TREES } from '@/data/talents';
 import { STAR_NODES, starCost } from '@/data/meta';
 import type { GameState } from '@/core/types';
 
+/** 第一個角色沿用舊版的存檔位置；之後建立的角色各有自己的 key（見 accounts.ts） */
 export const SAVE_KEY = 'dawnland-v2';
-const SIG_KEY = SAVE_KEY + ':sig';
-/** 這個瀏覽器已經開始使用簽章（之後缺少簽章就視為被修改） */
-const SIGNED_KEY = SAVE_KEY + ':signed';
+const sigKey = (key: string) => key + ':sig';
+/** 這個存檔已經開始使用簽章（之後缺少簽章就視為被修改） */
+const signedKey = (key: string) => key + ':signed';
+
+/** 目前遊玩中的角色存檔位置（自動存檔、匯入都寫到這裡） */
+let activeKey = SAVE_KEY;
+export const setActiveSave = (key: string) => { activeKey = key; };
+export const activeSaveKey = () => activeKey;
 
 function isObj(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -67,35 +73,39 @@ export function migrate(raw: unknown): GameState | null {
   return s;
 }
 
-export function loadState(): GameState | null {
+export function loadState(key = activeKey): GameState | null {
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
     const s = migrate(JSON.parse(raw));
     if (!s) return null;
-    const sig = localStorage.getItem(SIG_KEY);
-    if (sig ? sig !== signText(raw) : !!localStorage.getItem(SIGNED_KEY)) s.online.tainted = true;
+    const sig = localStorage.getItem(sigKey(key));
+    if (sig ? sig !== signText(raw) : !!localStorage.getItem(signedKey(key))) s.online.tainted = true;
     return s;
   } catch {
     return null;
   }
 }
 
-export function saveState(s: GameState): boolean {
+export function saveState(s: GameState, key = activeKey): boolean {
   try {
     s.lastSeen = Date.now();
     const json = JSON.stringify(s);
-    localStorage.setItem(SAVE_KEY, json);
-    localStorage.setItem(SIG_KEY, signText(json));
-    localStorage.setItem(SIGNED_KEY, '1');
+    localStorage.setItem(key, json);
+    localStorage.setItem(sigKey(key), signText(json));
+    localStorage.setItem(signedKey(key), '1');
     return true;
   } catch {
     return false;
   }
 }
 
-export function clearState() {
-  try { localStorage.removeItem(SAVE_KEY); } catch { /* 無法存取儲存空間 */ }
+export function clearState(key = activeKey) {
+  try {
+    localStorage.removeItem(key);
+    localStorage.removeItem(sigKey(key));
+    localStorage.removeItem(signedKey(key));
+  } catch { /* 無法存取儲存空間 */ }
 }
 
 // ---------------------------------------------------------------------

@@ -629,3 +629,28 @@ select.input { padding: 6px 10px; }
 .bodydoll .bd-lines g.on circle { fill: rgba(240,194,90,.7); }
 .bodydoll .bd-slot { position: absolute; transform: translate(-50%, -50%); width: clamp(44px, 15%, 60px); }
 .bodydoll .bd-slot .islot { width: 100%; }
+
+/* ---------- 選角畫面：帳號 → 角色 ---------- */
+.launcher .launcher-body { max-width: 760px; margin: 0 auto; }
+.launcher-back { position: absolute; left: 16px; top: 16px; }
+.launcher-continue { display: block; margin: 0 auto 18px; max-width: 100%; white-space: normal; }
+.acc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; text-align: left; }
+.acc-card { padding: 14px; cursor: pointer; transition: transform .12s, border-color .12s; }
+.acc-card:hover { transform: translateY(-2px); border-color: var(--gold); }
+.acc-name { font-weight: 900; font-size: 17px; margin-bottom: 6px; color: var(--gold); }
+.acc-slot { margin-top: 3px; }
+.acc-new { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 110px; }
+.acc-new .input { width: 100%; }
+.acc-plus { font-size: 30px; line-height: 1; color: var(--gold); margin-bottom: 4px; }
+.acc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 18px 0 14px; flex-wrap: wrap; padding: 8px 10px; border-radius: 12px; background: rgba(10,12,19,.72); }
+.acc-title { font-weight: 900; font-size: 20px; color: var(--gold); text-shadow: 0 1px 4px #000; }
+.char-slots { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.char-slot { padding: 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: transform .12s, border-color .12s; }
+.char-slot:hover { transform: translateY(-2px); border-color: var(--gold); }
+.char-slot .cn { font-weight: 900; font-size: 18px; margin-top: 4px; }
+.char-slot.empty { justify-content: center; min-height: 260px; gap: 8px; cursor: default; }
+.char-slot.empty:hover { transform: none; }
+@media (max-width: 560px) {
+  .char-slots { grid-template-columns: 1fr; }
+  .launcher-back { position: static; margin-bottom: 8px; }
+}

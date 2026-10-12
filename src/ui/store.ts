@@ -60,6 +60,15 @@ function pushLog(text: string, kind?: string, icon?: string) {
 
 export function startGame(state: GameState, opts: { offline?: boolean } = {}) {
   stopGame();
+  // 換角色時清掉上一個角色留下的畫面狀態
+  logs.value = [];
+  toasts.value = [];
+  storyQueue.value = [];
+  offlineReport.value = null;
+  selectedItem.value = null;
+  forgeItem.value = null;
+  gearView.value = null;
+  tab.value = 'hero';
   const gm = new Game(state);
   game.value = gm;
   setNumberStyle(state.settings.numberStyle);
@@ -136,6 +145,16 @@ function autoSubmit(gm: Game) {
 export function saveNow() {
   const gm = game.value;
   if (gm) saveState(gm.state);
+}
+
+/** 存檔並回到選角畫面 */
+export function exitToLauncher(save = true) {
+  if (save) saveNow();
+  stopGame();
+  modal.value = null;
+  tip.value = null;
+  offlineReport.value = null;
+  game.value = null;
 }
 
 /**

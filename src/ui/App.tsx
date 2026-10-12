@@ -1,27 +1,15 @@
-import { useState } from 'preact/hooks';
-import { loadState } from '@/save/storage';
-import { Create } from './Create';
 import { Gallery } from './Gallery';
 import { GameScreen } from './GameScreen';
+import { Launcher } from './Launcher';
 import { ModalHost, OfflineModal, StoryOverlay, Toasts, TooltipHost } from './common';
-import { openImport } from './panels/SettingsPanel';
-import { game, startGame } from './store';
+import { game } from './store';
 
-let booted = false;
-function boot() {
-  if (booted) return;
-  booted = true;
-  const s = loadState();
-  if (s) startGame(s, { offline: true });
-}
-
+/** 開遊戲先到選角畫面（選帳號、選角色或建立新的），不直接進入遊戲 */
 export function App() {
   if (location.hash === '#gallery') return <Gallery />;
-  boot();
-  const [, force] = useState(0);
   return (
     <>
-      {game.value ? <GameScreen /> : <Create onDone={() => force(n => n + 1)} onImport={openImport} />}
+      {game.value ? <GameScreen /> : <Launcher />}
       {game.value && <StoryOverlay />}
       <OfflineModal />
       <ModalHost />

@@ -4,9 +4,11 @@ import type { Settings } from '@/core/types';
 import { RARITIES } from '@/data/items';
 import { audio } from '@/audio/audio';
 import { setArtEnabled } from '@/render/images';
-import { clearState, exportJson, importText, saveState } from '@/save/storage';
+import { activeSaveKey, clearState, exportJson, importText, saveState } from '@/save/storage';
 import { Modal, Switch, confirmModal } from '../common';
-import { closeModal, g, openModal, refresh, saveNow, startGame, stopGame, game, uiTick } from '../store';
+import { closeModal, exitToLauncher, g, openModal, refresh, saveNow, startGame, stopGame, uiTick } from '../store';
+import { deleteChar, loadIndex } from '@/save/accounts';
+import type { GameState } from '@/core/types';
 
 export function SettingsPanel() {
   void uiTick.value;
@@ -63,7 +65,8 @@ export function SettingsPanel() {
         <button class="btn sm" onClick={() => { saveNow(); gm.toast('已存檔', 'good', '💾'); }}>立即存檔</button>
         <button class="btn sm" onClick={() => downloadSave()}>匯出存檔（JSON）</button>
         <button class="btn sm" onClick={() => openImport()}>匯入存檔</button>
-        <button class="btn sm danger" onClick={() => confirmModal('刪除角色？', <p>{gm.state.hero.name} 的所有進度會永久消失，無法復原。</p>, () => { stopGame(); clearState(); game.value = null; location.reload(); }, '永久刪除', true)}>刪除角色</button>
+        <button class="btn sm" onClick={() => exitToLauncher()}>切換角色／帳號</button>
+        <button class="btn sm danger" onClick={() => confirmModal('刪除角色？', <p>{gm.state.hero.name} 的所有進度會永久消失，無法復原。</p>, () => { exitToLauncher(false); deleteActiveChar(); }, '永久刪除', true)}>刪除角色</button>
       </div>
 
       <h3>關於</h3>
@@ -72,6 +75,17 @@ export function SettingsPanel() {
       </div>
     </div>
   );
+}
+
+/** 刪除目前這個角色：清掉存檔，並從帳號的角色位移除 */
+function deleteActiveChar() {
+  const key = activeSaveKey();
+  const idx = loadIndex();
+  for (const a of idx.accounts) {
+    const slot = a.slots.indexOf(key);
+    if (slot >= 0) { deleteChar(idx, a.id, slot); return; }
+  }
+  clearState(key);
 }
 
 /** 把目前進度下載成 JSON 檔 */
@@ -90,13 +104,15 @@ function downloadSave() {
   gm.toast(`已匯出 ${filename}`, 'good', '💾');
 }
 
-function ImportBody() {
+/** onLoaded：在選角畫面匯入到空位時由呼叫端處理；遊戲中匯入則覆蓋目前的角色 */
+function ImportBody({ onLoaded }: { onLoaded?: (s: GameState) => void }) {
   void uiTick.value;
   const [text, setText] = useState('');
   const [err, setErr] = useState('');
   const load = async (raw: string) => {
     const s = await importText(raw);
     if (!s) { setErr('無法讀取這個存檔，請確認是晨曦大陸匯出的 JSON 檔'); return; }
+    if (onLoaded) { closeModal(); onLoaded(s); return; }
     stopGame();
     saveState(s);
     closeModal();
@@ -114,7 +130,7 @@ function ImportBody() {
       <button class="btn" onClick={closeModal}>取消</button>
       {text.trim() && <button class="btn primary" onClick={() => void load(text)}>匯入貼上的內容</button>}
     </>}>
-      <p class="small muted">會覆蓋這個瀏覽器目前的角色。</p>
+      <p class="small muted">{onLoaded ? '會放進這個空的角色位。' : '會覆蓋目前這個角色的進度。'}</p>
       <label class="btn primary" style={{ display: 'inline-block', cursor: 'pointer' }}>
         選擇存檔檔案（.json）
         <input type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={pickFile} />
@@ -128,6 +144,6 @@ function ImportBody() {
   );
 }
 
-export function openImport() {
-  openModal(() => <ImportBody />);
+export function openImport(onLoaded?: (s: GameState) => void) {
+  openModal(() => <ImportBody onLoaded={onLoaded} />);
 }

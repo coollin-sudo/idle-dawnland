@@ -158,6 +158,12 @@ export function heroStats(s: GameState, ov?: EquipOverride): StatBlock {
 
 /** 戰力：攻擊期望值與有效生命的綜合指標，用來比較裝備好壞 */
 export function combatPower(s: GameState, st: StatBlock): number {
+  const { offense, ehp } = powerParts(s, st);
+  return Math.round(offense * 3 + ehp * 0.4);
+}
+
+/** 戰力的兩個組成：輸出（每秒傷害的相對值）與有效生命（考慮防禦、閃避、抗性與續航） */
+export function powerParts(s: GameState, st: StatBlock): { offense: number; ehp: number } {
   const c = classOf(s);
   const magic = c.basic.dmgType === 'magic';
   const atk = magic ? st.matk : st.atk;
@@ -184,7 +190,7 @@ export function combatPower(s: GameState, st: StatBlock): number {
   const res = (st.fireRes + st.iceRes + st.lightningRes + st.holyRes + st.shadowRes) / 5;
   const resMult = 1 / Math.max(0.3, 1 - Math.min(75, Math.max(0, res)) / 100 * 0.5);
   const ehp = st.hp / (1 - dr) / (1 - ev) / Math.max(0.2, 1 + st.dmgTaken / 100) * sustain * resMult;
-  return Math.round(offense * 3 + ehp * 0.4);
+  return { offense, ehp };
 }
 
 function loadoutElements(s: GameState): string[] {

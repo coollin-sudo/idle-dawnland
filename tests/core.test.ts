@@ -626,3 +626,34 @@ describe('鑲嵌孔改版', () => {
     expect(m.jewels['emerald:0']).toBe(1);
   });
 });
+
+describe('本機帳號與角色', () => {
+  const mem = new Map<string, string>();
+  const stub = {
+    getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, String(v)),
+    removeItem: (k: string) => void mem.delete(k), clear: () => mem.clear(), key: (i: number) => [...mem.keys()][i] ?? null,
+    get length() { return mem.size; },
+  };
+  it('舊存檔自動成為「帳號 1」的第一個角色；新角色各自一份存檔；刪除帳號會清掉底下角色', async () => {
+    (globalThis as unknown as { localStorage: typeof stub }).localStorage = stub;
+    mem.clear();
+    const { saveState, loadState, SAVE_KEY } = await import('@/save/storage');
+    const acc = await import('@/save/accounts');
+    saveState(newGameState('舊角色', 'warrior', T0, 1), SAVE_KEY);
+    const idx = acc.loadIndex();
+    expect(idx.accounts).toHaveLength(1);
+    expect(idx.accounts[0].slots).toEqual([SAVE_KEY, null]);
+    const a2 = acc.createAccount(idx, '小明');
+    const key = acc.newSaveKey(idx);
+    expect(key).not.toBe(SAVE_KEY);
+    acc.setSlot(idx, a2.id, 0, key);
+    saveState(newGameState('新角色', 'mage', T0, 2), key);
+    expect(loadState(key)!.hero.name).toBe('新角色');
+    expect(loadState(SAVE_KEY)!.hero.name).toBe('舊角色');
+    expect(acc.summarize(key)!.classId).toBe('mage');
+    acc.deleteAccount(idx, a2.id);
+    expect(mem.has(key)).toBe(false);
+    expect(mem.has(SAVE_KEY)).toBe(true);
+    expect(acc.loadIndex().accounts.map(a => a.name)).toEqual(['帳號 1']);
+  });
+});
