@@ -1,4 +1,4 @@
-import { armorDR, evadeChance } from '@/core/formulas';
+import { armorDR, DIFFICULTIES, evadeChance, mobAtk } from '@/core/formulas';
 import { resonancePct } from './rebirth';
 import { more } from '@/core/stats';
 import { softHaste } from '@/core/stats';
@@ -159,7 +159,17 @@ export function heroStats(s: GameState, ov?: EquipOverride): StatBlock {
 /** 戰力：攻擊期望值與有效生命的綜合指標，用來比較裝備好壞 */
 export function combatPower(s: GameState, st: StatBlock): number {
   const { offense, ehp } = powerParts(s, st);
-  return Math.round(offense * 3 + ehp * 0.4);
+  return Math.round(offense * 3 + survivalValue(s, ehp) * 0.4);
+}
+
+/** 生存「夠用」的門檻：大約撐得住 30 下目前等級怪物的攻擊（高難度的怪物更痛，門檻跟著難度倍率提高） */
+export const SURVIVAL_HITS = 30;
+/** 超過門檻後，多出來的生存只算 1/4（2026-10-12 用 scripts/power-truth.ts 實測：角色不會死時，多的血量與防禦幾乎不影響擊殺速度） */
+export const SURVIVAL_TAIL = 0.25;
+
+export function survivalValue(s: GameState, ehp: number) {
+  const need = SURVIVAL_HITS * mobAtk(s.hero.level + 3) * (DIFFICULTIES[s.progress.difficulty]?.mult ?? 1);
+  return ehp <= need ? ehp : need + (ehp - need) * SURVIVAL_TAIL;
 }
 
 /** 戰力的兩個組成：輸出（每秒傷害的相對值）與有效生命（考慮防禦、閃避、抗性與續航） */

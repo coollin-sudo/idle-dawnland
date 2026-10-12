@@ -657,3 +657,17 @@ describe('本機帳號與角色', () => {
     expect(acc.loadIndex().accounts.map(a => a.name)).toEqual(['帳號 1']);
   });
 });
+
+describe('戰力', () => {
+  it('生存超過門檻後只算 1/4，但仍隨生存遞增', async () => {
+    const { survivalValue, SURVIVAL_TAIL } = await import('@/systems/hero');
+    const s = newGameState('t', 'warrior', T0, 1);
+    s.hero.level = 40;
+    const low = survivalValue(s, 1000), a = survivalValue(s, 1e6), b = survivalValue(s, 2e6);
+    expect(low).toBe(1000);
+    expect(b).toBeGreaterThan(a);
+    expect((b - a) / 1e6).toBeCloseTo(SURVIVAL_TAIL, 5);
+    s.progress.difficulty = 2;
+    expect(survivalValue(s, 1e6)).toBeGreaterThan(a);
+  });
+});

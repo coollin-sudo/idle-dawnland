@@ -6,7 +6,7 @@
  *   首領：同區首領戰前 25 秒打掉的血量比例（打贏再加上剩餘秒數），避免大家都很快打贏而分不出差別
  * 用法：npx vite-node scripts/power-truth.ts <目錄> [每部位件數=20] [分鐘=20] [區域=3,5,7]
  */
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { Game } from '@/core/game';
 import type { GameState, Item, ItemSlotKind, Rarity, SlotId } from '@/core/types';
 import { generateItem } from '@/systems/items';
@@ -16,9 +16,12 @@ import { Rng } from '@/core/rng';
 const dir = process.argv[2];
 const PER = Number(process.argv[3] ?? 20);
 const MIN = Number(process.argv[4] ?? 20);
-const ZONES = (process.argv[5] ?? '3,5,7').split(',').map(Number);
+const ZONES = (process.argv.filter(x => !x.startsWith('--'))[5] ?? '3,5,7').split(',').map(Number);
 const SLOTS: [ItemSlotKind, SlotId][] = [['weapon', 'weapon'], ['armor', 'armor'], ['helmet', 'helmet'], ['ring', 'ring1'], ['amulet', 'amulet'], ['boots', 'boots']];
 const SEEDS = [11, 23];
+/** --dump=檔案：輸出每件候選裝備的原始數據（輸出、生存、實際表現），給公式比較用 */
+const DUMP = (() => { const a = process.argv.find(x => x.startsWith('--dump=')); return a ? a.slice(7) : undefined; })();
+const dump: unknown[] = [];
 
 const clone = (s: GameState): GameState => JSON.parse(JSON.stringify(s));
 
@@ -102,6 +105,7 @@ for (const f of files) {
       const p1 = combatPower(st, heroStats(st));
       const parts = powerParts(st, heroStats(st));
       const m = measure(st, zone);
+      dump.push({ file: f, level: base.hero.level, cls: base.hero.classId, slot, off0: parts0.offense, ehp0: parts0.ehp, off1: parts.offense, ehp1: parts.ehp, k0: m0.kills, k1: m.kills, d0: m0.deaths, d1: m.deaths, b0: m0.boss, b1: m.boss, noise });
       rows.push({
         dp: (p1 - p0) / p0, dk: (m.kills - m0.kills) / Math.max(1, m0.kills), db: m.boss - m0.boss,
         off: parts.offense / parts0.offense - 1, ehp: parts.ehp / parts0.ehp - 1, slot, name: it.name,
@@ -122,3 +126,4 @@ const geo = all.off.map((o, i) => Math.log(1 + o) + Math.log(1 + all.ehp[i]));
 console.log(`\n全部：戰力↔擊殺 ${spearman(all.dp, all.dk).toFixed(2)}  戰力↔首領 ${spearman(all.dp, all.db).toFixed(2)}`);
 console.log(`替代算法：只看輸出↔擊殺 ${spearman(all.off, all.dk).toFixed(2)} ↔首領 ${spearman(all.off, all.db).toFixed(2)}｜輸出×生存（幾何）↔擊殺 ${spearman(geo, all.dk).toFixed(2)} ↔首領 ${spearman(geo, all.db).toFixed(2)}`);
 console.log(`戰力上升超過 3% 的裝備中，實際變弱的比例：${misleading}/${upCount}（${(misleading / Math.max(1, upCount) * 100).toFixed(0)}%）`);
+if (DUMP) writeFileSync(DUMP, JSON.stringify(dump));
