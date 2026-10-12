@@ -125,6 +125,12 @@ export function animActOf(m: Motion | null): 'idle' | 'atk1' | 'atk2' | 'atk3' |
   }
 }
 
+/** 怪物逐格動畫：只有一組攻擊；首領放技能（施法、重擊）時改用技能那組 */
+export function monAnimActOf(m: Motion | null, hasSkill: boolean): 'idle' | 'atk' | 'skill' {
+  if (!m || m.kind === 'hop') return 'idle';
+  return hasSkill && (m.kind === 'skill' || m.kind === 'cast') ? 'skill' : 'atk';
+}
+
 /** 逐格動畫：四格對應「預備、出手前、命中、收招」，命中那一格對齊出招時間 */
 export function animFrameOf(m: Motion): number {
   const k = m.t / m.dur;

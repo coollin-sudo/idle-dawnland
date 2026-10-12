@@ -1,6 +1,6 @@
 """ChatGPT 產生的角色動畫表（2x2，四格）→ public/art/anim/{角色}/{動作}_{0..3}.webp
 
-用法：python3 -I scripts/anim-frames.py <放 {角色}__{動作}.png 的資料夾>
+用法：python3 scripts/anim-frames.py <放 {角色}__{動作}.png 的資料夾> [--mon]
 
 處理步驟：
 1. 依透明度投影找出 2x2 的切割線，切成四格（假透明的棋盤格背景會先去掉）。
@@ -21,6 +21,11 @@ CANVAS_W, CANVAS_H = 640, 420
 ANCHOR_X, ANCHOR_Y = 320, 404
 IDLE_HEIGHT = 270  # 待機動作的角色身高（像素）
 ACTS = ['idle', 'atk1', 'atk2', 'atk3', 'skill']
+# 怪物：待機、攻擊、（首領）技能；畫布比主角寬，龍、巨魔張開翅膀或噴吐時才放得下
+MON_ACTS = ['idle', 'atk', 'skill']
+MON_CANVAS_W, MON_ANCHOR_X = 800, 400
+# 生成時畫成面向右的怪物，切圖時鏡像成面向左
+FLIP = set()
 # 個別角色的大小微調（武器高舉過頭、帽子很高的角色，用外框算身高會被縮太小）
 SIZE = {}
 
@@ -147,22 +152,32 @@ def frames_of(path):
         band = mask[max(top, bot - int((bot - top) * 0.08)):bot + 1]
         bx = np.where(band)[1]
         foot = float(bx.mean()) if len(bx) else (left + right) / 2
-        out.append({'img': cell, 'top': int(top), 'bot': int(bot), 'cellH': cell.height, 'foot': foot})
+        out.append({'img': cell, 'top': int(top), 'bot': int(bot), 'cellH': cell.height, 'foot': foot, 'mid': (left + right) / 2})
     return out
 
 
-def main(src):
+def main(src, mon=False):
+    """mon=True：怪物（動作 idle／atk／skill，畫布較寬；水平以待機時的外框中心對齊，和原本的單張圖位置一致）"""
+    cw, ch_, ax, ay = (MON_CANVAS_W, CANVAS_H, MON_ANCHOR_X, ANCHOR_Y) if mon else (CANVAS_W, CANVAS_H, ANCHOR_X, ANCHOR_Y)
+    acts_ok = MON_ACTS if mon else ACTS
     files = sorted(glob.glob(os.path.join(src, '*__*.png')))
     chars = {}
     for f in files:
         ch, act = os.path.basename(f)[:-4].split('__')
-        chars.setdefault(ch, {})[act] = f
-    manifest = {}
+        if act in acts_ok:
+            chars.setdefault(ch, {})[act] = f
+    path = os.path.join(DST, 'anim.json')
+    old = json.load(open(path)) if os.path.exists(path) else {}
+    manifest = old.get('chars', {})
+    mons = set(old.get('monsters', []))
     for ch, acts in sorted(chars.items()):
-        sheets = {act: frames_of(p) for act, p in acts.items() if act in ACTS}
+        sheets = {act: frames_of(p) for act, p in acts.items()}
         idle = [fr for fr in sheets.get('idle', []) if fr]
         ref = idle or [fr for fs in sheets.values() for fr in fs if fr]
         scale = IDLE_HEIGHT / float(np.median([fr['bot'] - fr['top'] for fr in ref])) * SIZE.get(ch, 1)
+        # 怪物：腳底中心到外框中心的偏移（待機的中位數），讓整體外框中心落在錨點上
+        shift = float(np.median([fr['mid'] - fr['foot'] for fr in ref])) * scale if mon else 0.0
+        flip = ch in FLIP
         os.makedirs(os.path.join(DST, ch), exist_ok=True)
         manifest[ch] = {}
         for act, frs in sheets.items():
@@ -174,17 +189,26 @@ def main(src):
                     continue
                 lift = (ground - fr['bot'] / fr['cellH']) * fr['cellH'] * scale
                 im = fr['img'].resize((max(1, round(fr['img'].width * scale)), max(1, round(fr['img'].height * scale))), Image.LANCZOS)
-                canvas = Image.new('RGBA', (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
-                ox = round(ANCHOR_X - fr['foot'] * scale)
-                oy = round(ANCHOR_Y - lift - fr['bot'] * scale)
-                canvas.alpha_composite(im, (ox, oy)) if ox >= 0 and oy >= 0 else canvas.paste(im, (ox, oy), im)
+                foot = fr['foot'] * scale
+                if flip:
+                    im = im.transpose(Image.FLIP_LEFT_RIGHT)
+                    foot = im.width - foot
+                canvas = Image.new('RGBA', (cw, ch_), (0, 0, 0, 0))
+                ox = round(ax - foot - (-shift if flip else shift))
+                oy = round(ay - lift - fr['bot'] * scale)
+                # 超出畫布的部分先裁掉再疊（paste 帶遮罩會讓半透明邊緣的透明度被乘兩次）
+                sx, sy = max(0, -ox), max(0, -oy)
+                canvas.alpha_composite(im, (max(0, ox), max(0, oy)), (sx, sy, min(im.width, cw - ox), min(im.height, ch_ - oy)))
                 canvas.save(os.path.join(DST, ch, f'{act}_{i}.webp'), 'WEBP', quality=86, method=6)
                 n += 1
             manifest[ch][act] = n
             print(ch, act, 'frames', n, 'scale %.2f' % scale)
-    with open(os.path.join(DST, 'anim.json'), 'w') as f:
-        json.dump({'canvas': [CANVAS_W, CANVAS_H], 'anchor': [ANCHOR_X, ANCHOR_Y], 'idleHeight': IDLE_HEIGHT, 'chars': manifest}, f, ensure_ascii=False, indent=1)
+        if mon:
+            mons.add(ch)
+    with open(path, 'w') as f:
+        json.dump({'canvas': [CANVAS_W, CANVAS_H], 'anchor': [ANCHOR_X, ANCHOR_Y], 'monCanvas': [MON_CANVAS_W, CANVAS_H], 'monAnchor': [MON_ANCHOR_X, ANCHOR_Y],
+                   'idleHeight': IDLE_HEIGHT, 'monsters': sorted(mons), 'chars': manifest}, f, ensure_ascii=False, indent=1)
 
 
 if __name__ == '__main__':
-    main(sys.argv[1])
+    main(sys.argv[1], '--mon' in sys.argv[2:])

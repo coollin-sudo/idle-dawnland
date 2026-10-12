@@ -7,7 +7,60 @@
   320,
   404
  ],
+ "monCanvas": [
+  800,
+  420
+ ],
+ "monAnchor": [
+  400,
+  404
+ ],
  "idleHeight": 270,
+ "monsters": [
+  "automaton",
+  "balrog",
+  "bat",
+  "boar",
+  "crystal_golem",
+  "fallen_knight",
+  "fire_elem",
+  "frost_dragon",
+  "goblin",
+  "goblin_king",
+  "gold_goblin",
+  "hare",
+  "harpy",
+  "hellhound",
+  "ice_elem",
+  "imp",
+  "lava_golem",
+  "mummy",
+  "nox",
+  "pharaoh",
+  "rat_king",
+  "rock_golem",
+  "salamander",
+  "sand_serpent",
+  "scorpion",
+  "shade",
+  "shroom",
+  "skel_miner",
+  "sky_knight",
+  "slime",
+  "snow_wolf",
+  "spider",
+  "storm_king",
+  "sylph",
+  "tentacle",
+  "thunderbird",
+  "treant",
+  "trial_spirit",
+  "troll",
+  "void_eye",
+  "wisp",
+  "wolf",
+  "yeti"
+ ],
  "chars": {
   "archbishop": {
    "atk1": 4,
@@ -92,6 +145,186 @@
    "atk3": 4,
    "idle": 4,
    "skill": 4
+  },
+  "automaton": {
+   "atk": 4,
+   "idle": 4
+  },
+  "balrog": {
+   "atk": 4,
+   "idle": 4,
+   "skill": 4
+  },
+  "bat": {
+   "atk": 4,
+   "idle": 4
+  },
+  "boar": {
+   "atk": 4,
+   "idle": 4
+  },
+  "crystal_golem": {
+   "atk": 4,
+   "idle": 4
+  },
+  "fallen_knight": {
+   "atk": 4,
+   "idle": 4
+  },
+  "fire_elem": {
+   "atk": 4,
+   "idle": 4
+  },
+  "frost_dragon": {
+   "atk": 4,
+   "idle": 4,
+   "skill": 4
+  },
+  "goblin": {
+   "atk": 4,
+   "idle": 4
+  },
+  "goblin_king": {
+   "atk": 4,
+   "idle": 4,
+   "skill": 4
+  },
+  "gold_goblin": {
+   "atk": 4,
+   "idle": 4
+  },
+  "hare": {
+   "atk": 4,
+   "idle": 4
+  },
+  "harpy": {
+   "atk": 4,
+   "idle": 4
+  },
+  "hellhound": {
+   "atk": 4,
+   "idle": 4
+  },
+  "ice_elem": {
+   "atk": 4,
+   "idle": 4
+  },
+  "imp": {
+   "atk": 4,
+   "idle": 4
+  },
+  "lava_golem": {
+   "atk": 4,
+   "idle": 4
+  },
+  "mummy": {
+   "atk": 4,
+   "idle": 4
+  },
+  "nox": {
+   "atk": 4,
+   "idle": 4,
+   "skill": 4
+  },
+  "pharaoh": {
+   "atk": 4,
+   "idle": 4,
+   "skill": 4
+  },
+  "rat_king": {
+   "atk": 4,
+   "idle": 4
+  },
+  "rock_golem": {
+   "atk": 4,
+   "idle": 4
+  },
+  "salamander": {
+   "atk": 4,
+   "idle": 4
+  },
+  "sand_serpent": {
+   "atk": 4,
+   "idle": 4
+  },
+  "scorpion": {
+   "atk": 4,
+   "idle": 4
+  },
+  "shade": {
+   "atk": 4,
+   "idle": 4
+  },
+  "shroom": {
+   "atk": 4,
+   "idle": 4
+  },
+  "skel_miner": {
+   "atk": 4,
+   "idle": 4
+  },
+  "sky_knight": {
+   "atk": 4,
+   "idle": 4
+  },
+  "slime": {
+   "atk": 4,
+   "idle": 4
+  },
+  "snow_wolf": {
+   "atk": 4,
+   "idle": 4
+  },
+  "spider": {
+   "atk": 4,
+   "idle": 4
+  },
+  "storm_king": {
+   "atk": 4,
+   "idle": 4,
+   "skill": 4
+  },
+  "sylph": {
+   "atk": 4,
+   "idle": 4
+  },
+  "tentacle": {
+   "atk": 4,
+   "idle": 4
+  },
+  "thunderbird": {
+   "atk": 4,
+   "idle": 4
+  },
+  "treant": {
+   "atk": 4,
+   "idle": 4,
+   "skill": 4
+  },
+  "trial_spirit": {
+   "atk": 4,
+   "idle": 4
+  },
+  "troll": {
+   "atk": 4,
+   "idle": 4,
+   "skill": 4
+  },
+  "void_eye": {
+   "atk": 4,
+   "idle": 4
+  },
+  "wisp": {
+   "atk": 4,
+   "idle": 4
+  },
+  "wolf": {
+   "atk": 4,
+   "idle": 4
+  },
+  "yeti": {
+   "atk": 4,
+   "idle": 4
   }
  }
 }

@@ -102,8 +102,13 @@ export const petArt = (id: string) => artUrl(`art/pets/${id}`);
  * 每張是固定大小的畫布，腳底中心對齊在錨點。
  */
 export const ANIM = { w: 640, h: 420, ax: 320, ay: 404, idleH: 270, frames: 4 } as const;
-export type AnimAct = 'idle' | 'atk1' | 'atk2' | 'atk3' | 'skill';
+/** 怪物的畫布比較寬（龍張翅、噴吐），水平錨點是待機時的外框中心 */
+export const MON_ANIM = { ...ANIM, w: 800, ax: 400 } as const;
+export type AnimAct = 'idle' | 'atk1' | 'atk2' | 'atk3' | 'skill' | 'atk';
 export const ANIM_ACTS: AnimAct[] = ['idle', 'atk1', 'atk2', 'atk3', 'skill'];
+export const MON_ACTS: AnimAct[] = ['idle', 'atk', 'skill'];
 export const hasAnim = (char: string) => !!enabled && !!resolve(`art/anim/${char}/idle_0`);
+export const hasAnimAct = (char: string, act: AnimAct) => !!enabled && !!resolve(`art/anim/${char}/${act}_0`);
 export const animFrame = (char: string, act: AnimAct, i: number) => getImage(`art/anim/${char}/${act}_${i}`);
-export const preloadAnim = (char: string) => preloadArt(ANIM_ACTS.flatMap(a => Array.from({ length: ANIM.frames }, (_, i) => `art/anim/${char}/${a}_${i}`)));
+export const preloadAnim = (char: string, acts: AnimAct[] = ANIM_ACTS) =>
+  preloadArt(acts.filter(a => hasAnimAct(char, a)).flatMap(a => Array.from({ length: ANIM.frames }, (_, i) => `art/anim/${char}/${a}_${i}`)));
