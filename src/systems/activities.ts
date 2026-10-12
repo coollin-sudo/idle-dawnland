@@ -1,6 +1,7 @@
 import type { Game } from '@/core/game';
 import { mechOf } from '@/data/bossMechanics';
 import { weekKey } from '@/online/week';
+import { runProgress } from '@/systems/rebirth';
 import { applyGearSwap } from './gearsets';
 import { BOSS_TIME_MS, DIFFICULTIES, REGION_COUNT, STAGES_PER_REGION, WAVES_PER_STAGE, stageLevel } from '@/core/formulas';
 import { todayKey } from '@/core/format';
@@ -200,7 +201,8 @@ export class StageActivity implements Activity {
     if (first) {
       p.best[this.diff] = this.stage;
       const eff = this.diff * 80 + this.stage;
-      if (eff > g.state.rebirth.bestStageEver) g.state.rebirth.bestStageEver = eff;
+      const run = runProgress(p.best, this.diff, this.stage);
+      if (run > g.state.rebirth.bestStageEver) g.state.rebirth.bestStageEver = run;
       if (eff > g.state.records.bestEff) g.state.records.bestEff = eff;
       const gems = this.isBossStage() ? 20 + Math.floor(this.stage / 10) * 10 + this.diff * 30 : 2 + this.diff * 2;
       g.state.cur.gems += gems;

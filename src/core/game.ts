@@ -10,7 +10,7 @@ import { checkProgress } from '@/systems/quests';
 import { trackRates } from '@/systems/offline';
 import { grantStarterKit } from '@/systems/progression';
 import { setNumberStyle } from './format';
-import { potionHeal, potionPrice } from './formulas';
+import { potionHeal, potionPrice, priceLevel } from './formulas';
 
 export const STEP_MS = 100;
 
@@ -168,7 +168,7 @@ export class Game {
     const lv = this.state.hero.level;
     const want = lv < 20 ? 0 : lv < 50 ? 1 : 2;
     for (let t = want; t >= 0; t--) {
-      const cost = potionPrice(t, lv) * 10;
+      const cost = potionPrice(t, priceLevel(this.state.hero)) * 10;
       if (this.state.cur.gold >= cost * 2) {
         this.state.cur.gold -= cost;
         this.state.potions[t] += 10;

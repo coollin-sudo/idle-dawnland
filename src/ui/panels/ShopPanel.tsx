@@ -1,6 +1,6 @@
 import { fmt, fmtDuration } from '@/core/format';
 import { Emo, rich } from '../emoji';
-import { potionHeal, potionPrice, protectGoldPrice, stonePrice } from '@/core/formulas';
+import { potionHeal, potionPrice, priceLevel, protectGoldPrice, stonePrice } from '@/core/formulas';
 import { BLESSINGS, GEM_SHOP } from '@/data/shop';
 import { invCapacity } from '@/systems/loot';
 import { buyBlessing, buyInvSlots, buyMerchant, buyPotion, buyProtect, buyProtectGold, buyStones, ensureMerchant, merchantPrice, PROTECT_GEMS, refreshMerchant } from '@/systems/shop';
@@ -12,7 +12,7 @@ export function ShopPanel() {
   void uiTick.value;
   const gm = g();
   const s = gm.state;
-  const L = s.hero.level;
+  const L = priceLevel(s.hero);
   ensureMerchant(gm);
   const act = (fn: () => void) => { fn(); refresh(); };
   const now = gm.now();

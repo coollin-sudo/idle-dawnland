@@ -13,9 +13,10 @@ import { enhance } from '@/systems/forge';
 import { migrate } from '@/save/storage';
 import { applyOffline } from '@/systems/offline';
 import { claimQuest, currentQuest } from '@/systems/quests';
-import { rebirth } from '@/systems/rebirth';
+import { canRebirth, rebirth, runProgress } from '@/systems/rebirth';
+import { buyProtectGold } from '@/systems/shop';
 import { gainXp } from '@/systems/progression';
-import { xpToNext } from '@/core/formulas';
+import { priceLevel, protectGoldPrice, xpToNext } from '@/core/formulas';
 import type { ClassId } from '@/core/types';
 
 const T0 = 1_700_000_000_000;
@@ -178,6 +179,42 @@ describe('離線、任務與轉生', () => {
     expect(g.state.hero.level).toBe(1);
     expect(g.state.cur.starSouls).toBeGreaterThan(0);
     expect(g.state.rebirth.count).toBe(1);
+  });
+  it('轉生保留金幣與已解鎖的難度', () => {
+    const { g } = makeGame();
+    g.state.rebirth.bestStageEver = 79;
+    g.state.progress.best = [79, 10, -1];
+    g.state.progress.unlockedDifficulty = 1;
+    g.state.cur.gold = 123456;
+    g.state.hero.level = 60;
+    rebirth(g);
+    expect(g.state.cur.gold).toBe(123456);
+    expect(g.state.progress.unlockedDifficulty).toBe(1);
+    expect(g.state.progress.best).toEqual([-1, -1, -1]);
+  });
+  it('轉生後商店不會變便宜（用曾到過的最高等級定價）', () => {
+    const { g } = makeGame();
+    g.state.rebirth.bestStageEver = 49;
+    g.state.hero.level = 70;
+    const before = protectGoldPrice(priceLevel(g.state.hero));
+    rebirth(g);
+    expect(g.state.hero.level).toBe(1);
+    expect(protectGoldPrice(priceLevel(g.state.hero))).toBe(before);
+    g.state.cur.gold = before - 1;
+    buyProtectGold(g);
+    expect(g.state.cur.protect).toBe(0);
+  });
+  it('跳進高難度時，進度依怪物強度換算成普通關卡，不能刷星魂', () => {
+    // 這一輪沒打通普通：惡夢第 1 關只等於普通前段，未達轉生門檻
+    expect(runProgress([-1, -1, -1], 1, 0)).toBeLessThan(49);
+    // 這一輪有打通普通：照原本「難度 × 80 ＋ 關卡」計
+    expect(runProgress([79, -1, -1], 1, 0)).toBe(80);
+    // 換算值不會超過原本的計法，越後面的關卡越高
+    expect(runProgress([-1, -1, -1], 1, 79)).toBeLessThanOrEqual(159);
+    expect(runProgress([-1, -1, -1], 1, 40)).toBeGreaterThan(runProgress([-1, -1, -1], 1, 20));
+    const { g } = makeGame();
+    g.state.rebirth.bestStageEver = runProgress([-1, -1, -1], 1, 0);
+    expect(canRebirth(g)).toBe(false);
   });
 });
 

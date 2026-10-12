@@ -21,9 +21,9 @@ export function RebirthPanel() {
           <div style={{ fontSize: '40px' }}><Emo e="🌌" /></div>
           <div class="grow">
             <div style={{ fontWeight: 900, fontSize: '16px' }}>轉生</div>
-            <div class="small muted">放棄目前的等級、關卡進度、金幣、技能與天賦點，換取「星魂」。裝備、寵物、寶石、材料、成就與圖鑑都會保留。</div>
-            <div style={{ marginTop: '6px' }}>轉生可獲得：<b class="gold"><CIcon k="starSouls" />{fmt(souls)}</b>　<span class="small muted">（依歷史最高關卡與等級計算）</span></div>
-            <div class="small muted">轉生次數 {s.rebirth.count}・轉生後從第 {startStageAfterRebirth(gm) + 1} 關開始</div>
+            <div class="small muted">放棄目前的等級、關卡進度、技能與天賦點，換取「星魂」。金幣、裝備、寵物、寶石、材料、已解鎖的難度、成就與圖鑑都會保留。</div>
+            <div style={{ marginTop: '6px' }}>轉生可獲得：<b class="gold"><CIcon k="starSouls" />{fmt(souls)}</b>　<span class="small muted">（依這一輪最遠的進度與等級計算）</span></div>
+            <div class="small muted">轉生次數 {s.rebirth.count}・轉生後從普通難度第 {startStageAfterRebirth(gm) + 1} 關開始</div>
             <div style={{ marginTop: '6px' }}>
               星魂共鳴：攻擊、魔攻、生命額外 <b class="gold">+{fmt(Math.round(resonancePct(earned)))}%</b>
               {souls > 0 && <> → 轉生後 <b class="good">+{fmt(Math.round(resonancePct(earned + souls)))}%</b></>}
@@ -32,7 +32,7 @@ export function RebirthPanel() {
           </div>
           <button class="btn primary" disabled={!ok || souls <= 0} onClick={() => confirmModal('確定轉生？', <p>將重置等級與關卡進度，獲得 <CIcon k="starSouls" />{fmt(souls)} 星魂。</p>, () => { rebirth(gm); refresh(); }, '轉生', true)}>轉生</button>
         </div>
-        {!ok && <div class="small bad" style={{ marginTop: '6px' }}>需要先在普通難度通關第 5 區（霜語山脈）。</div>}
+        {!ok && <div class="small bad" style={{ marginTop: '6px' }}>這一輪需要先推進到相當於普通難度第 5 區（霜語山脈）通關。直接打已解鎖的惡夢、地獄也算，會依怪物強度換算。</div>}
       </div>
 
       <h3>星魂天賦 <span class="count">持有 <Cost k="starSouls" n={s.cur.starSouls} /></span></h3>

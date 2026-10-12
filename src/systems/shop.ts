@@ -1,5 +1,5 @@
 import type { Game } from '@/core/game';
-import { potionPrice, protectGoldPrice, stonePrice } from '@/core/formulas';
+import { potionPrice, priceLevel, protectGoldPrice, stonePrice } from '@/core/formulas';
 import type { Item } from '@/core/types';
 import { BLESSING_MAP, GEM_SHOP, MERCHANT_REFRESH_MS, MERCHANT_SIZE } from '@/data/shop';
 import { DUNGEON_MAP } from '@/data/dungeons';
@@ -10,7 +10,7 @@ import { dungeonEntries } from './activities';
 export const PROTECT_GEMS = 25;
 
 export function buyPotion(g: Game, tier: 0 | 1 | 2, n: number) {
-  const cost = potionPrice(tier, g.state.hero.level) * n;
+  const cost = potionPrice(tier, priceLevel(g.state.hero)) * n;
   if (g.state.cur.gold < cost) return g.toast('金幣不足', 'warn');
   g.state.cur.gold -= cost;
   g.state.potions[tier] += n;
@@ -18,7 +18,7 @@ export function buyPotion(g: Game, tier: 0 | 1 | 2, n: number) {
 }
 
 export function buyStones(g: Game, n: number) {
-  const cost = stonePrice(g.state.hero.level) * n;
+  const cost = stonePrice(priceLevel(g.state.hero)) * n;
   if (g.state.cur.gold < cost) return g.toast('金幣不足', 'warn');
   g.state.cur.gold -= cost;
   g.state.cur.stones += n;
@@ -26,7 +26,7 @@ export function buyStones(g: Game, n: number) {
 }
 
 export function buyProtectGold(g: Game, n = 1) {
-  const cost = protectGoldPrice(g.state.hero.level) * n;
+  const cost = protectGoldPrice(priceLevel(g.state.hero)) * n;
   if (g.state.cur.gold < cost) return g.toast('金幣不足', 'warn');
   g.state.cur.gold -= cost;
   g.state.cur.protect += n;

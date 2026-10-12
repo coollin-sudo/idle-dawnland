@@ -74,6 +74,11 @@ export const sellPrice = (ilvl: number, rarity: number) => Math.round((5 + ilvl 
 // ---------- 經濟 ----------
 export const potionHeal = (tier: number) => [0.25, 0.4, 0.6][tier];
 export const potionPrice = (tier: number, heroLvl: number) => Math.round([10, 40, 150][tier] * (1 + heroLvl / 15));
+/**
+ * 商店定價用的等級：取「目前等級」與「曾到過的最高等級」較高者。
+ * 轉生後等級回到 1，價格若跟著變便宜，就能低價囤強化石、保護卷軸與藥水。
+ */
+export const priceLevel = (h: { level: number; maxLevel?: number }) => Math.max(h.level, h.maxLevel ?? 1);
 export const stonePrice = (heroLvl: number) => Math.round(80 + heroLvl * 6);
 /** 保護卷軸的金幣價格（金幣的長期消耗：強化到 +20 需要大量保護卷軸） */
 export const protectGoldPrice = (heroLvl: number) => Math.round(3000 + heroLvl * heroLvl * 12);
