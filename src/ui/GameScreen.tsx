@@ -20,7 +20,7 @@ import { claimQuest, currentQuest, questProgress, describeReward, dailyProgress 
 import { loadoutSlots, talentAvailable, xpNeed } from '@/systems/progression';
 import { CHAPTERS } from '@/data/quests';
 import { Bar, CIcon, SkillIcon } from './common';
-import { g, getScene, logs, refresh, setScene, tab, uiTick, type TabId } from './store';
+import { g, getScene, isPhone, logs, refresh, setScene, tab, uiTick, type TabId } from './store';
 import { audio } from '@/audio/audio';
 import { HeroPanel } from './panels/HeroPanel';
 import { BagPanel } from './panels/BagPanel';
@@ -253,6 +253,7 @@ function LogBox() {
 }
 
 const TABS: { id: TabId; name: string; icon: string }[] = [
+  { id: 'adventure', name: '冒險', icon: '⚔️' },
   { id: 'hero', name: '角色', icon: '🧝' },
   { id: 'bag', name: '背包', icon: '🎒' },
   { id: 'skills', name: '技能', icon: '✨' },
@@ -305,11 +306,11 @@ function Tabs() {
         const lock = tabLocked(t.id);
         return (
           <button
-            class={'tab' + (tab.value === t.id ? ' on' : '') + (lock ? ' locked' : '')}
+            class={'tab' + (tab.value === t.id ? ' on' : '') + (lock ? ' locked' : '') + (t.id === 'adventure' ? ' phone-only' : '')}
             title={lock ?? t.name}
-            onClick={() => { if (!lock) tab.value = t.id; else g().toast(lock, 'warn', '🔒'); }}
+            onClick={() => { if (!lock) { tab.value = t.id; if (isPhone()) window.scrollTo(0, 0); } else g().toast(lock, 'warn', '🔒'); }}
           >
-            <span class="ti">{(() => { const art = artUrl(t.id === 'rank' ? 'art/emo/trophy' : `art/ui/${t.id}`); return art ? <img class="tiimg" src={art} alt="" /> : t.icon; })()}</span>
+            <span class="ti">{(() => { const art = t.id === 'adventure' ? artUrl('art/emo/swords') : artUrl(t.id === 'rank' ? 'art/emo/trophy' : `art/ui/${t.id}`); return art ? <img class="tiimg" src={art} alt="" /> : t.icon; })()}</span>
             {t.name}
             {!lock && tabBadge(t.id) && <span class="badge" />}
           </button>
@@ -322,6 +323,7 @@ function Tabs() {
 function Panel() {
   void uiTick.value;
   switch (tab.value) {
+    case 'adventure':
     case 'hero': return <HeroPanel />;
     case 'bag': return <BagPanel />;
     case 'skills': return <SkillsPanel />;
@@ -343,7 +345,8 @@ export function GameScreen() {
   return (
     <div class="shell">
       <TopBar />
-      <div class="main">
+      {/* 手機：「冒險」只顯示戰鬥畫面，其他分頁只顯示功能內容 */}
+      <div class={'main ' + (tab.value === 'adventure' ? 'm-adv' : 'm-panel')}>
         <div class="left">
           <BattleView />
           <div class="panel">

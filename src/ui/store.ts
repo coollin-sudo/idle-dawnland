@@ -12,7 +12,7 @@ import { audio } from '@/audio/audio';
 import { bindAudio } from '@/audio/bindings';
 import type { BattleScene } from '@/render/scene';
 
-export type TabId = 'hero' | 'bag' | 'skills' | 'talents' | 'forge' | 'pets' | 'map' | 'challenge' | 'shop' | 'quests' | 'collection' | 'rank' | 'rebirth' | 'settings';
+export type TabId = 'adventure' | 'hero' | 'bag' | 'skills' | 'talents' | 'forge' | 'pets' | 'map' | 'challenge' | 'shop' | 'quests' | 'collection' | 'rank' | 'rebirth' | 'settings';
 
 export const game = signal<Game | null>(null);
 export const uiTick = signal(0);
@@ -40,6 +40,8 @@ let seq = 1;
 export const setScene = (s: BattleScene | null) => { scene = s; };
 export const getScene = () => scene;
 export const g = () => game.value!;
+/** 手機版面：戰鬥畫面與功能頁分開顯示（和 styles.css 的 640px 斷點一致） */
+export const isPhone = () => typeof matchMedia !== 'undefined' && matchMedia('(max-width: 640px)').matches;
 /** 讓 UI 立刻重繪 */
 export const refresh = () => { uiTick.value++; };
 
@@ -68,7 +70,8 @@ export function startGame(state: GameState, opts: { offline?: boolean } = {}) {
   selectedItem.value = null;
   forgeItem.value = null;
   gearView.value = null;
-  tab.value = 'hero';
+  // 手機一進遊戲先看戰鬥畫面（「冒險」）；電腦版左邊一直是戰鬥，右邊預設角色頁
+  tab.value = isPhone() ? 'adventure' : 'hero';
   if (typeof window !== 'undefined') window.scrollTo(0, 0);
   const gm = new Game(state);
   game.value = gm;

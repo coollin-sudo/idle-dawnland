@@ -754,3 +754,14 @@ html.skin .cls.on { box-shadow: 0 0 0 2px var(--gold), 0 0 26px rgba(240,194,90,
 
 /* 遊戲畫面不縮放：連點兩下不放大（touch-action），雙指縮放由 main.tsx 擋掉 */
 html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+
+/* ---------- 手機：戰鬥畫面與功能頁分開，底部選單兩排 ---------- */
+.tab.phone-only { display: none; }
+@media (max-width: 640px) {
+  .tab.phone-only { display: flex; }
+  .main.m-panel .left { display: none; }
+  .main.m-adv .tab-body { display: none; }
+  .tabs { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; overflow: visible; padding: 5px 4px calc(5px + env(safe-area-inset-bottom)); }
+  .tab { flex: none; min-width: 0; padding: 4px 0; font-size: 10.5px; }
+  .shell { padding-bottom: calc(126px + env(safe-area-inset-bottom)); }
+}
