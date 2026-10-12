@@ -12,7 +12,8 @@ export function applySkin() {
   const root = document.documentElement;
   const urls = Object.entries(PARTS).map(([k, f]) => [k, artUrl(`art/skin/${f}`)] as const);
   if (urls.some(([, u]) => !u)) { root.classList.remove('skin'); return; }
-  for (const [k, u] of urls) root.style.setProperty(`--skin-${k}`, `url("${u}")`);
+  // 轉成絕對網址：CSS 變數裡的相對路徑會以「使用它的 CSS 檔」位置解析（assets/），會找不到圖
+  for (const [k, u] of urls) root.style.setProperty(`--skin-${k}`, `url("${new URL(u!, location.href).href}")`);
   root.classList.add('skin');
 }
 

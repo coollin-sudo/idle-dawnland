@@ -8,6 +8,7 @@ import { activeSaveKey, clearState, exportJson, importText, saveState } from '@/
 import { Modal, Switch, confirmModal } from '../common';
 import { closeModal, exitToLauncher, g, openModal, refresh, saveNow, startGame, stopGame, uiTick } from '../store';
 import { deleteChar, loadIndex } from '@/save/accounts';
+import { Capacitor } from '@capacitor/core';
 import type { GameState } from '@/core/types';
 
 export function SettingsPanel() {
@@ -77,6 +78,13 @@ export function SettingsPanel() {
   );
 }
 
+async function shareNative(filename: string, blob: Blob) {
+  const { Filesystem, Directory, Encoding } = await import('@capacitor/filesystem');
+  const { Share } = await import('@capacitor/share');
+  const res = await Filesystem.writeFile({ path: filename, data: await blob.text(), directory: Directory.Cache, encoding: Encoding.UTF8 });
+  await Share.share({ title: filename, files: [res.uri] });
+}
+
 /** 刪除目前這個角色：清掉存檔，並從帳號的角色位移除 */
 function deleteActiveChar() {
   const key = activeSaveKey();
@@ -88,11 +96,15 @@ function deleteActiveChar() {
   clearState(key);
 }
 
-/** 把目前進度下載成 JSON 檔 */
+/** 把目前進度下載成 JSON 檔（App 版改用 iOS 分享面板：存到「檔案」、AirDrop 或傳給自己） */
 function downloadSave() {
   const gm = g();
   saveNow();
   const { filename, blob } = exportJson(gm.state);
+  if (Capacitor.isNativePlatform()) {
+    void shareNative(filename, blob).then(() => gm.toast(`已匯出 ${filename}`, 'good', '💾')).catch(() => gm.toast('匯出取消或失敗', 'warn'));
+    return;
+  }
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

@@ -728,3 +728,26 @@ html.skin .tab-body h3 {
 html.skin .stage-top { z-index: 6; left: 18px; right: 18px; top: 16px; }
 html.skin .stage-wrap::after { border-image-width: 20px; }
 html.skin .topbar { padding-left: 40px; padding-right: 40px; }
+
+/* iPhone 瀏海／動態島：App 版與「加入主畫面」全螢幕時，頂部列與左右避開安全區 */
+.topbar { padding-top: calc(10px + env(safe-area-inset-top)); }
+.shell { padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
+.create { padding-top: calc(40px + env(safe-area-inset-top)); }
+@media (max-width: 640px) {
+  .topbar { padding-top: calc(8px + env(safe-area-inset-top)); }
+  .shell { padding-left: max(8px, env(safe-area-inset-left)); padding-right: max(8px, env(safe-area-inset-right)); }
+}
+/* iOS 對小於 16px 的輸入框聚焦時會自動放大整個畫面 */
+@media (pointer: coarse) { .input, input, textarea, select { font-size: 16px; } }
+/* 手機：頂部列會折成好幾行，長條圖會被拉高變形，改用面板框 */
+@media (max-width: 640px) {
+  html.skin .topbar {
+    border-width: 0;
+    border-image-source: var(--skin-frame);
+    border-image-slice: 68 fill;
+    border-image-width: 18px;
+    padding-left: 16px; padding-right: 16px;
+  }
+}
+/* 建立角色：外框被美術框取代後，選中的職業改用金色光暈標示 */
+html.skin .cls.on { box-shadow: 0 0 0 2px var(--gold), 0 0 26px rgba(240,194,90,.45); transform: translateY(-3px); }

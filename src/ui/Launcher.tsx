@@ -104,7 +104,7 @@ function AccountList({ idx, onPick, onPlayLast, onChanged }: { idx: AccountIndex
         {adding ? (
           <div class="acc-card panel acc-new">
             <div class="acc-name">新帳號</div>
-            <input class="input" maxLength={12} placeholder="帳號名稱（例如：主帳、小明）" value={name} onInput={e => setName((e.target as HTMLInputElement).value)} onKeyDown={e => { if (e.key === 'Enter') add(); }} autoFocus />
+            <input class="input" maxLength={12} placeholder="帳號名稱（例如：主帳、小明）" value={name} onInput={e => setName((e.target as HTMLInputElement).value)} onKeyDown={e => { if (e.key === 'Enter') add(); }} autoFocus={finePointer()} />
             <div class="row" style={{ gap: '6px', marginTop: '8px', justifyContent: 'center' }}>
               <button class="btn primary sm" onClick={add}>建立帳號</button>
               {idx.accounts.length > 0 && <button class="btn ghost sm" onClick={() => setAdding(false)}>取消</button>}
@@ -181,3 +181,6 @@ function className(classId: string, advId: string | null) {
   const adv = advId ? ADVANCES[advId as keyof typeof ADVANCES] : null;
   return adv?.name ?? c?.name ?? '';
 }
+
+/** 只在有滑鼠的裝置自動聚焦輸入框；手機一打開就跳鍵盤很干擾 */
+const finePointer = () => typeof matchMedia !== 'undefined' && matchMedia('(pointer: fine)').matches;

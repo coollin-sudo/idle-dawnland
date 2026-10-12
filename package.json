@@ -9,14 +9,20 @@
     "preview": "vite preview",
     "test": "vitest run",
     "sim": "vite-node scripts/balance-sim.ts",
-    "art-prompts": "vite-node scripts/gen-art-prompts.ts"
+    "art-prompts": "vite-node scripts/gen-art-prompts.ts",
+    "ios": "npm run build && npx cap sync ios"
   },
   "dependencies": {
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/filesystem": "^8.1.4",
+    "@capacitor/ios": "^8.5.3",
+    "@capacitor/share": "^8.0.3",
     "@preact/signals": "^2.11.3",
     "preact": "^11.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.29.7",
+    "@capacitor/cli": "^8.5.3",
     "@preact/preset-vite": "^2.10.6",
     "@types/node": "^26.6.4",
     "typescript": "^7.0.2",

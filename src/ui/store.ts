@@ -69,6 +69,7 @@ export function startGame(state: GameState, opts: { offline?: boolean } = {}) {
   forgeItem.value = null;
   gearView.value = null;
   tab.value = 'hero';
+  if (typeof window !== 'undefined') window.scrollTo(0, 0);
   const gm = new Game(state);
   game.value = gm;
   setNumberStyle(state.settings.numberStyle);
