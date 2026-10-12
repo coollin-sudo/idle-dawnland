@@ -6,6 +6,11 @@ import { Capacitor } from '@capacitor/core';
 
 render(<App />, document.getElementById('app')!);
 
+// 遊戲畫面不縮放：iOS Safari 會忽略 user-scalable=no，雙指縮放要另外擋（連點放大由 CSS touch-action 處理，不會吃掉快速連點的按鈕）
+if (typeof document !== 'undefined') {
+  for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
+}
+
 // 開發模式：方便在主控台檢查遊戲狀態
 if (import.meta.env.DEV) (window as unknown as { __dawn: typeof store }).__dawn = store;
 

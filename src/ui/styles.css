@@ -751,3 +751,6 @@ html.skin .topbar { padding-left: 40px; padding-right: 40px; }
 }
 /* 建立角色：外框被美術框取代後，選中的職業改用金色光暈標示 */
 html.skin .cls.on { box-shadow: 0 0 0 2px var(--gold), 0 0 26px rgba(240,194,90,.45); transform: translateY(-3px); }
+
+/* 遊戲畫面不縮放：連點兩下不放大（touch-action），雙指縮放由 main.tsx 擋掉 */
+html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
