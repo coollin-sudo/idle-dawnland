@@ -1,7 +1,7 @@
 import { fmt } from '@/core/format';
 import { Emo, rich } from '../emoji';
 import { STAR_NODES, starCost } from '@/data/meta';
-import { canRebirth, rebirth, resonancePct, soulsPreview, starUpgrade, startStageAfterRebirth } from '@/systems/rebirth';
+import { canRebirth, rebirth, resonancePct, skipHint, soulsPreview, starUpgrade, startStageAfterRebirth } from '@/systems/rebirth';
 import { CIcon, Cost, NpcHeader, confirmModal } from '../common';
 import { g, refresh, uiTick } from '../store';
 
@@ -12,6 +12,7 @@ export function RebirthPanel() {
   const souls = soulsPreview(gm);
   const ok = canRebirth(gm);
   const earned = s.rebirth.soulsEarned ?? 0;
+  const skip = skipHint(gm);
   return (
     <div>
       <NpcHeader npc="mila" lines={['碎片會吸收你的戰鬥經驗，凝結成星魂。', '轉生之後，靈魂本身會變得更強。', '覺得前進變慢的時候，就是轉生的好時機。']} />
@@ -23,6 +24,11 @@ export function RebirthPanel() {
             <div style={{ fontWeight: 900, fontSize: '16px' }}>轉生</div>
             <div class="small muted">放棄目前的等級、關卡進度、技能與天賦點，換取「星魂」。金幣、裝備、寵物、寶石、材料、已解鎖的難度、成就與圖鑑都會保留。</div>
             <div style={{ marginTop: '6px' }}>轉生可獲得：<b class="gold"><CIcon k="starSouls" />{fmt(souls)}</b>　<span class="small muted">（依這一輪最遠的進度與等級計算）</span></div>
+            {skip && (
+              <div class="small" style={{ marginTop: '4px', color: '#f5d08a' }}>
+                <Emo e="💡" /> 這一輪還沒打通{skip.need}，{skip.target}的進度依怪物強度換算成普通關卡。打通{skip.need}後，這次轉生可獲得的星魂會從 {fmt(skip.now)} 增加到 <b class="gold">{fmt(skip.full)}</b>。
+              </div>
+            )}
             <div class="small muted">轉生次數 {s.rebirth.count}・轉生後從普通難度第 {startStageAfterRebirth(gm) + 1} 關開始</div>
             <div style={{ marginTop: '6px' }}>
               星魂共鳴：攻擊、魔攻、生命額外 <b class="gold">+{fmt(Math.round(resonancePct(earned)))}%</b>

@@ -13,7 +13,7 @@ import { enhance } from '@/systems/forge';
 import { migrate } from '@/save/storage';
 import { applyOffline } from '@/systems/offline';
 import { claimQuest, currentQuest } from '@/systems/quests';
-import { canRebirth, rebirth, runProgress } from '@/systems/rebirth';
+import { canRebirth, rebirth, runBest, runProgress, skipHint } from '@/systems/rebirth';
 import { buyProtectGold } from '@/systems/shop';
 import { gainXp } from '@/systems/progression';
 import { priceLevel, protectGoldPrice, xpToNext } from '@/core/formulas';
@@ -215,6 +215,19 @@ describe('離線、任務與轉生', () => {
     const { g } = makeGame();
     g.state.rebirth.bestStageEver = runProgress([-1, -1, -1], 1, 0);
     expect(canRebirth(g)).toBe(false);
+  });
+  it('跳關時轉生頁會提示打通前一個難度能多拿多少星魂；打通後進度立刻改用完整算法', () => {
+    const { g } = makeGame();
+    g.state.progress.unlockedDifficulty = 2;
+    g.state.progress.best = [60, -1, 40];
+    g.state.rebirth.bestStageEver = runBest(g.state.progress.best);
+    const hint = skipHint(g)!;
+    expect(hint.need).toBe('惡夢');
+    expect(hint.full).toBeGreaterThan(hint.now);
+    g.state.progress.best = [60, 79, 40];
+    expect(runBest(g.state.progress.best)).toBe(200);
+    g.state.rebirth.bestStageEver = runBest(g.state.progress.best);
+    expect(skipHint(g)).toBeNull();
   });
 });
 

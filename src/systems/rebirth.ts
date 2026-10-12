@@ -32,18 +32,45 @@ export function runProgress(best: number[], difficulty: number, stage: number) {
   return Math.min(full, normalEquivalent(difficulty, stage));
 }
 
+/** 這一輪目前的推進度：各難度已通關的最遠關卡取最高（打通前一個難度後，高難度的進度會立刻改用完整算法） */
+export function runBest(best: number[]) {
+  let out = -1;
+  best.forEach((b, d) => { if (b >= 0) out = Math.max(out, runProgress(best, d, b)); });
+  return out;
+}
+
 /** 這一輪要推進到相當於普通難度第 5 區（霜語山脈）通關，才能轉生 */
 export function canRebirth(g: Game) {
   return g.state.rebirth.bestStageEver >= REBIRTH_REGION * 10 - 1;
 }
 
 export function soulsPreview(g: Game) {
-  const eff = g.state.rebirth.bestStageEver + 1;
+  return soulsAt(g, g.state.rebirth.bestStageEver);
+}
+
+/** 推進度 progress（難度 × 80 ＋ 關卡，或等效普通關卡）時轉生可得的星魂 */
+function soulsAt(g: Game, progress: number) {
+  const eff = progress + 1;
   if (eff <= 0) return 0;
   const node = STAR_NODES.find(n => n.special === 'souls')!;
   const bonus = 1 + (g.state.rebirth.ranks[node.id] ?? 0) * (node.per ?? 0) / 100;
   const levelPart = g.state.hero.level / 4;
   return Math.floor((Math.pow(eff, 1.5) / 5 + levelPart) * bonus);
+}
+
+/**
+ * 跳關提示：這一輪直接打了高難度、卻還沒打通前一個難度時，
+ * 告訴玩家打通前一個難度後，這次轉生的星魂會變成多少（沒有差別時回傳 null）。
+ */
+export function skipHint(g: Game): { need: string; target: string; now: number; full: number } | null {
+  const best = g.state.progress.best;
+  let pick = -1;
+  for (let d = 1; d < best.length; d++) if (best[d] >= 0 && best[d - 1] < LAST_STAGE) pick = d;
+  if (pick < 0) return null;
+  const now = soulsPreview(g);
+  const full = soulsAt(g, Math.max(g.state.rebirth.bestStageEver, pick * 80 + best[pick]));
+  if (full <= now) return null;
+  return { need: DIFFICULTIES[pick - 1].name, target: DIFFICULTIES[pick].name, now, full };
 }
 
 export function startStageAfterRebirth(g: Game) {
