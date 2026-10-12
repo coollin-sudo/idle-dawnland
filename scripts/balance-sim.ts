@@ -19,6 +19,7 @@ import { claimEgg, startHatch } from '@/systems/pets';
 import { canRebirth, rebirth, resonancePct, soulsPreview, starUpgrade } from '@/systems/rebirth';
 import { STAR_NODES, starCost } from '@/data/meta';
 import { travel } from '@/systems/activities';
+import { stageLevel } from '@/core/formulas';
 import { regionOfStage } from '@/data/regions';
 import { dungeonEntries, startDungeon, startTower } from '@/systems/activities';
 import { allocTalents, smartSetup } from './lib/smart';
@@ -33,6 +34,8 @@ const STALL_H = 6;
 /** --spec=0 / --spec=1：所有技能統一選第一或第二種專精（比較專精強度） */
 /** --smart：打到首領時，依首領機制調整技能欄（模擬會動腦的玩家）；預設是完全不調整的玩家 */
 const SMART = process.argv.includes('--smart');
+/** --jump：轉生後不重打普通，等級跟得上就直接去打已解鎖的最高難度（比較兩種轉生後的玩法） */
+const JUMP = process.argv.includes('--jump');
 /** --weeks：輸出每區「到達首領」與「打倒首領」的時間 */
 /** --snap=目錄：到達每區首領時存下遊戲狀態（給 boss-trial.ts 測試用） */
 const SNAP = (() => { const a = process.argv.find(x => x.startsWith('--snap=')); return a ? a.slice(7) : undefined; })();
@@ -72,6 +75,12 @@ function manage(g: Game) {
   if (LONG && g.activity.kind === 'stage') {
     const p = s.progress;
     if (p.unlockedDifficulty > p.difficulty && p.best[p.difficulty] >= 79) travel(g, Math.max(0, p.best[p.difficulty + 1]), p.difficulty + 1);
+    else if (JUMP && p.unlockedDifficulty > p.difficulty) {
+      // 已解鎖的最高難度：等級追到下一關怪物等級前 3 級就跳過去
+      const d = p.unlockedDifficulty;
+      const next = Math.max(0, p.best[d] + 1);
+      if (s.hero.level >= stageLevel(d, Math.min(79, next)) - 3) travel(g, Math.min(79, next), d);
+    }
   }
   // 星魂：便宜的先買
   if (LONG) {
@@ -96,7 +105,7 @@ for (const cls of classes) {
   const g = new Game(state, { headless: true, now: () => clock });
   const t0 = performance.now();
   const rows: string[] = [];
-  const marks = new Set(LONG ? [24, 48, 72, 120, 168, 240, 336, 504, 720] : hours > 200 ? [1, 3, 24, 72, 168, 336, 504, 672, 840, 1008, 1176] : [0.5, 1, 2, 3, 6, 12, 24, 36, 48, 72, 96, 120, 168]);
+  const marks = new Set(LONG ? [24, 72, 168, 336, 504, 720, 1008, 1344, 1680, 2016, 2400, 2880] : hours > 200 ? [1, 3, 24, 72, 168, 336, 504, 672, 840, 1008, 1176] : [0.5, 1, 2, 3, 6, 12, 24, 36, 48, 72, 96, 120, 168]);
   let lastBestSum = -99, lastImprove = 0;
   const rebirthLog: string[] = [];
   const arrive: number[] = [], clear: number[] = [];
@@ -111,7 +120,7 @@ for (const cls of classes) {
       const worth = (100 + resonancePct(earned + soulsPreview(g))) / (100 + resonancePct(earned)) >= 1.25;
       if (canRebirth(g) && worth && min - lastImprove > STALL_H * 60 && g.activity.kind === 'stage') {
         const souls = soulsPreview(g);
-        rebirthLog.push(`${(min / 60).toFixed(0)}h 轉生#${g.state.rebirth.count + 1}（Lv${g.state.hero.level} 最佳${g.state.progress.best.join('/')} 星魂+${souls}）`);
+        rebirthLog.push(`${(min / 60).toFixed(0)}h 轉生#${g.state.rebirth.count + 1}（Lv${g.state.hero.level} 最佳${g.state.progress.best.join('/')} 本輪進度${g.state.rebirth.bestStageEver} 星魂+${souls}）`);
         rebirth(g);
         lastBestSum = -99; lastImprove = min;
       }
