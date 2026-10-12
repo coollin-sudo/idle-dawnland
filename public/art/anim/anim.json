@@ -36,6 +36,18 @@
   "lava_golem",
   "mummy",
   "nox",
+  "pet_beetle",
+  "pet_fox",
+  "pet_goblin",
+  "pet_golem",
+  "pet_griffin",
+  "pet_icedrake",
+  "pet_lantern",
+  "pet_shadowdrake",
+  "pet_slime",
+  "pet_snowbun",
+  "pet_sprite",
+  "pet_volt",
   "pharaoh",
   "rat_king",
   "rock_golem",
@@ -323,6 +335,54 @@
    "idle": 4
   },
   "yeti": {
+   "atk": 4,
+   "idle": 4
+  },
+  "pet_beetle": {
+   "atk": 4,
+   "idle": 4
+  },
+  "pet_fox": {
+   "atk": 4,
+   "idle": 4
+  },
+  "pet_goblin": {
+   "atk": 4,
+   "idle": 4
+  },
+  "pet_golem": {
+   "atk": 4,
+   "idle": 4
+  },
+  "pet_griffin": {
+   "atk": 4,
+   "idle": 4
+  },
+  "pet_icedrake": {
+   "atk": 4,
+   "idle": 4
+  },
+  "pet_lantern": {
+   "atk": 4,
+   "idle": 4
+  },
+  "pet_shadowdrake": {
+   "atk": 4,
+   "idle": 4
+  },
+  "pet_slime": {
+   "atk": 4,
+   "idle": 4
+  },
+  "pet_snowbun": {
+   "atk": 4,
+   "idle": 4
+  },
+  "pet_sprite": {
+   "atk": 4,
+   "idle": 4
+  },
+  "pet_volt": {
    "atk": 4,
    "idle": 4
   }

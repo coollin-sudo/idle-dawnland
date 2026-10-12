@@ -290,7 +290,7 @@ export class BattleScene {
           a.x = hx; a.spawn = 1;
           const adv = (u.look as { advId?: string | null }).advId;
           preloadAnim(adv ?? u.defId);
-        } else if (u.kind === 'monster' && mdef && hasAnim(mdef.id)) preloadAnim(mdef.id, MON_ACTS);
+        } else if ((u.kind === 'monster' || u.kind === 'pet') && mdef && hasAnim(mdef.id)) preloadAnim(mdef.id, MON_ACTS);
         this.actors.set(u.uid, a);
       }
       if (u.kind === 'monster' || u.kind === 'summon') {
@@ -1001,7 +1001,7 @@ export class BattleScene {
       const flip = u.side === 'enemy';
       const imgPath = u.kind === 'monster' ? monsterImage(a.mdef.id) : u.kind === 'pet' ? petImage(a.mdef.id) : null;
       // 美術圖本身已朝向正確方向（怪物面左、寵物面右），不鏡像，只決定突進方向
-      if (u.kind === 'monster' && hasAnim(a.mdef.id) && this.drawAnimMonster(ctx, a, a.mdef.id, flip ? -1 : 1)) { /* 逐格動畫 */ }
+      if ((u.kind === 'monster' || u.kind === 'pet') && hasAnim(a.mdef.id) && this.drawAnimMonster(ctx, a, a.mdef.id, flip ? -1 : 1)) { /* 逐格動畫 */ }
       else if (imgPath) this.drawImageUnit(ctx, imgPath, a.height * 1.1, flip ? -1 : 1, attackK, a);
       else {
         const mp = this.motionPose(a);
@@ -1033,14 +1033,19 @@ export class BattleScene {
     return true;
   }
 
-  /** 逐格動畫的怪物：大小以原本單張圖為準（待機時的外框高度＝單張圖的高度），首領放技能時用技能那組 */
+  /** 逐格動畫的怪物與寵物：大小以原本單張圖為準（待機時的外框高度＝單張圖的高度），首領放技能時用技能那組 */
   private drawAnimMonster(ctx: Ctx, a: Actor, id: string, dir: 1 | -1): boolean {
     const act = monAnimActOf(a.motion, hasAnimAct(id, 'skill'));
-    const i = a.motion ? animFrameOf(a.motion) : Math.floor(this.time * 4 + a.seed) % ANIM.frames;
+    // 寵物跟著主角趕路時，待機那組播快一點並小跳步
+    const walking = a.kind === 'pet' && this.walk > 0 && !a.motion;
+    const i = a.motion ? animFrameOf(a.motion) : Math.floor(this.time * (walking ? 9 : 4) + a.seed) % ANIM.frames;
     const img = animFrame(id, act, i) ?? animFrame(id, 'idle', 0);
     if (!img) return false;
     const h = a.height * 1.1;
+    ctx.save();
+    if (walking) ctx.translate(0, -Math.abs(Math.sin(this.time * 10)) * 4);
     this.drawAnimFrame(ctx, a, img, MON_ANIM, h, dir, h * 0.32);
+    ctx.restore();
     return true;
   }
 

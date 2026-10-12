@@ -125,9 +125,9 @@ export function animActOf(m: Motion | null): 'idle' | 'atk1' | 'atk2' | 'atk3' |
   }
 }
 
-/** 怪物逐格動畫：只有一組攻擊；首領放技能（施法、重擊）時改用技能那組 */
+/** 怪物、寵物逐格動畫：只有一組攻擊；首領放技能（施法、重擊）時改用技能那組。寵物出手是 hop */
 export function monAnimActOf(m: Motion | null, hasSkill: boolean): 'idle' | 'atk' | 'skill' {
-  if (!m || m.kind === 'hop') return 'idle';
+  if (!m) return 'idle';
   return hasSkill && (m.kind === 'skill' || m.kind === 'cast') ? 'skill' : 'atk';
 }
 
