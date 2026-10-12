@@ -64,7 +64,7 @@ export function MapPanel() {
                   })}
                 </div>
               )}
-              {open === ri && unlocked && <BossIntel s={gm.state} bossId={r.boss} />}
+              {open === ri && unlocked && <BossIntel bossId={r.boss} />}
             </div>
           );
         })}

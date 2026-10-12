@@ -90,7 +90,7 @@ export function SkillsPanel() {
         英雄每次行動會從第 1 格開始找「冷卻好了」的技能施放，所以排在前面的技能會先放。「⏸ 保留」的技能在首領戰中會留到首領開始詠唱或露出破綻時才施放，用來打斷、擋大招或集中爆發。
         {h.loadoutManual && h.autoAlloc && <> 你調整過技能欄，自動配點不會再重排。<a href="#" onClick={e => { e.preventDefault(); resetLoadoutAuto(gm); refresh(); }}>交回自動排列</a></>}
       </div>
-      {(() => { const id = nextBossId(s); return id ? <BossIntel s={s} bossId={id} compact /> : null; })()}
+      {(() => { const id = nextBossId(s); return id ? <BossIntel bossId={id} /> : null; })()}
 
       {groups.map(([title, list]) => (
         <>
