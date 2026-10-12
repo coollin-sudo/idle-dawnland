@@ -654,3 +654,77 @@ select.input { padding: 6px 10px; }
   .char-slots { grid-template-columns: 1fr; }
   .launcher-back { position: static; margin-bottom: 8px; }
 }
+
+/* ======================================================================
+ * 介面外框美術（src/ui/skin.ts 設定 --skin-*；html.skin 才套用，缺圖時維持原本樣式）
+ * 面板框用 9 宮格（border-image）：四個角的雕花不變形，邊與中間拉伸
+ * ====================================================================== */
+html.skin body {
+  background:
+    linear-gradient(180deg, rgba(6,8,14,.35) 0%, rgba(6,8,14,.55) 45%, rgba(6,8,14,.85) 100%),
+    var(--skin-bg) center top / cover no-repeat fixed,
+    var(--bg);
+}
+html.skin .panel {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0;
+  border-image-source: var(--skin-frame);
+  border-image-slice: 68 fill;
+  border-image-width: 22px;
+  border-image-repeat: stretch;
+  box-shadow: 0 12px 30px rgba(0,0,0,.45);
+}
+/* 小卡片、技能格：皮革暗紋底＋細金邊 */
+html.skin .card,
+html.skin .skill-slot,
+html.skin .panel-note {
+  background:
+    linear-gradient(180deg, rgba(30,38,62,.86), rgba(14,18,30,.92)),
+    var(--skin-tex) 0 0 / 220px;
+  border-color: rgba(185,139,44,.38);
+  box-shadow: inset 0 1px 0 rgba(255,230,170,.08), 0 2px 6px rgba(0,0,0,.35);
+}
+html.skin .card.hl { border-color: var(--gold3); box-shadow: 0 0 0 1px rgba(240,194,90,.3), 0 0 18px rgba(240,194,90,.12), inset 0 1px 0 rgba(255,230,170,.1); }
+html.skin .skill-slot.empty { background: rgba(10,13,22,.55); border-color: rgba(185,139,44,.25); }
+
+/* 頂部列：深藍金邊長條，兩端的裝飾不變形 */
+html.skin .topbar {
+  background: transparent;
+  border: 0 solid transparent;
+  border-image-source: var(--skin-bar);
+  border-image-slice: 0 110 fill;
+  border-image-width: 0 34px;
+  border-image-repeat: stretch;
+  box-shadow: 0 6px 18px rgba(0,0,0,.5);
+  backdrop-filter: none;
+}
+
+/* 戰鬥畫面：鑲寶石的金框疊在畫面外圍 */
+html.skin .stage-wrap { border: 0; border-radius: 6px; box-shadow: 0 16px 40px rgba(0,0,0,.6); }
+html.skin .stage-wrap::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 5;
+  border-style: solid; border-width: 0;
+  border-image-source: var(--skin-frame-b);
+  border-image-slice: 80;
+  border-image-width: 26px;
+  border-image-repeat: stretch;
+}
+
+/* 分頁：選中的分頁用金邊皮革 */
+html.skin .tab.on {
+  background: linear-gradient(180deg, rgba(70,56,26,.85), rgba(36,30,18,.9)), var(--skin-tex) 0 0 / 200px;
+  border-color: var(--gold);
+  box-shadow: inset 0 1px 0 rgba(255,230,170,.18), 0 0 10px rgba(240,194,90,.18);
+}
+html.skin .tab:hover:not(.on) { background: rgba(240,194,90,.06); }
+
+/* 面板標題加一條金色漸層底線，看起來像書頁章節 */
+html.skin .tab-body h3 {
+  padding-bottom: 4px;
+  background: linear-gradient(90deg, rgba(240,194,90,.55), rgba(240,194,90,0) 70%) left bottom / 100% 1px no-repeat;
+}
+/* 框的寬度會蓋住畫面邊緣：關卡名稱與按鈕往內縮、疊在框上面 */
+html.skin .stage-top { z-index: 6; left: 18px; right: 18px; top: 16px; }
+html.skin .stage-wrap::after { border-image-width: 20px; }
+html.skin .topbar { padding-left: 40px; padding-right: 40px; }

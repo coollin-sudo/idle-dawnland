@@ -1,3 +1,4 @@
+import './skin';
 import { Gallery } from './Gallery';
 import { GameScreen } from './GameScreen';
 import { Launcher } from './Launcher';
